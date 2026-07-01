@@ -1,0 +1,65 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}{% if foundation_cms.site_settings.brand_title %}{{ foundation_cms.site_settings.brand_title }}{% else %}Gobindas Handicrafts - Enterprise Homepage{% endif %}{% endblock %}</title>
+
+    <meta name="description" content="{% block meta_description %}Discover premium handcrafted products created by skilled artisans.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}handicrafts, handmade products, artisan goods, ethical shopping, sustainable decor{% endblock %}">
+    <meta name="author" content="Gobindas Handicrafts">
+    <meta name="robots" content="{% block meta_robots %}index,follow{% endblock %}">
+
+    <link rel="icon" href="{% static 'foundation/images/favicon.ico' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <meta name="theme-color" content="#B88A44">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}Gobindas Handicrafts{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Authentic handcrafted products made by skilled artisans.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'foundation/images/og-image.jpg' %}{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:site_name" content="Gobindas Handicrafts">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Gobindas Handicrafts{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Premium handcrafted products from skilled artisans.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% static 'foundation/images/og-image.jpg' %}{% endblock %}">
+
+    <link rel="stylesheet" href="{% static 'foundation/css/variables.css' %}">
+    <link rel="stylesheet" href="{% static 'foundation/css/navbar.css' %}">
+    <link rel="stylesheet" href="{% static 'foundation/css/footer.css' %}">
+    <link rel="stylesheet" href="{% static 'foundation/css/whatsapp.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    {% include 'foundation/header.html' %}
+
+    <main id="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% include 'foundation/footer.html' %}
+
+    {% include 'foundation/whatsapp.html' %}
+
+    <script src="{% static 'foundation/js/navbar.js' %}"></script>
+    <script src="{% static 'foundation/js/footer.js' %}"></script>
+    <script src="{% static 'foundation/js/whatsapp.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,396 @@
+/* =========================================
+   1. HOMEPAGE DESIGN TOKENS & SCOPED VARIABLES
+   ========================================= */
+#homepage-root {
+    /* Mapped strictly to the uploaded Gobindas logo & styling */
+    --brand-gold: #B88A44;
+    --brand-gold-light: #F2E8D7;
+    --brand-dark: #1A1815;
+    --brand-light: #FFFFFF;
+    --bg-canvas: #FCFAF8;
+    --text-muted: #6B655C;
+    
+    --font-brand: 'Cinzel', serif;
+    --font-ui: 'Inter', sans-serif;
+    
+    --spacing-section: 6rem;
+    --spacing-module: 4rem;
+    --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    font-family: var(--font-ui);
+    background-color: var(--bg-canvas);
+    color: var(--brand-dark);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Typography & Reset scopes for Homepage Root */
+#homepage-root h1, 
+#homepage-root h2, 
+#homepage-root h3, 
+#homepage-root h4 { 
+    font-family: var(--font-brand); 
+    font-weight: 600; 
+    line-height: 1.2; 
+}
+
+#homepage-root img { 
+    max-width: 100%; 
+    height: auto; 
+    display: block; 
+}
+
+#homepage-root a { 
+    text-decoration: none; 
+    color: inherit; 
+}
+
+.section-title { 
+    font-size: 2.5rem; 
+    text-align: center; 
+    margin-bottom: 3rem; 
+    color: var(--brand-dark); 
+}
+
+.btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: var(--transition);
+}
+
+.btn-primary { 
+    background: var(--brand-gold); 
+    color: var(--brand-light); 
+}
+
+.btn-primary:hover { 
+    background: var(--brand-dark); 
+}
+
+.btn-outline { 
+    border-color: var(--brand-light); 
+    color: var(--brand-light); 
+}
+
+.btn-outline:hover { 
+    background: var(--brand-light); 
+    color: var(--brand-dark); 
+}
+
+/* =========================================
+   2. MODULE: DYNAMIC HERO
+   ========================================= */
+.module-hero {
+    position: relative;
+    min-height: 85vh; /* Content-driven, minimum height for visual impact */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    background-size: cover;
+    background-position: center;
+}
+
+.module-hero::before {
+    content: ''; 
+    position: absolute; 
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(26,24,21,0.3), rgba(26,24,21,0.7));
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative; 
+    z-index: 2; 
+    max-width: 800px; 
+    color: var(--brand-light);
+}
+
+.hero-subtitle {
+    font-size: 0.9rem; 
+    letter-spacing: 0.2em; 
+    text-transform: uppercase;
+    margin-bottom: 1.5rem; 
+    color: var(--brand-gold);
+}
+
+.hero-title { 
+    font-size: 4rem; 
+    margin-bottom: 2rem; 
+}
+
+.hero-ctas { 
+    display: flex; 
+    gap: 1rem; 
+    justify-content: center; 
+    flex-wrap: wrap; 
+}
+
+/* =========================================
+   3. MODULE: TRUST BAR
+   ========================================= */
+.module-trustbar {
+    background-color: var(--brand-dark);
+    color: var(--brand-gold);
+    padding: 1.5rem 2rem;
+}
+
+.trustbar-grid {
+    max-width: 1400px; 
+    margin: 0 auto;
+    display: flex; 
+    justify-content: space-between; 
+    flex-wrap: wrap; 
+    gap: 1.5rem;
+}
+
+.trust-item {
+    display: flex; 
+    align-items: center; 
+    gap: 0.75rem; 
+    font-size: 0.85rem;
+    letter-spacing: 0.05em; 
+    text-transform: uppercase; 
+    flex: 1; 
+    min-width: 200px; 
+    justify-content: center;
+}
+
+/* =========================================
+   4. MODULE: VISUAL DISCOVERY (CATEGORIES)
+   ========================================= */
+.module-discovery { 
+    padding: var(--spacing-section) 2rem; 
+    max-width: 1400px; 
+    margin: 0 auto; 
+}
+
+.discovery-grid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 2rem;
+}
+
+.category-card {
+    position: relative; 
+    overflow: hidden; 
+    aspect-ratio: 4/5; 
+    cursor: pointer;
+}
+
+.category-card img {
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    transition: transform 0.8s ease;
+}
+
+.category-card:hover img { 
+    transform: scale(1.05); 
+}
+
+.category-overlay {
+    position: absolute; 
+    inset: 0; 
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+    display: flex; 
+    align-items: flex-end; 
+    padding: 2rem;
+}
+
+.category-overlay h3 { 
+    color: var(--brand-light); 
+    font-size: 1.5rem; 
+}
+
+/* =========================================
+   5. MODULE: MERCHANDISING (CAROUSEL)
+   ========================================= */
+.module-merch { 
+    padding: var(--spacing-module) 0 var(--spacing-section); 
+    overflow: hidden; 
+}
+
+.merch-carousel {
+    display: flex; 
+    gap: 2rem; 
+    overflow-x: auto; 
+    padding: 0 2rem 2rem;
+    scroll-snap-type: x mandatory; 
+    scrollbar-width: none;
+}
+
+.merch-carousel::-webkit-scrollbar { 
+    display: none; 
+}
+
+.product-card {
+    min-width: 300px; 
+    scroll-snap-align: start; 
+    position: relative;
+}
+
+.product-img-wrapper {
+    position: relative; 
+    aspect-ratio: 3/4; 
+    overflow: hidden; 
+    background: #EEE; 
+    margin-bottom: 1rem;
+}
+
+.badge {
+    position: absolute; 
+    top: 1rem; 
+    left: 1rem; 
+    background: var(--brand-gold);
+    color: var(--brand-light); 
+    font-size: 0.7rem; 
+    padding: 0.3rem 0.6rem;
+    text-transform: uppercase; 
+    letter-spacing: 0.1em; 
+    z-index: 2;
+}
+
+.product-info { 
+    text-align: center; 
+}
+
+.product-title { 
+    font-size: 1rem; 
+    color: var(--brand-dark); 
+    margin-bottom: 0.5rem; 
+}
+
+.product-price { 
+    font-family: var(--font-ui); 
+    color: var(--text-muted); 
+    font-size: 0.95rem; 
+}
+
+/* =========================================
+   6. MODULE: MEET THE MAKER
+   ========================================= */
+.module-maker { 
+    background-color: var(--brand-dark); 
+    color: var(--brand-light); 
+}
+
+.maker-split { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+}
+
+.maker-image { 
+    aspect-ratio: 1/1; 
+    object-fit: cover; 
+    width: 100%; 
+    height: 100%; 
+}
+
+.maker-content {
+    padding: 4rem; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+}
+
+.maker-quote { 
+    font-family: var(--font-brand); 
+    font-size: 2rem; 
+    color: var(--brand-gold); 
+    margin-bottom: 2rem; 
+    line-height: 1.3; 
+}
+
+.maker-bio { 
+    color: #A39B8E; 
+    margin-bottom: 2rem; 
+    font-size: 1.1rem; 
+}
+
+/* =========================================
+   7. MODULE: UGC GALLERY
+   ========================================= */
+.module-ugc { 
+    padding: var(--spacing-section) 0; 
+}
+
+.ugc-grid { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 0; 
+}
+
+.ugc-item { 
+    aspect-ratio: 1/1; 
+    overflow: hidden; 
+    position: relative; 
+}
+
+.ugc-item img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    transition: opacity 0.3s; 
+}
+
+.ugc-item:hover img { 
+    opacity: 0.8; 
+    cursor: pointer; 
+}
+
+.ugc-icon {
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%);
+    color: var(--brand-light); 
+    opacity: 0; 
+    transition: opacity 0.3s;
+}
+
+.ugc-item:hover .ugc-icon { 
+    opacity: 1; 
+}
+
+/* =========================================
+   8. RESPONSIVE BREAKPOINTS
+   ========================================= */
+@media (max-width: 900px) {
+    .hero-title { 
+        font-size: 2.5rem; 
+    }
+    
+    .maker-split { 
+        grid-template-columns: 1fr; 
+    }
+    
+    .maker-image { 
+        aspect-ratio: 16/9; 
+    }
+    
+    .maker-content { 
+        padding: 3rem 2rem; 
+    }
+    
+    .ugc-grid { 
+        grid-template-columns: repeat(2, 1fr); 
+    }
+}
+
+@media (max-width: 600px) {
+    .trust-item { 
+        flex: 100%; 
+    }
+    
+    .discovery-grid { 
+        grid-template-columns: 1fr; 
+    }
+}

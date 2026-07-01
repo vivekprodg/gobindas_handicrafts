@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Order History" %} | {{ site_name|default:"Luxury eCommerce" }}{% endblock %}
+
+{% block content %}
+<!-- Main Container: Designed for ultra-premium, mobile-first responsive layouts -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 w-100 container">
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="flex d-flex text-xs font-medium text-gray-500 text-muted mb-8 tracking-widest uppercase" aria-label="Breadcrumb">
+        <ol class="inline-flex d-inline-flex items-center space-x-2 list-unstyled mb-0 pl-0">
+            <li class="inline-flex d-inline-flex items-center">
+                <a href="/" class="hover:text-black text-decoration-none transition-colors duration-200">{% trans "Home" %}</a>
+            </li>
+            <li class="inline-flex d-inline-flex items-center">
+                <span class="mx-2 text-gray-300">/</span>
+                <a href="{% url 'orders:list' %}" class="hover:text-black text-decoration-none transition-colors duration-200">{% trans "Account" %}</a>
+            </li>
+            <li class="inline-flex d-inline-flex items-center" aria-current="page">
+                <span class="mx-2 text-gray-300">/</span>
+                <span class="text-black text-dark font-bold">{% trans "Order History" %}</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header & Order Statistics -->
+    <header class="border-b border-gray-200 pb-6 mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 d-flex flex-column flex-md-row align-items-md-end justify-content-between border-bottom pb-4 mb-5">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-serif text-black text-dark tracking-tight mb-2 display-6 fw-normal">
+                {% trans "Order History" %}
+            </h1>
+            <p class="text-sm text-gray-500 text-muted mb-0">
+                {% trans "Review your past purchases, track shipments, and manage returns." %}
+            </p>
+        </div>
+        
+        <!-- Filters & Summary -->
+        <div class="flex items-center gap-4 d-flex align-items-center">
+            <span class="text-xs font-semibold uppercase tracking-widest text-gray-400 text-muted">
+                {{ page_obj.paginator.count|default:orders.count|default:0 }} {% trans "Orders Total" %}
+            </span>
+            <a href="{% url 'orders:order_history' %}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-xs font-bold uppercase tracking-wider rounded-full text-black bg-white hover:bg-gray-50 transition-all duration-200 text-decoration-none btn btn-outline-dark rounded-pill btn-sm">
+                {% trans "View Archive" %}
+            </a>
+        </div>
+    </header>
+
+    <!-- Orders Feed -->
+    <section class="space-y-8 d-flex flex-column gap-4" aria-label="{% trans 'List of Orders' %}">
+        {% for order in page_obj|default:object_list|default:orders %}
+            <!-- Premium Order Card -->
+            <article class="border border-gray-200 rounded-2xl bg-white overflow-hidden flex flex-col lg:flex-row hover:shadow-md transition-shadow duration-300 card border-0 shadow-sm rounded-4 mb-4">
+                
+                <!-- Order Metadata (Left Column / Top) -->
+                <div class="bg-gray-50 p-6 md:p-8 lg:w-1/3 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-200 card-header bg-light border-bottom-0 p-4 p-md-5">
+                    <div>
+                        <!-- Order ID -->
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 text-muted small">{% trans "Order Number" %}</h3>
+                        <p class="text-xl font-medium text-black mb-6 fw-bold">#{{ order.id }}</p>
+
+                        <!-- Order Date -->
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 text-muted small">{% trans "Date Placed" %}</h3>
+                        <p class="text-sm text-gray-800 mb-6">
+                            <time datetime="{{ order.created_at|date:'Y-m-d' }}">{{ order.created_at|date:"F j, Y" }}</time>
+                        </p>
+
+                        <!-- Order Total -->
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 text-muted small">{% trans "Total Amount" %}</h3>
+                        <p class="text-xl font-medium text-black fw-bold">
+                            {{ order.total_amount|default:order.total|default:"0.00" }}
+                        </p>
+                    </div>
+                    
+                    <!-- Primary Status -->
+                    <div class="mt-8 mt-md-4">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-black text-white badge bg-dark rounded-pill px-3 py-2 font-weight-normal">
+                            {{ order.get_status_display|default:order.status|title }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Order Actions & Secondary Details (Right Column / Bottom) -->
+                <div class="p-6 md:p-8 lg:w-2/3 flex flex-col justify-center bg-white card-body p-4 p-md-5">
+                    
+                    <!-- Action Buttons Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 row g-3">
+                        
+                        <!-- View Details -->
+                        <div class="col-12 col-sm-6">
+                            <a href="{% url 'orders:order_detail' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-decoration-none btn btn-outline-secondary w-100 py-2 rounded-3">
+                                {% trans "View Order Details" %}
+                            </a>
+                        </div>
+                        
+                        <!-- Track Shipment -->
+                        <div class="col-12 col-sm-6">
+                            <a href="{% url 'orders:track_order' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-black hover:bg-gray-900 transition-all duration-200 text-decoration-none btn btn-dark w-100 py-2 rounded-3">
+                                {% trans "Track Shipment" %}
+                            </a>
+                        </div>
+                        
+                        <!-- Download Invoice -->
+                        <div class="col-12 col-sm-6">
+                            <a href="{% url 'orders:download_invoice' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-decoration-none btn btn-outline-secondary w-100 py-2 rounded-3">
+                                <svg class="w-4 h-4 mr-2 text-gray-500 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                {% trans "Download Invoice" %}
+                            </a>
+                        </div>
+                        
+                        <!-- Reorder -->
+                        <div class="col-12 col-sm-6">
+                            <a href="{% url 'orders:reorder' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-decoration-none btn btn-outline-secondary w-100 py-2 rounded-3">
+                                <svg class="w-4 h-4 mr-2 text-gray-500 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                {% trans "Buy Again" %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Secondary States (Payment & Returns) -->
+                    <div class="mt-8 pt-6 border-t border-gray-100 flex flex-wrap gap-6 text-sm border-top mt-4 pt-4 d-flex justify-content-between align-items-center">
+                        <div class="flex items-center gap-4 d-flex gap-3">
+                            <!-- Payment Status -->
+                            {% if order.payment_status %}
+                            <a href="{% url 'orders:payment_details' id=order.id %}" class="text-gray-500 hover:text-black transition-colors flex items-center text-decoration-none text-muted">
+                                <svg class="w-4 h-4 mr-1.5 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                {{ order.get_payment_status_display|default:order.payment_status|title }}
+                            </a>
+                            {% endif %}
+                            
+                            <!-- Shipment Status -->
+                            {% if order.shipment_status %}
+                            <a href="{% url 'orders:shipment_details' id=order.id %}" class="text-gray-500 hover:text-black transition-colors flex items-center text-decoration-none text-muted">
+                                <svg class="w-4 h-4 mr-1.5 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                {{ order.get_shipment_status_display|default:order.shipment_status|title }}
+                            </a>
+                            {% endif %}
+                        </div>
+
+                        <!-- Reverse Logistics Actions -->
+                        <div class="flex items-center gap-4 d-flex gap-3">
+                            {% if order.status == 'delivered' or order.status == 'shipped' %}
+                                <a href="{% url 'orders:return_request' id=order.id %}" class="text-gray-500 hover:text-black transition-colors underline underline-offset-4 text-muted">
+                                    {% trans "Request Return" %}
+                                </a>
+                            {% elif order.status == 'pending' or order.status == 'processing' %}
+                                <a href="{% url 'orders:cancel_order' id=order.id %}" class="text-red-500 hover:text-red-700 transition-colors underline underline-offset-4 text-danger">
+                                    {% trans "Cancel Order" %}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        {% empty %}
+            <!-- Beautiful Empty State -->
+            <div class="text-center py-20 px-4 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-5 bg-light rounded-4 border">
+                <div class="bg-white p-6 rounded-full shadow-sm mb-6 bg-white p-4 rounded-circle shadow-sm d-inline-block mb-4">
+                    <svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" style="width:48px;height:48px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-serif text-black mb-2 h4 fw-normal">{% trans "No orders found" %}</h3>
+                <p class="text-sm text-gray-500 max-w-md mx-auto mb-8 text-muted mb-4">
+                    {% trans "You haven't placed any orders yet. Discover our latest collection of premium handcrafted items and begin your journey." %}
+                </p>
+                <a href="/" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-black hover:bg-gray-900 transition-all duration-300 text-decoration-none btn btn-dark rounded-pill px-4 py-2">
+                    {% trans "Continue Shopping" %}
+                </a>
+            </div>
+        {% endfor %}
+    </section>
+
+    <!-- Pagination Integration -->
+    {% if is_paginated or page_obj.has_other_pages %}
+        <div class="mt-12 flex justify-center mt-5 d-flex justify-content-center">
+            {% include "partials/pagination.html" fallback="includes/pagination.html" %}
+        </div>
+    {% endif %}
+
+</main>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% load static %}
+
+<article class="gobindas-product-card {% if product.status == 'draft' %}is-draft{% elif product.status == 'archived' %}is-archived{% endif %}" 
+         data-product-id="{{ product.id }}" 
+         data-product-slug="{{ product.slug }}"
+         data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+         data-track-view="true"
+         {% if product.status == 'draft' %}style="opacity: 0.85;"{% endif %}>
+    <div class="product-card-media">
+        <div class="product-card-badges" data-badge-container>
+            {% if product.status == 'draft' %}
+                <span class="badge-attribute" style="background: #A94442; color: #FFFFFF;">Draft</span>
+            {% elif product.status == 'archived' %}
+                <span class="badge-attribute" style="background: #7A726A; color: #FFFFFF;">Archived</span>
+            {% endif %}
+
+            {% if product.artisan %}
+                <span class="badge-artisan">By {{ product.artisan.name }}</span>
+            {% endif %}
+            
+            {% if product.is_featured %}
+                <span class="badge-attribute badge-featured" style="background: var(--brand-dark, #2C2520); color: var(--brand-gold, #C5A880);">Featured</span>
+            {% endif %}
+
+            {% if product.in_collections.exists %}
+                {% for collection in product.in_collections.all|slice:":1" %}
+                    <span class="badge-attribute" style="background: #4A6B53; color: #FFFFFF;">{{ collection.name }}</span>
+                {% endfor %}
+            {% endif %}
+
+            {% if product.badge_text %}
+                <span class="badge-attribute">{{ product.badge_text }}</span>
+            {% endif %}
+            {% if product.secondary_badge_text %}
+                <span class="badge-attribute" style="background:#2C2520;">{{ product.secondary_badge_text }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="product-card-actions">
+            <button type="button" 
+                    class="action-circle-btn toggle-wishlist {% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}wishlisted{% endif %}" 
+                    title="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}" 
+                    aria-label="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}Remove {{ product.title }} from Wishlist{% else %}Add {{ product.title }} to Wishlist{% endif %}"
+                    aria-pressed="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}true{% else %}false{% endif %}"
+                    data-product-id="{{ product.id }}"
+                    data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+                    data-url="{% url 'catalog:wishlist_toggle' %}"
+                    data-login-url="{% url 'account_login' %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" 
+                     fill="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}#C0392B{% else %}none{% endif %}" 
+                     stroke="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}#C0392B{% else %}currentColor{% endif %}" 
+                     stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+            </button>
+            <button type="button" class="action-circle-btn trigger-quickview" title="Quick View" aria-label="Quick View for {{ product.title }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+        </div>
+
+        <a href="{% url 'catalog:product_detail' slug=product.slug %}" aria-label="View details for {{ product.title }}" class="product-card-media-link">
+            {% if product.primary_image %}
+                <img src="{{ product.primary_image.url }}" alt="{{ product.title }}" loading="lazy">
+            {% else %}
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #F5F1ED; color: var(--text-muted, #7A726A); font-size: 0.85rem;">
+                    No Image Available
+                </div>
+            {% endif %}
+        </a>
+    </div>
+
+    <div class="product-card-details">
+        {% if product.artisan %}
+            <div class="product-origin-meta">{{ product.artisan.region }} &bull; {{ product.material.name|default:"Hand-Crafted" }}</div>
+        {% endif %}
+        
+        <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="product-title-link">{{ product.title }}</a>
+        <p class="product-short-desc">{{ product.short_description }}</p>
+        
+        {% if product.tags.exists %}
+        <div class="product-tags-wrapper" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem;">
+            {% for tag in product.tags.all|slice:":3" %}
+                <span style="font-size: 0.65rem; color: var(--text-muted, #7A726A); background: #F5F1ED; padding: 2px 8px; border-radius: 12px; font-weight: 500;">#{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="product-rating-row">
+            <span class="rating-stars" aria-label="{{ product.rating|default:5 }} out of 5 stars">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= product.rating|default:5 %}★{% else %}☆{% endif %}
+                {% endfor %}
+            </span>
+            <span class="rating-count">({{ product.reviews_count|default:0 }} reviews)</span>
+        </div>
+
+        <div class="product-bottom-meta">
+            <div class="price-structure">
+                {% if product.original_price %}
+                    <span class="price-original" data-compare-price data-currency="NPR ">NPR {{ product.original_price|floatformat:0 }}</span>
+                {% endif %}
+                <span class="price-current" data-price-display data-currency="NPR ">NPR {{ product.price|floatformat:0 }}</span>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                {% if product.stock_text %}
+                    <div class="stock-indicator stock-status {% if product.stock_status == 'low' %}stock-low{% elif product.stock_status == 'out' %}stock-out{% else %}stock-in{% endif %}" data-stock-display>
+                        {{ product.stock_text }}
+                    </div>
+                {% endif %}
+                
+                {% if product.variants.exists %}
+                    <div class="variant-indicator" style="font-size: 0.65rem; color: var(--text-muted, #7A726A); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        {{ product.variants.count }} Options
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="product-card-cta-drawer">
+        <button type="button" class="btn-card-add-cart" 
+                data-cart-action="add"
+                data-can-save="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+                data-sync-url="{% url 'cart:cart_sync' %}"
+                {% if product.stock_status == 'out' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
+            {% if product.stock_status == 'out' %}Out of Stock{% else %}Add to Cart{% endif %}
+        </button>
+    </div>
+</article>

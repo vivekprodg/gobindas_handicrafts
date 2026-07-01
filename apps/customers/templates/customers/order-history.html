@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order History | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================================================
+       Premium Luxury Order History Styling
+       ========================================================================== */
+    :root {
+        --dash-surface: #FFFFFF;
+        --dash-bg: #FCFAF8;
+        --dash-border: #EAE5E0;
+        --dash-text-main: #2C2520;
+        --dash-text-muted: #7A726A;
+        --dash-gold: #C5A880;
+        --dash-gold-hover: #B3966E;
+        --dash-radius-lg: 16px;
+        --dash-radius-md: 12px;
+        --dash-shadow-soft: 0 12px 36px rgba(44, 37, 32, 0.05);
+        --dash-shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .dashboard-layout {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 3.5rem;
+        align-items: start;
+        background-color: var(--dash-bg);
+    }
+
+    /* Sidebar - Premium Consistency */
+    .dashboard-sidebar {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 2.5rem 1.5rem;
+        position: sticky;
+        top: 110px;
+        box-shadow: var(--dash-shadow-soft);
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: var(--dash-radius-md);
+        color: var(--dash-text-muted);
+        font-weight: 500;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .sidebar-link:hover {
+        background: #FDFCFB;
+        color: var(--dash-text-main);
+        transform: translateX(4px);
+    }
+
+    .sidebar-link.active {
+        background: var(--dash-text-main);
+        color: #FFFFFF;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(44, 37, 32, 0.15);
+    }
+
+    /* Main Dashboard Content area */
+    .dashboard-main {
+        min-width: 0;
+    }
+
+    /* Global Premium Notifications Alert */
+    .alert {
+        padding: 1.25rem 1.75rem;
+        border-radius: var(--dash-radius-md);
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        border: 1px solid transparent;
+        animation: fadeIn 0.4s ease-out;
+    }
+    .alert-success { background-color: #F4F9F4; color: #2E6B3E; border-color: #D1E7DD; }
+    .alert-danger { background-color: #FDF3F3; color: #B53A3A; border-color: #F8D7DA; }
+    .alert-warning { background-color: #FFFDF0; color: #856404; border-color: #FFEBAA; }
+    .alert-info { background-color: #F4F9FC; color: #1D6F8A; border-color: #CFF4FC; }
+
+    /* Orders Section Hero Header */
+    .orders-hero {
+        background: linear-gradient(135deg, var(--dash-text-main) 0%, #1A1512 100%);
+        border-radius: var(--dash-radius-lg);
+        padding: 3.5rem;
+        color: #FFFFFF;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 20px 40px rgba(44, 37, 32, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .orders-hero::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(197, 168, 128, 0.05));
+        pointer-events: none;
+    }
+
+    .orders-hero h1 {
+        font-family: 'Cinzel', serif;
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0 0 0.75rem 0;
+        letter-spacing: -0.02em;
+    }
+
+    .orders-hero p {
+        font-size: 1.1rem;
+        color: #D5CFC9;
+        margin: 0;
+        font-weight: 400;
+        max-width: 600px;
+        line-height: 1.6;
+    }
+
+    /* Orders Container */
+    .orders-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* Premium Order Row Cards */
+    .order-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-md);
+        padding: 1.75rem 2rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: grid;
+        grid-template-columns: 1.5fr 1.2fr 1.2fr 1fr;
+        gap: 1.5rem;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(44, 37, 32, 0.02);
+    }
+
+    .order-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--dash-shadow-soft);
+        border-color: var(--dash-gold);
+    }
+
+    .order-meta-info strong {
+        font-size: 1.1rem;
+        color: var(--dash-text-main);
+        letter-spacing: -0.01em;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .order-meta-info small {
+        font-size: 0.85rem;
+        color: var(--dash-text-muted);
+        font-weight: 400;
+    }
+    
+    /* Modern Dynamic Context Badges */
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #F7F4F0;
+        color: var(--dash-text-main);
+        border: 1px solid var(--dash-border);
+        text-align: center;
+        max-width: max-content;
+    }
+
+    /* Financial Total Typography */
+    .order-financials {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--dash-text-main);
+    }
+    
+    /* Premium Premium Action Buttons */
+    .btn-view {
+        display: inline-block;
+        background: var(--dash-text-main);
+        color: #FFFFFF;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.25s ease;
+        border: 1px solid var(--dash-text-main);
+    }
+    
+    .btn-view:hover {
+        background: var(--dash-gold);
+        border-color: var(--dash-gold);
+        color: #FFFFFF;
+        box-shadow: 0 4px 12px rgba(197, 168, 128, 0.25);
+    }
+
+    /* Minimalist Elegant Pagination */
+    .pagination {
+        display: flex;
+        gap: 0.35rem;
+        justify-content: center;
+        align-items: center;
+        margin-top: 3.5rem;
+    }
+    
+    .page-link {
+        padding: 0.65rem 1.15rem;
+        border: 1px solid var(--dash-border);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--dash-text-main);
+        font-size: 0.9rem;
+        font-weight: 500;
+        background-color: var(--dash-surface);
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover:not(.active) {
+        border-color: var(--dash-text-main);
+        background-color: #FDFCFB;
+    }
+    
+    .page-link.active {
+        background: var(--dash-text-main);
+        color: #FFFFFF;
+        border-color: var(--dash-text-main);
+        font-weight: 600;
+    }
+
+    /* Sophisticated Empty State Component */
+    .empty-state {
+        background: var(--dash-surface);
+        border: 1px dashed var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 6rem 3rem;
+        text-align: center;
+        max-width: 680px;
+        margin: 2rem auto;
+        box-shadow: var(--dash-shadow-soft);
+    }
+
+    .empty-state h2 {
+        font-family: 'Cinzel', serif;
+        font-size: 1.85rem;
+        color: var(--dash-text-main);
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+        color: var(--dash-text-muted);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Responsive Media Adaptation Viewports */
+    @media (max-width: 1199px) {
+        .order-card {
+            grid-template-columns: 1.2fr 1fr 1fr;
+            padding: 1.5rem;
+        }
+        .order-action-wrapper {
+            grid-column: span 3;
+            text-align: left !important;
+            margin-top: 0.5rem;
+        }
+        .btn-view {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+            padding: 2.5rem 1.5rem;
+            gap: 2rem;
+        }
+        .dashboard-sidebar {
+            display: none;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .orders-hero {
+            padding: 2.5rem 2rem;
+        }
+        .orders-hero h1 {
+            font-size: 2rem;
+        }
+        .order-card {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding: 1.5rem;
+        }
+        .order-action-wrapper {
+            grid-column: span 1;
+        }
+        .order-financials {
+            text-align: left !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <aside class="dashboard-sidebar" aria-label="Account Navigation">
+        <nav class="sidebar-nav">
+            <a href="{% url 'customers:dashboard' %}" class="sidebar-link">Dashboard</a>
+            <a href="{% url 'customers:order_history' %}" class="sidebar-link active">Order History</a>
+            <a href="{% url 'customers:saved_cart_list' %}" class="sidebar-link">Saved Carts</a>
+            <a href="{% url 'customers:logout' %}" class="sidebar-link">Sign Out</a>
+        </nav>
+    </aside>
+
+    <main class="dashboard-main">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <section class="orders-hero">
+            <h1>My Orders</h1>
+            <p>View your purchase history and manage your artisan orders.</p>
+        </section>
+
+        {% if orders %}
+            <div class="orders-list">
+                {% for order in orders %}
+                    <article class="order-card" aria-label="Order card summary #{{ order.id }}">
+                        <div class="order-meta-info">
+                            <strong>Order #{{ order.id }}</strong>
+                            <small>{{ order.created_at|date:"M j, Y" }}</small>
+                        </div>
+                        <div>
+                            <span class="status-badge">{{ order.status|title }}</span>
+                        </div>
+                        <div class="order-financials" style="text-align: right;">
+                            <strong>{{ order.total|default:"0.00" }}</strong>
+                        </div>
+                        <div class="order-action-wrapper" style="text-align: right;">
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn-view" aria-label="View precise layout logs for order reference {{ order.id }}">View Details</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+                <nav class="pagination" aria-label="Order pagination container control">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="page-link">&larr; Previous</a>
+                    {% endif %}
+                    <span class="page-link active" aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next &rarr;</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <h2>No orders found</h2>
+                <p>Start your journey into authentic craftsmanship today.</p>
+                <a href="{% url 'catalog:product_list' %}" class="btn-view" style="display: inline-block; width: auto; padding: 0.85rem 2rem;">Browse Collections</a>
+            </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

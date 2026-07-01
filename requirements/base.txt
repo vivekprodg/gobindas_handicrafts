@@ -1,0 +1,54 @@
+# Core framework
+Django==5.1.4
+
+# Environment variables
+python-dotenv==1.1.1
+
+# PostgreSQL driver
+psycopg[binary]==3.2.9
+
+# Django REST Framework
+djangorestframework==3.16.0
+
+# CORS support
+django-cors-headers==4.7.0
+
+# Image processing
+Pillow==11.2.1
+
+# Filtering and search
+django-filter==25.1
+
+# API documentation
+drf-spectacular==0.28.0
+
+# Production static file serving
+whitenoise==6.9.0
+
+# Caching support
+redis==6.2.0
+django-redis==5.4.0
+
+# Background tasks
+celery==5.5.3
+
+# Celery Redis integration
+kombu==5.5.4
+
+# Timezone support
+tzdata==2025.2
+
+# HTTP requests
+requests==2.32.4
+
+# Slug generation
+python-slugify==8.0.4
+
+# XML security
+defusedxml==0.7.1
+
+# OpenAPI schema generation
+uritemplate==4.2.0
+
+# Packaging utilities
+packaging==25.0

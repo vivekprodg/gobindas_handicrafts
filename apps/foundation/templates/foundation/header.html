@@ -1,0 +1,409 @@
+{% load static %}
+
+{% if header_is_enabled %}
+<div class="top-header{% if not header_show_on_desktop %} mobile-only{% endif %}{% if not header_show_on_mobile %} desktop-only{% endif %}" id="top-bar-node"
+     data-announcements="{% if header_bar_announcements_json %}{{ header_bar_announcements_json }}{% else %}[]{% endif %}"
+     data-rotator-interval="{{ header_rotator_interval|default:'4000' }}">
+    
+    <div class="top-header-section">
+        {% if header_currencies %}
+            <div class="utility-dropdown-container">
+                <button class="utility-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    {% with default_currency=header_currencies.0 %}
+                        {% if default_currency.symbol %}<span class="currency-symbol">{{ default_currency.symbol }}</span> {% endif %}{{ default_currency.code }}
+                    {% endwith %}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M6 9l6 6 6-6"></path>
+                    </svg>
+                </button>
+                <ul class="utility-dropdown-menu" role="listbox">
+                    {% for currency in header_currencies %}
+                        <li role="option">
+                            <a href="{% if currency.url %}{{ currency.url }}{% else %}#{% endif %}">
+                                {% if currency.symbol %}{{ currency.symbol }} {% endif %}{{ currency.code }} ({{ currency.label }})
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% elif header_currency_label %}
+            <div class="utility-dropdown">
+                {{ header_currency_label }}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6"></path>
+                </svg>
+            </div>
+        {% endif %}
+
+        {% if header_languages %}
+            <div class="utility-dropdown-container">
+                <button class="utility-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    {% with default_lang=header_languages.0 %}
+                        {{ default_lang.code|upper }}
+                    {% endwith %}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M6 9l6 6 6-6"></path>
+                    </svg>
+                </button>
+                <ul class="utility-dropdown-menu" role="listbox">
+                    {% for language in header_languages %}
+                        <li role="option">
+                            <a href="{% if language.url %}{{ language.url }}{% else %}#{% endif %}">
+                                {{ language.code|upper }} ({{ language.label }})
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% elif header_language_label %}
+            <div class="utility-dropdown">
+                {{ header_language_label }}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6"></path>
+                </svg>
+            </div>
+        {% endif %}
+
+        {% if header_left_utilities %}
+            {% for utility in header_left_utilities %}
+                {% if utility.label %}
+                    <a href="{% if utility.url %}{{ utility.url }}{% else %}#{% endif %}" class="utility-dropdown">
+                        {% if utility.icon_key == 'phone' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        {% elif utility.icon_key == 'email' or utility.icon_key == 'envelope' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        {% elif utility.icon_key == 'map-pin' or utility.icon_key == 'marker' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {% elif utility.icon_key == 'truck' or utility.icon_key == 'shipping' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                        {% elif utility.icon_key == 'info' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        {% endif %}
+                        {{ utility.label }}
+                        {% if utility.show_dropdown_icon %}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6"></path>
+                            </svg>
+                        {% endif %}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="top-header-center">
+        <span id="campaign-rotator">
+            {% if header_announcements %}
+                {{ header_announcements.0 }}
+            {% else %}
+                Loading campaigns...
+            {% endif %}
+        </span>
+    </div>
+
+    <div class="top-header-section top-header-right">
+        {% if header_right_utilities %}
+            {% for utility in header_right_utilities %}
+                {% if utility.label %}
+                    <a href="{% if utility.url %}{{ utility.url }}{% else %}#{% endif %}" class="utility-dropdown">
+                        {% if utility.icon_key == 'phone' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        {% elif utility.icon_key == 'email' or utility.icon_key == 'envelope' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        {% elif utility.icon_key == 'map-pin' or utility.icon_key == 'marker' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {% elif utility.icon_key == 'truck' or utility.icon_key == 'shipping' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                        {% elif utility.icon_key == 'info' %}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        {% endif %}
+                        {{ utility.label }}
+                        {% if utility.show_dropdown_icon %}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6"></path>
+                            </svg>
+                        {% endif %}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if navbar_is_enabled %}
+<nav class="main-navbar" id="global-nav" aria-label="Main Navigation" {% if not navbar_is_sticky %}style="position: relative;"{% endif %}>
+    <div class="hamburger" aria-label="Open menu" role="button" tabindex="0">
+        <span></span><span></span><span></span>
+    </div>
+
+    <a href="{{ brand_url|default:'/' }}" class="nav-brand" aria-label="{{ brand_title|default:'Gobindas Handicrafts' }} Home">
+        <div class="brand-icon">
+            {% if brand_logo_url %}
+                <img
+                    src="{{ brand_logo_url }}"
+                    alt="{{ site_settings.logo_alt_text|default:brand_title|default:'Logo' }}"
+                    style="object-fit:contain; display:block;"
+                >
+            {% else %}
+                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1" />
+                    <path d="M7 14c2-4 6-4 10 0 M12 6v10 M9 16h6" />
+                 </svg>
+            {% endif %}
+        </div>
+        <div class="brand-text">
+            <div class="brand-title">{{ brand_title|default:"GOBINDAS" }}</div>
+            <div class="brand-subtitle">{{ brand_subtitle|default:"HANDICRAFTS" }}</div>
+        </div>
+    </a>
+
+    <ul class="nav-links">
+        {% for item in navbar_items %}
+            {% if item.menu_type == "link" and not item.children %}
+                <li class="nav-item {% if item.visibility_scope == 'desktop' %}desktop-only{% elif item.visibility_scope == 'mobile' %}mobile-only{% endif %}">
+                    {% if item.link_url %}
+                        <a href="{{ item.link_url }}"{% if item.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>
+                            {% if item.icon_key %}<i class="icon-{{ item.icon_key }}"></i> {% endif %}{{ item.label }}
+                        </a>
+                    {% else %}
+                        <span>{% if item.icon_key %}<i class="icon-{{ item.icon_key }}"></i> {% endif %}{{ item.label }}</span>
+                    {% endif %}
+
+                    {% if item.badge_text %}
+                        <span class="nav-badge {% if item.badge_style %}{{ item.badge_style }}{% endif %}">{{ item.badge_text }}</span>
+                    {% endif %}
+                </li>
+            {% else %}
+                <li class="nav-item {% if item.visibility_scope == 'desktop' %}desktop-only{% elif item.visibility_scope == 'mobile' %}mobile-only{% endif %}" aria-haspopup="true" aria-expanded="false">
+                    {% if item.link_url %}
+                        <a href="{{ item.link_url }}"{% if item.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>
+                            {% if item.icon_key %}<i class="icon-{{ item.icon_key }}"></i> {% endif %}{{ item.label }}
+                        </a>
+                    {% else %}
+                        <span>{% if item.icon_key %}<i class="icon-{{ item.icon_key }}"></i> {% endif %}{{ item.label }}</span>
+                    {% endif %}
+
+                    {% if item.badge_text %}
+                        <span class="nav-badge {% if item.badge_style %}{{ item.badge_style }}{% endif %}">{{ item.badge_text }}</span>
+                    {% endif %}
+
+                    <div class="mega-menu">
+                        {% if item.mega_menu_columns %}
+                            {% for column in item.mega_menu_columns %}
+                                <div class="menu-column {% if column.visibility_scope == 'desktop' %}desktop-only{% elif column.visibility_scope == 'mobile' %}mobile-only{% endif %}">
+                                    {% if column.heading %}
+                                        <h4>{{ column.heading }}</h4>
+                                    {% endif %}
+
+                                    {% if column.links %}
+                                        <ul>
+                                            {% for link in column.links %}
+                                                {% if link.label %}
+                                                    <li class="{% if link.visibility_scope == 'desktop' %}desktop-only{% elif link.visibility_scope == 'mobile' %}mobile-only{% endif %}">
+                                                        {% if link.url %}
+                                                            <a href="{{ link.url }}"{% if link.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %} {% if link.is_featured %}style="font-weight: 700; color: var(--brand-gold);"{% endif %}>
+                                                                {% if link.icon_key %}<i class="icon-{{ link.icon_key }}"></i> {% endif %}{{ link.label }}
+                                                            </a>
+                                                        {% else %}
+                                                            <span {% if link.is_featured %}style="font-weight: 700; color: var(--brand-gold);"{% endif %}>
+                                                                {% if link.icon_key %}<i class="icon-{{ link.icon_key }}"></i> {% endif %}{{ link.label }}
+                                                            </span>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% elif item.children %}
+                            {% for child in item.children %}
+                                <div class="menu-column {% if child.visibility_scope == 'desktop' %}desktop-only{% elif child.visibility_scope == 'mobile' %}mobile-only{% endif %}">
+                                    {% if child.label %}
+                                        {% if child.link_url %}
+                                            <h4><a href="{{ child.link_url }}"{% if child.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>
+                                                {% if child.icon_key %}<i class="icon-{{ child.icon_key }}"></i> {% endif %}{{ child.label }}
+                                            </a></h4>
+                                        {% else %}
+                                            <h4>{% if child.icon_key %}<i class="icon-{{ child.icon_key }}"></i> {% endif %}{{ child.label }}</h4>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if child.children %}
+                                        <ul>
+                                            {% for grandchild in child.children %}
+                                                {% if grandchild.label %}
+                                                    <li class="{% if grandchild.visibility_scope == 'desktop' %}desktop-only{% elif grandchild.visibility_scope == 'mobile' %}mobile-only{% endif %}">
+                                                        {% if grandchild.link_url %}
+                                                            <a href="{{ grandchild.link_url }}"{% if grandchild.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>
+                                                                {% if grandchild.icon_key %}<i class="icon-{{ grandchild.icon_key }}"></i> {% endif %}{{ grandchild.label }}
+                                                            </a>
+                                                        {% else %}
+                                                            <span>{% if grandchild.icon_key %}<i class="icon-{{ grandchild.icon_key }}"></i> {% endif %}{{ grandchild.label }}</span>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if item.featured_is_visible %}
+                            <div class="menu-media" style="background-image: url('{% if item.featured_image_url %}{{ item.featured_image_url }}{% elif site_settings and site_settings.default_featured_image %}{{ site_settings.default_featured_image.url }}{% else %}https://images.unsplash.com/photo-1610701596007-11502861dcfa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80{% endif %}');">
+                                <div class="menu-media-caption">
+                                    <strong>
+                                        {% if item.featured_title %}
+                                            {{ item.featured_title }}
+                                        {% elif site_settings and site_settings.default_featured_title %}
+                                            {{ site_settings.default_featured_title }}
+                                        {% else %}
+                                            Meet the Artisans
+                                        {% endif %}
+                                    </strong><br>
+                                    <span style="color:#555; font-size: 0.8rem;">
+                                        {% if item.featured_text %}
+                                            {{ item.featured_text|linebreaksbr }}
+                                        {% elif site_settings and site_settings.default_featured_text %}
+                                            {{ site_settings.default_featured_text|linebreaksbr }}
+                                        {% else %}
+                                            Explore the workshop lineages of India.
+                                        {% endif %}
+                                    </span>
+                                    {% if item.featured_cta_text and item.featured_cta_url %}
+                                        <a href="{{ item.featured_cta_url }}" style="display: block; margin-top: 0.5rem; font-weight: 600; color: var(--brand-gold);">
+                                            {{ item.featured_cta_text }} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <li class="nav-item mobile-only nav-account-mobile" aria-haspopup="true" aria-expanded="false">
+            {% if user.is_authenticated %}
+                <span>Account ({{ user.first_name|default:user.username }})</span>
+                <div class="mega-menu mobile-account-drawer">
+                    <div class="menu-column">
+                        <h4>Manage Profile</h4>
+                        <ul>
+                            <li><a href="{% url 'customers:dashboard' %}">Dashboard</a></li>
+                            <li><a href="{% url 'customers:order_history' %}">Order History</a></li>
+                            <li><a href="{% url 'customers:wishlist' %}">Wishlist</a></li>
+                            <li><a href="{% url 'customers:saved_cart_list' %}">Saved Carts</a></li>
+                            <li><a href="{% url 'customers:address_list' %}">Addresses</a></li>
+                            <li><a href="{% url 'customers:profile' %}">Profile Details</a></li>
+                            <li><a href="{% url 'foundation:logout' %}" class="logout-link">Sign Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <span>Account Access</span>
+                <div class="mega-menu mobile-account-drawer">
+                    <div class="menu-column">
+                        <h4>Welcome</h4>
+                        <ul>
+                            {% if site_settings and site_settings.enable_customer_registration %}
+                                <li><a href="{% url 'foundation:login' %}">Sign In</a></li>
+                                <li><a href="{% url 'foundation:register' %}">Create Account</a></li>
+                            {% else %}
+                                <li><a href="{% url 'foundation:login' %}">Sign In</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </li>
+    </ul>
+
+    <div class="nav-utilities">
+        <div class="search-box">
+            <input type="text" placeholder="{% if site_settings and site_settings.search_placeholder %}{{ site_settings.search_placeholder }}{% else %}Find artisan rugs...{% endif %}" aria-label="Search Catalog">
+            <button class="icon-btn" aria-label="{% if site_settings and site_settings.search_button_label %}{{ site_settings.search_button_label }}{% else %}Search{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+        </div>
+
+        <div class="account-dropdown-container">
+            {% if user.is_authenticated %}
+                <button class="icon-btn account-dropdown-trigger" aria-haspopup="menu" aria-expanded="false" aria-label="Account Settings for {{ user.first_name|default:user.username }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="account-dropdown-menu premium-menu-glass" role="menu">
+                    <div class="account-menu-header">
+                        <div class="account-avatar-wrapper">
+                            {% if user.customer_profile and user.customer_profile.avatar %}
+                                <img src="{{ user.customer_profile.avatar.url }}" alt="{{ user.username }}" class="account-avatar-img">
+                            {% else %}
+                                <div class="account-avatar-fallback">{{ user.first_name|first|default:user.username|first|upper }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="account-meta">
+                            <span class="account-greeting">Welcome back,</span>
+                            <span class="account-name">{{ user.get_full_name|default:user.username }}</span>
+                            {% if user.customer_profile and user.customer_profile.is_premium_member %}
+                                <span class="account-badge member-badge">Premium Member</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="menu-divider">
+                    
+                    <ul class="account-action-list">
+                        <li role="none"><a role="menuitem" href="{% url 'customers:dashboard' %}" class="account-menu-link">Account Dashboard</a></li>
+                        <li role="none"><a role="menuitem" href="{% url 'customers:order_history' %}" class="account-menu-link">Order History</a></li>
+                        <li role="none">
+                            <a role="menuitem" href="{% url 'customers:wishlist' %}" class="account-menu-link">
+                                My Wishlist
+                                {% if request.wishlist_count %}
+                                    <span class="utility-count-badge">{{ request.wishlist_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li role="none"><a role="menuitem" href="{% url 'customers:saved_cart_list' %}" class="account-menu-link">Saved Carts</a></li>
+                        <li role="none"><a role="menuitem" href="{% url 'customers:address_list' %}" class="account-menu-link">Saved Addresses</a></li>
+                        <li role="none"><a role="menuitem" href="{% url 'customers:profile' %}" class="account-menu-link">Profile Details</a></li>
+                    </ul>
+
+                    <hr class="menu-divider">
+                    
+                    <ul class="account-action-list bottom-actions">
+                        <li role="none">
+                            <a role="menuitem" href="{% url 'foundation:logout' %}" class="account-menu-link logout-action">
+                                Sign Out
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% else %}
+                <button class="icon-btn account-dropdown-trigger guest-trigger" aria-haspopup="menu" aria-expanded="false" aria-label="Account Login">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="account-dropdown-menu guest-auth-menu premium-menu-glass" role="menu">
+                    <div class="guest-menu-header">
+                        <h4 class="guest-title">Welcome to {{ brand_title|default:"Gobindas" }}</h4>
+                        <p class="guest-subtitle">Sign in for seamless checkout, wishlists, and personalized artisan recommendations.</p>
+                    </div>
+                    <div class="guest-actions">
+                        <a role="menuitem" href="{% url 'foundation:login' %}" class="btn-primary auth-btn-primary">Sign In</a>
+                        {% if site_settings and site_settings.enable_customer_registration %}
+                            <a role="menuitem" href="{% url 'foundation:register' %}" class="btn-secondary auth-btn-secondary">Create Account</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <button class="icon-btn" aria-label="{% if site_settings and site_settings.cart_button_label %}{{ site_settings.cart_button_label }}{% else %}Shopping Bag{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span class="cart-badge" id="cart-counter">{% if site_settings and site_settings.cart_badge_count is not None %}{{ site_settings.cart_badge_count }}{% else %}0{% endif %}</span>
+        </button>
+    </div>
+</nav>
+{% endif %}

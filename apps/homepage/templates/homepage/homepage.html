@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'homepage/css/homepage.css' %}">
+{% endblock %}
+
+{% block title %}{{ homepage_payload.page_title|default:"Gobindas Handicrafts - Enterprise Homepage" }}{% endblock %}
+
+{% block content %}
+<main id="homepage-root">
+    {% for module in homepage_payload.modules %}
+
+        {# ========================================= #}
+        {# 1. DYNAMIC HERO MODULE                    #}
+        {# ========================================= #}
+        {% if module.type == "dynamic_hero" %}
+            <section class="module-hero" style="background-image: url('{{ module.parameters.background_media }}');">
+                <div class="hero-content">
+                    {% if module.parameters.subtitle %}
+                        <div class="hero-subtitle">{{ module.parameters.subtitle }}</div>
+                    {% endif %}
+                    
+                    {% if module.parameters.title %}
+                        <h1 class="hero-title">{{ module.parameters.title }}</h1>
+                    {% endif %}
+                    
+                    {% if module.parameters.ctas %}
+                        <div class="hero-ctas">
+                            {% for cta in module.parameters.ctas %}
+                                <a href="{{ cta.url }}" class="btn {{ cta.style }}">{{ cta.label }}</a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+        {# ========================================= #}
+        {# 2. TRUST BAR MODULE                       #}
+        {# ========================================= #}
+        {% elif module.type == "trust_bar" %}
+            <div class="module-trustbar">
+                <div class="trustbar-grid">
+                    {% for signal in module.parameters.signals %}
+                        <div class="trust-item">
+                            {% if signal.icon == 'fair-trade' %}
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            {% elif signal.icon == 'shipping' %}
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><circle cx="8" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+                            {% elif signal.icon == 'artisan' %}
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            {% endif %}
+                            
+                            {% if signal.text %}
+                                <span>{{ signal.text }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        {# ========================================= #}
+        {# 3. VISUAL DISCOVERY (CATEGORIES) MODULE   #}
+        {# ========================================= #}
+        {% elif module.type == "visual_discovery" %}
+            <section class="module-discovery">
+                {% if module.parameters.heading %}
+                    <h2 class="section-title">{{ module.parameters.heading }}</h2>
+                {% endif %}
+                
+                <div class="discovery-grid">
+                    {% for category in homepage_categories %}
+                        <a href="{% url 'catalog:category_detail' category.slug %}" class="category-card">
+                            {% if category.image %}
+                                <img src="{{ category.image.url }}" alt="{{ category.name|default:'' }}">
+                            {% endif %}
+                            <div class="category-overlay">
+                                {% if category.name %}
+                                    <h3>{{ category.name }}</h3>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </section>
+
+        {# ========================================= #}
+        {# 4. MERCHANDISING CAROUSEL MODULE          #}
+        {# ========================================= #}
+        {% elif module.type == "merchandising_carousel" %}
+            <section class="module-merch">
+                {% if module.parameters.heading %}
+                    <h2 class="section-title">{{ module.parameters.heading }}</h2>
+                {% endif %}
+                
+                <div class="merch-carousel">
+                    {% for item in module.parameters.items %}
+                        <div class="product-card">
+                            <div class="product-img-wrapper">
+                                {% if item.badge %}
+                                    <div class="badge">{{ item.badge }}</div>
+                                {% endif %}
+                                {% if item.image %}
+                                    <img src="{{ item.image }}" alt="{{ item.title }}" style="width:100%; height:100%; object-fit:cover;">
+                                {% endif %}
+                            </div>
+                            <div class="product-info">
+                                {% if item.title %}
+                                    <h4 class="product-title">{{ item.title }}</h4>
+                                {% endif %}
+                                {% if item.price %}
+                                    <div class="product-price">{{ item.price }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+        {# ========================================= #}
+        {# 5. MEET THE MAKER (STORY SPLIT) MODULE    #}
+        {# ========================================= #}
+        {% elif module.type == "story_split" %}
+            <section class="module-maker">
+                <div class="maker-split">
+                    {% if module.parameters.image %}
+                        <img src="{{ module.parameters.image }}" alt="{{ module.parameters.artisan_name }}" class="maker-image">
+                    {% endif %}
+                    
+                    <div class="maker-content">
+                        {% if module.parameters.quote %}
+                            <h3 class="maker-quote">{{ module.parameters.quote }}</h3>
+                        {% endif %}
+                        
+                        {% if module.parameters.bio %}
+                            <p class="maker-bio">{{ module.parameters.bio }}</p>
+                        {% endif %}
+                        
+                        {% if module.parameters.target_url and module.parameters.button_text %}
+                            <div>
+                                <a href="{{ module.parameters.target_url }}" class="btn btn-primary">{{ module.parameters.button_text }}</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+        {# ========================================= #}
+        {# 6. SOCIAL PROOF (UGC GALLERY) MODULE      #}
+        {# ========================================= #}
+        {% elif module.type == "social_proof" %}
+            <section class="module-ugc">
+                {% if module.parameters.heading %}
+                    <h2 class="section-title">{{ module.parameters.heading }}</h2>
+                {% endif %}
+                
+                <div class="ugc-grid">
+                    {% for img_url in module.parameters.images %}
+                        <div class="ugc-item">
+                            <img src="{{ img_url }}" alt="User generated content">
+                            <div class="ugc-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+        {% endif %}
+    {% endfor %}
+</main>
+{% endblock %}
+
+{% block extra_js %}
+{{ homepage_payload_json|json_script:"homepage-payload-data" }}
+
+<script>
+    const cmsPayload = JSON.parse(
+        document.getElementById("homepage-payload-data").textContent
+    );
+
+    console.log("CMS Payload:", cmsPayload);
+</script>
+{% endblock %}

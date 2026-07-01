@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'catalog/css/product-list.css' %}">
+    <link rel="stylesheet" href="{% static 'catalog/css/product-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="plp-wrapper"
+     data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+     data-can-wishlist="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+     data-can-save="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+     data-track-view="true"
+     data-list-type="category"
+     data-category-id="{{ category.id|default:'' }}"
+     data-category-slug="{{ category.slug|default:'' }}">
+     
+    <nav class="breadcrumbs-nav" aria-label="Breadcrumb">
+        {% for crumb in breadcrumbs %}
+            {% if forloop.last %}
+                <span style="color: var(--brand-dark); font-weight: 600;" aria-current="page">{{ crumb.label }}</span>
+            {% else %}
+                <a href="{{ crumb.url }}">{{ crumb.label }}</a><span aria-hidden="true">&gt;</span>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    <header class="category-hero-section">
+        <h1 class="category-title">{{ category.name }}</h1>
+        <p class="category-description">{{ category.description }}</p>
+    </header>
+
+    <section class="catalog-control-bar">
+        <div class="product-metrics-count" aria-live="polite">Showing {{ products.start_index|default:0 }}–{{ products.end_index|default:0 }} of {{ total_products }} fine masterpieces</div>
+        <div class="catalog-interaction-controls">
+            <div class="select-custom-wrapper">
+                <select id="catalog-sort-select" aria-label="Sort products" onchange="const form = document.getElementById('catalog-filter-form'); form.elements['sort'].value = this.value; form.submit();">
+                    <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>Featured Collection</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                    <option value="price-low" {% if current_sort == 'price-low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price-high" {% if current_sort == 'price-high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <div class="catalog-layout-grid">
+        
+        <form method="GET" action="" id="catalog-filter-form" class="filter-sidebar-panel" aria-label="Product Filters">
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+            {% if request.GET.search %}
+                <input type="hidden" name="search" value="{{ request.GET.search }}">
+            {% endif %}
+            {% if request.GET.q %}
+                <input type="hidden" name="q" value="{{ request.GET.q }}">
+            {% endif %}
+
+            <h2 class="sidebar-panel-header">Refine Collection</h2>
+            
+            <fieldset class="filter-accordion-node active" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Category Hierarchy</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">1. Category Hierarchy</button>
+                <div class="filter-node-content">
+                    {% for cat in filter_categories %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" {% if cat.slug == category.slug or cat.slug == category.parent.slug %}checked{% endif %} onclick="window.location.href='/category/{{ cat.slug }}/';"> 
+                            <a href="/category/{{ cat.slug }}/" style="color: inherit; text-decoration: none;">{{ cat.name }}</a>
+                        </label>
+                        {% if cat.subcategories %}
+                            <div class="hierarchical-indent">
+                                {% for subcat in cat.subcategories %}
+                                    <label class="filter-list-option">
+                                        <input type="checkbox" {% if subcat.slug == category.slug %}checked{% endif %} onclick="window.location.href='/category/{{ subcat.slug }}/';"> 
+                                        <a href="/category/{{ subcat.slug }}/" style="color: inherit; text-decoration: none;">{{ subcat.name }}</a>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <fieldset class="filter-accordion-node active" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Price Matrix</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">2. Price Matrix (NPR)</button>
+                <div class="filter-node-content">
+                    <div class="price-slider-range-box">
+                        <input type="range" name="price_max" min="{{ filter_price.min }}" max="{{ filter_price.max }}" value="{{ filter_price.current }}" id="priceRangeInput" aria-label="Maximum Price" onchange="this.form.submit();">
+                        <div class="price-text-fields-row">
+                            <span>Min: NPR {{ filter_price.min_formatted }}</span>
+                            <span id="maxPriceLabel">Max: NPR {{ filter_price.current_formatted }}</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            {% if filter_materials %}
+            <fieldset class="filter-accordion-node active" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Material Configuration</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">3. Material Configuration</button>
+                <div class="filter-node-content">
+                    {% for mat in filter_materials %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="material" value="{{ mat.name }}" {% if mat.checked %}checked{% endif %} onchange="this.form.submit();"> {{ mat.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_craftsmen %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Master Craftsman</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">4. Master Craftsman</button>
+                <div class="filter-node-content">
+                    {% for artisan in filter_craftsmen %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="artisan" value="{{ artisan.slug }}" {% if artisan.checked %}checked{% endif %} onchange="this.form.submit();"> {{ artisan.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_provenance %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Origin Provenance</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">5. Origin Provenance</button>
+                <div class="filter-node-content">
+                    {% for provenance in filter_provenance %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="origin" value="{{ provenance.name }}" {% if provenance.checked %}checked{% endif %} onchange="this.form.submit();"> {{ provenance.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_hues %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Hue Aesthetics</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">6. Hue Aesthetics</button>
+                <div class="filter-node-content">
+                    <div class="color-swatches-grid">
+                        {% for hue in filter_hues %}
+                            <label class="color-swatch-bubble-label" style="display: inline-block; cursor: pointer;">
+                                <input type="checkbox" name="hue" value="{{ hue.name }}" {% if hue.checked %}checked{% endif %} style="display: none;" onchange="this.form.submit();">
+                                <div class="color-swatch-bubble {% if hue.checked %}selected{% endif %}" style="background: {{ hue.color }};" title="{{ hue.name }}"></div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_ethical %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Ethical Standards</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">7. Ethical Standards</button>
+                <div class="filter-node-content">
+                    {% for std in filter_ethical %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="ethical" value="{{ std.name }}" {% if std.checked %}checked{% endif %} onchange="this.form.submit();"> {{ std.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_collections %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Curated Collections</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">8. Curated Collections</button>
+                <div class="filter-node-content">
+                    {% for collection in filter_collections %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="collection" value="{{ collection.slug }}" {% if collection.checked %}checked{% endif %} onchange="this.form.submit();"> {{ collection.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_tags %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Tags</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">9. Descriptive Tags</button>
+                <div class="filter-node-content">
+                    {% for tag in filter_tags %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="tag" value="{{ tag.slug }}" {% if tag.checked %}checked{% endif %} onchange="this.form.submit();"> {{ tag.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Featured Status</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">10. Featured Masterpieces</button>
+                <div class="filter-node-content">
+                    <label class="filter-list-option">
+                        <input type="checkbox" name="featured" value="true" {% if request.GET.featured == 'true' or filter_featured.checked %}checked{% endif %} onchange="this.form.submit();"> Featured Only
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Product Variations</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">11. Product Variations</button>
+                <div class="filter-node-content">
+                    <label class="filter-list-option">
+                        <input type="radio" name="variants" value="" {% if not request.GET.variants %}checked{% endif %} onchange="this.form.submit();"> All Products
+                    </label>
+                    <label class="filter-list-option">
+                        <input type="radio" name="variants" value="true" {% if request.GET.variants == 'true' %}checked{% endif %} onchange="this.form.submit();"> Has Variations
+                    </label>
+                    <label class="filter-list-option">
+                        <input type="radio" name="variants" value="false" {% if request.GET.variants == 'false' %}checked{% endif %} onchange="this.form.submit();"> Single Items Only
+                    </label>
+                </div>
+            </fieldset>
+
+            {% if filter_availability %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Inventory Availability</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">12. Availability</button>
+                <div class="filter-node-content">
+                    {% for avail in filter_availability %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="availability" value="{{ avail.value }}" {% if avail.checked %}checked{% endif %} onchange="this.form.submit();"> {{ avail.label }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_dimensions %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Dimensions</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">13. Dimensions</button>
+                <div class="filter-node-content">
+                    {% if filter_dimensions.length %}
+                    <div style="margin-bottom: 12px;">
+                        <strong style="display: block; font-size: 0.9em; margin-bottom: 6px; color: var(--text-muted);">Length Ranges</strong>
+                        {% for dim in filter_dimensions.length %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="length" value="{{ dim.value }}" {% if dim.checked %}checked{% endif %} onchange="this.form.submit();"> {{ dim.label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if filter_dimensions.width %}
+                    <div style="margin-bottom: 12px;">
+                        <strong style="display: block; font-size: 0.9em; margin-bottom: 6px; color: var(--text-muted);">Width Ranges</strong>
+                        {% for dim in filter_dimensions.width %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="width" value="{{ dim.value }}" {% if dim.checked %}checked{% endif %} onchange="this.form.submit();"> {{ dim.label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if filter_dimensions.height %}
+                    <div>
+                        <strong style="display: block; font-size: 0.9em; margin-bottom: 6px; color: var(--text-muted);">Height Ranges</strong>
+                        {% for dim in filter_dimensions.height %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="height" value="{{ dim.value }}" {% if dim.checked %}checked{% endif %} onchange="this.form.submit();"> {{ dim.label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            {% if filter_weight %}
+            <fieldset class="filter-accordion-node" style="border:none; padding:0; margin:0;">
+                <legend class="sr-only">Weight Category</legend>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">14. Weight Category</button>
+                <div class="filter-node-content">
+                    {% for weight_class in filter_weight %}
+                        <label class="filter-list-option">
+                            <input type="checkbox" name="weight" value="{{ weight_class.value }}" {% if weight_class.checked %}checked{% endif %} onchange="this.form.submit();"> {{ weight_class.label }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+            
+            <noscript>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Apply Filters</button>
+            </noscript>
+        </form>
+
+        <main class="product-showcase-matrix" id="main-product-gallery" 
+              data-wishlist-base-url="{% url 'customers:wishlist_add_base' %}"
+              data-cart-save-url="{% url 'customers:saved_cart_save' %}">
+            {% for product in products %}
+                {% include "catalog/product-card.html" with product=product wishlisted_product_ids=wishlisted_product_ids saved_cart_product_ids=saved_cart_product_ids %}
+            {% empty %}
+                <div style="grid-column: 1 / -1; padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                    <p style="font-size: 1.1rem; font-weight: 500;">No masterpieces match your filtering selections.</p>
+                    <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" style="color: var(--brand-gold); text-decoration: underline; margin-top: 0.5rem; display: inline-block;">Clear Filters</a>
+                </div>
+            {% endfor %}
+        </main>
+    </div>
+
+    {% if products.has_other_pages %}
+    <nav class="catalog-pagination-nav" aria-label="Catalog Navigation Panel">
+        {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-node" aria-label="Previous Page">&lt;</a>
+        {% else %}
+            <span class="pagination-node disabled" aria-hidden="true">&lt;</span>
+        {% endif %}
+
+        {% for i in products.paginator.page_range %}
+            {% if products.number == i %}
+                <span class="pagination-node active" aria-current="page">{{ i }}</span>
+            {% else %}
+                <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-node" aria-label="Go to page {{ i }}">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-node" aria-label="Next Page">&gt;</a>
+        {% else %}
+            <span class="pagination-node disabled" aria-hidden="true">&gt;</span>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'catalog/js/product-list.js' %}"></script>
+    <script src="{% static 'catalog/js/product-card.js' %}"></script>
+{% endblock %}

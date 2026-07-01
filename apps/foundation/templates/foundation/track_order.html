@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'foundation/css/foundation-pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="track-container">
+    <h1 class="page-title">Track Order</h1>
+    <form method="post" action="{% url 'foundation:track_order' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label" for="id_order_number">Order Number</label>
+            {{ form.order_number }}
+            {% if form.order_number.errors %}
+                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.order_number.errors.0 }}</span>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="id_email_or_phone">Email or Phone Number</label>
+            {{ form.email_or_phone }}
+            {% if form.email_or_phone.errors %}
+                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.email_or_phone.errors.0 }}</span>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn-primary">Track Status</button>
+    </form>
+
+    {% if tracking_result %}
+        <div class="tracking-results-card">
+            <div class="tracking-header">
+                <span class="tracking-title">Order: {{ tracking_result.order_number }}</span>
+                <span class="tracking-status-badge">{{ tracking_result.status }}</span>
+            </div>
+            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>Carrier:</strong> {{ tracking_result.carrier }}</p>
+            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>Estimated Delivery:</strong> {{ tracking_result.estimated_delivery }}</p>
+            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>From:</strong> {{ tracking_result.origin }}</p>
+            <p style="margin-bottom: 1rem; font-size: 0.9rem;"><strong>Sent To:</strong> {{ tracking_result.destination }}</p>
+            
+            <div class="tracking-timeline">
+                {% for step in tracking_result.steps %}
+                    <div class="timeline-step {% if step.done %}completed{% endif %}">
+                        <div class="step-date">{{ step.date }}</div>
+                        <div class="step-title">{{ step.title }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

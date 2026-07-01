@@ -1,0 +1,35 @@
+-r base.txt
+
+# Django debug toolbar
+django-debug-toolbar==5.2.0
+
+# Extensions and shell tools
+django-extensions==4.1
+
+# Better development server
+werkzeug==3.1.3
+
+# Code formatting
+black==25.1.0
+isort==6.0.1
+
+# Linting
+flake8==7.2.0
+
+# Type checking
+mypy==1.15.0
+django-stubs==5.1.3
+
+# Testing
+pytest==8.4.1
+pytest-django==4.11.1
+factory-boy==3.3.3
+
+# Coverage reports
+coverage==7.8.2
+
+# Pre-commit hooks
+pre-commit==4.2.0
+
+# Better shell
+ipython==9.2.0

@@ -1,0 +1,798 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Account | Discover Artisan Masterpieces{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================================================
+       Premium Authentication Redesign - Global Variables & Reset
+       ========================================================================== */
+    :root {
+        --auth-brand-gold: var(--brand-gold, #C5A880);
+        --auth-brand-gold-dark: var(--brand-gold-dark, #9A7B54);
+        --auth-brand-dark: var(--brand-dark, #2C2520);
+        --auth-bg-light: #FCFAF8;
+        --auth-surface: #FFFFFF;
+        --auth-text-main: var(--brand-dark, #2C2520);
+        --auth-text-muted: var(--text-muted, #7A726A);
+        --auth-border: var(--border-light, #EAE5E0);
+        --auth-error: #C0392B;
+        --auth-error-bg: #FDF0ED;
+        --auth-focus-ring: rgba(197, 168, 128, 0.25);
+        --auth-shadow-soft: 0 24px 48px rgba(44, 37, 32, 0.08);
+        --auth-radius: 20px;
+        --auth-transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* ==========================================================================
+       Layout Architecture
+       ========================================================================== */
+    .auth-page-wrapper {
+        min-height: calc(100vh - 90px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.5rem;
+        background-color: var(--auth-bg-light);
+        font-family: var(--font-ui, 'Inter', sans-serif);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-page-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: radial-gradient(var(--auth-brand-gold) 1px, transparent 1px);
+        background-size: 40px 40px;
+        opacity: 0.05;
+        pointer-events: none;
+    }
+
+    .auth-container {
+        display: flex;
+        width: 100%;
+        max-width: 1200px;
+        background: var(--auth-surface);
+        border-radius: var(--auth-radius);
+        box-shadow: var(--auth-shadow-soft);
+        overflow: hidden;
+        position: relative;
+        z-index: 10;
+        animation: fadeUpIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    /* ==========================================================================
+       Left Side: Hero Brand / Trust Indicator Panel
+       ========================================================================== */
+    .auth-hero-panel {
+        flex: 1.1;
+        background-color: var(--auth-brand-dark);
+        background-image: linear-gradient(to bottom, rgba(44, 37, 32, 0.6), rgba(26, 21, 18, 0.9)), url('https://images.unsplash.com/photo-1610701596007-11502861dcfa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+        background-size: cover;
+        background-position: center;
+        padding: 4rem 3.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        position: relative;
+        color: #FFFFFF;
+        overflow: hidden;
+    }
+
+    .auth-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .auth-hero-badge {
+        display: inline-block;
+        background: rgba(197, 168, 128, 0.2);
+        border: 1px solid rgba(197, 168, 128, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 0.4rem 1rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--auth-brand-gold-light, #F8F3E9);
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-hero-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 3rem;
+        font-weight: 600;
+        line-height: 1.15;
+        margin-bottom: 1.25rem;
+        color: #FFFFFF;
+    }
+
+    .auth-hero-subtitle {
+        font-size: 1.05rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.85);
+        margin-bottom: 2.5rem;
+        max-width: 95%;
+    }
+
+    .auth-trust-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .auth-trust-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .trust-icon-box {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: var(--auth-brand-gold);
+        flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       Right Side: Registration Form Panel
+       ========================================================================== */
+    .auth-form-panel {
+        flex: 1;
+        padding: 4rem 4.5rem;
+        background: var(--auth-surface);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .auth-form-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .auth-form-header h1 {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.25rem;
+        color: var(--auth-text-main);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .auth-form-header p {
+        color: var(--auth-text-muted);
+        font-size: 0.95rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       Alerts & Messages
+       ========================================================================== */
+    .auth-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        animation: slideDown 0.4s ease-out;
+    }
+    
+    .auth-alert-error {
+        background: var(--auth-error-bg);
+        color: var(--auth-error);
+        border: 1px solid rgba(192, 57, 43, 0.2);
+    }
+    
+    .auth-alert-success {
+        background: #F0F8F4;
+        color: #2D6A4F;
+        border: 1px solid rgba(45, 106, 79, 0.2);
+    }
+
+    .auth-alert svg { flex-shrink: 0; margin-top: 2px; }
+
+    /* ==========================================================================
+       Form Elements & Grid Architecture
+       ========================================================================== */
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-grid-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .floating-label-group {
+        position: relative;
+        width: 100%;
+    }
+
+    .premium-input {
+        width: 100%;
+        padding: 1.5rem 1.25rem 0.6rem;
+        border: 1px solid var(--auth-border);
+        border-radius: 10px;
+        background: #FAFAFA;
+        font-family: var(--font-ui, 'Inter', sans-serif);
+        font-size: 1rem;
+        color: var(--auth-text-main);
+        transition: var(--auth-transition);
+        appearance: none;
+    }
+
+    .premium-input:hover {
+        border-color: #D5CEC8;
+        background: #FFFFFF;
+    }
+
+    .premium-input:focus {
+        border-color: var(--auth-brand-gold);
+        background: #FFFFFF;
+        box-shadow: 0 0 0 4px var(--auth-focus-ring);
+        outline: none;
+    }
+
+    .premium-input.is-invalid {
+        border-color: var(--auth-error);
+        background: var(--auth-error-bg);
+    }
+
+    .premium-input.is-invalid:focus {
+        box-shadow: 0 0 0 4px rgba(192, 57, 43, 0.15);
+    }
+
+    .floating-label-group label {
+        position: absolute;
+        top: 50%;
+        left: 1.25rem;
+        transform: translateY(-50%);
+        color: var(--auth-text-muted);
+        transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+        pointer-events: none;
+        font-size: 0.95rem;
+        z-index: 2;
+    }
+
+    .premium-input:focus ~ label,
+    .premium-input:not(:placeholder-shown) ~ label {
+        top: 0.9rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--auth-brand-gold-dark);
+    }
+
+    .premium-input.is-invalid ~ label {
+        color: var(--auth-error);
+    }
+
+    .field-error {
+        color: var(--auth-error);
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .field-help-text {
+        font-size: 0.75rem;
+        color: var(--auth-text-muted);
+        margin-top: 0.4rem;
+        display: block;
+    }
+
+    /* Password Input Specialized Wrapper */
+    .password-input-wrapper {
+        position: relative;
+    }
+    
+    .toggle-password-btn {
+        position: absolute;
+        top: 50%;
+        right: 1.25rem;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--auth-text-muted);
+        cursor: pointer;
+        z-index: 5;
+        transition: color 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .toggle-password-btn:hover,
+    .toggle-password-btn:focus-visible {
+        color: var(--auth-text-main);
+        outline: none;
+    }
+
+    /* ==========================================================================
+       Terms and Submit Area
+       ========================================================================== */
+    .terms-acknowledgement {
+        font-size: 0.85rem;
+        color: var(--auth-text-muted);
+        line-height: 1.5;
+        margin-top: 0.5rem;
+    }
+
+    .terms-acknowledgement a {
+        color: var(--auth-brand-dark);
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 1px solid var(--auth-brand-gold);
+        transition: var(--auth-transition);
+    }
+
+    .terms-acknowledgement a:hover {
+        color: var(--auth-brand-gold-dark);
+    }
+
+    .btn-premium-submit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1.2rem;
+        background: var(--auth-brand-dark);
+        color: #FFFFFF;
+        border: 2px solid var(--auth-brand-dark);
+        border-radius: 10px;
+        font-family: var(--font-ui, 'Inter', sans-serif);
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: var(--auth-transition);
+        position: relative;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    .btn-premium-submit::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .btn-premium-submit:hover {
+        background: var(--auth-brand-gold);
+        border-color: var(--auth-brand-gold);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(184, 138, 68, 0.2);
+    }
+    
+    .btn-premium-submit:hover::after {
+        left: 100%;
+    }
+
+    /* ==========================================================================
+       Social Login & Footer
+       ========================================================================== */
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 2rem 0;
+        color: var(--auth-text-muted);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .auth-divider::before,
+    .auth-divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid var(--auth-border);
+    }
+    
+    .auth-divider span {
+        padding: 0 1rem;
+    }
+
+    .social-auth-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .btn-social {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem;
+        background: #FFFFFF;
+        border: 1px solid var(--auth-border);
+        border-radius: 10px;
+        color: var(--auth-text-main);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--auth-transition);
+    }
+
+    .btn-social:hover {
+        background: #FAFAFA;
+        border-color: var(--auth-text-muted);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .auth-footer {
+        margin-top: 2.5rem;
+        text-align: center;
+        font-size: 0.95rem;
+        color: var(--auth-text-muted);
+    }
+
+    .auth-footer a {
+        color: var(--auth-brand-dark);
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    .auth-footer a:hover {
+        border-color: var(--auth-brand-gold);
+        color: var(--auth-brand-gold-dark);
+    }
+
+    /* ==========================================================================
+       Animations & Responsiveness
+       ========================================================================== */
+    @keyframes fadeUpIn {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideDown {
+        0% { opacity: 0; transform: translateY(-10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1100px) {
+        .auth-form-panel { padding: 4rem 3rem; }
+        .auth-hero-panel { padding: 4rem 2.5rem; }
+    }
+
+    @media (max-width: 991px) {
+        .auth-container {
+            flex-direction: column;
+            max-width: 600px;
+        }
+        .auth-hero-panel {
+            padding: 3rem 2rem;
+            min-height: 250px;
+            align-items: center;
+            text-align: center;
+        }
+        .auth-hero-title { font-size: 2.25rem; }
+        .auth-hero-subtitle { display: none; } /* Hide detailed text to save space on mobile */
+        .auth-trust-list { display: none; }
+        .auth-form-panel { padding: 3rem 2.5rem; }
+    }
+
+    @media (max-width: 576px) {
+        .auth-page-wrapper { padding: 1.5rem 1rem; }
+        .auth-form-panel { padding: 2.5rem 1.5rem; }
+        .form-grid-row { grid-template-columns: 1fr; gap: 1.5rem; }
+        .auth-hero-title { font-size: 1.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="auth-page-wrapper" aria-label="Registration Page">
+    <div class="auth-container">
+        
+        <aside class="auth-hero-panel">
+            <div class="auth-hero-content">
+                <span class="auth-hero-badge">Join the Guild</span>
+                <h2 class="auth-hero-title">Discover Masterpieces.</h2>
+                <p class="auth-hero-subtitle">Create an account to save your favorite heritage pieces, track your orders, and gain exclusive access to limited kiln runs and bespoke artisan collections.</p>
+                
+                <ul class="auth-trust-list" aria-label="Membership Benefits">
+                    <li class="auth-trust-item">
+                        <div class="trust-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <span>100% Direct Support to Master Artisans</span>
+                    </li>
+                    <li class="auth-trust-item">
+                        <div class="trust-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </div>
+                        <span>Curate Personal Wishlists & Spaces</span>
+                    </li>
+                    <li class="auth-trust-item">
+                        <div class="trust-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        </div>
+                        <span>Secure & Encrypted Checkout</span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <section class="auth-form-panel">
+            <header class="auth-form-header">
+                <h1>Create Account</h1>
+                <p>Enter your details below to become a member.</p>
+            </header>
+
+            {% if messages %}
+                <div class="auth-messages-wrapper" role="alert" aria-live="polite">
+                    {% for message in messages %}
+                        <div class="auth-alert {% if message.tags == 'error' %}auth-alert-error{% else %}auth-alert-success{% endif %}">
+                            {% if message.tags == 'error' %}
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            {% else %}
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            {% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="auth-alert auth-alert-error" role="alert">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            <p style="margin: 0;">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <form method="post" action="" class="auth-form" novalidate>
+                {% csrf_token %}
+                
+                {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% elif next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+                
+                {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+
+                <div class="form-grid-row">
+                    {% if form.first_name %}
+                    <div class="floating-label-group">
+                        <input type="text" 
+                               name="{{ form.first_name.html_name }}" 
+                               id="{{ form.first_name.id_for_label }}" 
+                               class="premium-input {% if form.first_name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.first_name.value|default_if_none:'' }}" 
+                               required 
+                               autocomplete="given-name" 
+                               placeholder=" "
+                               {% if form.first_name.errors %}aria-invalid="true" aria-describedby="{{ form.first_name.id_for_label }}-error"{% endif %}>
+                        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label|default:"First Name" }}</label>
+                        {% if form.first_name.errors %}
+                            <div class="field-error" id="{{ form.first_name.id_for_label }}-error" role="alert">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                {{ form.first_name.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if form.last_name %}
+                    <div class="floating-label-group">
+                        <input type="text" 
+                               name="{{ form.last_name.html_name }}" 
+                               id="{{ form.last_name.id_for_label }}" 
+                               class="premium-input {% if form.last_name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.last_name.value|default_if_none:'' }}" 
+                               required 
+                               autocomplete="family-name" 
+                               placeholder=" "
+                               {% if form.last_name.errors %}aria-invalid="true" aria-describedby="{{ form.last_name.id_for_label }}-error"{% endif %}>
+                        <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label|default:"Last Name" }}</label>
+                        {% if form.last_name.errors %}
+                            <div class="field-error" id="{{ form.last_name.id_for_label }}-error" role="alert">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                {{ form.last_name.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% for field in form.visible_fields %}
+                    {% if field.name in "username,email" %}
+                        <div class="floating-label-group">
+                            <input type="{% if field.name == 'email' %}email{% else %}text{% endif %}" 
+                                   name="{{ field.html_name }}" 
+                                   id="{{ field.id_for_label }}" 
+                                   class="premium-input {% if field.errors %}is-invalid{% endif %}" 
+                                   value="{{ field.value|default_if_none:'' }}" 
+                                   required 
+                                   autocomplete="{% if field.name == 'email' %}email{% else %}username{% endif %}" 
+                                   placeholder=" "
+                                   {% if field.errors %}aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %}>
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            
+                            {% if field.help_text %}
+                                <span class="field-help-text">{{ field.help_text|safe }}</span>
+                            {% endif %}
+
+                            {% if field.errors %}
+                                <div class="field-error" id="{{ field.id_for_label }}-error" role="alert">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    {{ field.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                {% for field in form.visible_fields %}
+                    {% if 'password' in field.name %}
+                        <div class="floating-label-group">
+                            <div class="password-input-wrapper">
+                                <input type="password" 
+                                       name="{{ field.html_name }}" 
+                                       id="{{ field.id_for_label }}" 
+                                       class="premium-input {% if field.errors %}is-invalid{% endif %}" 
+                                       required 
+                                       autocomplete="new-password" 
+                                       placeholder=" "
+                                       {% if field.errors %}aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %}>
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                
+                                <button type="button" class="toggle-password-btn" aria-label="Toggle password visibility" aria-pressed="false" data-target="{{ field.id_for_label }}">
+                                    <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <svg class="eye-closed" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
+
+                            {% if field.help_text %}
+                                <span class="field-help-text">{{ field.help_text|safe }}</span>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                <div class="field-error" id="{{ field.id_for_label }}-error" role="alert">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    {{ field.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                {% for field in form.visible_fields %}
+                    {% if field.name not in "first_name,last_name,username,email,password1,password2" %}
+                        <div class="floating-label-group">
+                            {{ field }}
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.help_text %}
+                                <span class="field-help-text">{{ field.help_text|safe }}</span>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="field-error">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                <p class="terms-acknowledgement">
+                    By creating an account, you agree to our <a href="{% url 'foundation:home' %}">Terms of Service</a> and <a href="{% url 'foundation:home' %}">Privacy Policy</a>.
+                </p>
+
+                <button type="submit" class="btn-premium-submit">
+                    <span>Complete Registration</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </form>
+
+            {% if site_settings.enable_social_login %}
+            <div class="auth-divider">
+                <span>Or continue with</span>
+            </div>
+
+            <div class="social-auth-grid">
+                {% if site_settings.enable_google_login %}
+                <a href="#" class="btn-social google-auth" aria-label="Sign up with Google" onclick="event.preventDefault(); alert('Social integration requires backend configuration.');">
+                    <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Google
+                </a>
+                {% endif %}
+                
+                {% if site_settings.enable_facebook_login %}
+                <a href="#" class="btn-social facebook-auth" aria-label="Sign up with Facebook" onclick="event.preventDefault(); alert('Social integration requires backend configuration.');">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <footer class="auth-footer">
+                <p>Already have an account? <a href="{% url 'foundation:login' %}">Sign In</a></p>
+            </footer>
+        </section>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password Visibility Toggle Logic
+        const passwordToggles = document.querySelectorAll('.toggle-password-btn');
+        
+        passwordToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const passwordInput = document.getElementById(targetId);
+                const eyeOpen = this.querySelector('.eye-open');
+                const eyeClosed = this.querySelector('.eye-closed');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.setAttribute('aria-pressed', 'true');
+                    eyeOpen.style.display = 'none';
+                    eyeClosed.style.display = 'block';
+                } else {
+                    passwordInput.type = 'password';
+                    this.setAttribute('aria-pressed', 'false');
+                    eyeOpen.style.display = 'block';
+                    eyeClosed.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize generic inputs with premium-input classes if they missed it (fallback)
+        document.querySelectorAll('input:not(.premium-input):not([type="hidden"]):not([type="checkbox"]):not([type="radio"])').forEach(input => {
+            input.classList.add('premium-input');
+            if(!input.placeholder) {
+                input.placeholder = " ";
+            }
+        });
+    });
+</script>
+{% endblock %}

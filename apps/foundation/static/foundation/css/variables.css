@@ -1,0 +1,14 @@
+:root {
+    --brand-gold: #B88A44;
+    --brand-gold-dark: #91682B;
+    --brand-gold-light: #F8F3E9;
+    --brand-dark: #2A2621;
+    --brand-light: #FFFFFF;
+    --brand-gold-hover: #D4A963;
+    --text-muted: #A39B8E;
+
+    --border-light: rgba(184, 138, 68, 0.2);
+    --font-brand: 'Cinzel', serif;
+    --font-ui: 'Inter', sans-serif;
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}

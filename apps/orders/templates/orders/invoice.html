@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}
+    {% trans "Invoice" %} #{{ order.order_number|default:order.id }} | {% trans "Luxury Handicrafts" %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 
+     * Ultra-Premium Enterprise Invoice Styles
+     * Optimized for both Browser Viewing and PDF Generation (WeasyPrint/wkhtmltopdf)
+     */
+    :root {
+        --invoice-dark: #111111;
+        --invoice-charcoal: #333333;
+        --invoice-muted: #767676;
+        --invoice-light: #FBFBFA;
+        --invoice-border: #EAEAEA;
+        --invoice-gold: #C5A880;
+    }
+
+    /* Print & PDF Page Setup */
+    @page {
+        size: A4;
+        margin: 15mm 20mm;
+    }
+
+    .invoice-action-bar {
+        max-width: 900px;
+        margin: 40px auto 20px auto;
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+    }
+
+    .btn-invoice-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid var(--invoice-dark);
+        background-color: var(--invoice-dark);
+        color: #ffffff;
+    }
+    
+    .btn-invoice-action:hover {
+        background-color: var(--invoice-gold);
+        border-color: var(--invoice-gold);
+    }
+    
+    .btn-invoice-secondary {
+        background-color: transparent;
+        color: var(--invoice-dark);
+    }
+    
+    .btn-invoice-secondary:hover {
+        background-color: var(--invoice-light);
+        border-color: var(--invoice-dark);
+        color: var(--invoice-dark);
+    }
+
+    /* Core Invoice Container */
+    .luxury-invoice-container {
+        max-width: 900px;
+        margin: 0 auto 60px auto;
+        background: #ffffff;
+        padding: 60px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: var(--invoice-dark);
+        line-height: 1.5;
+        box-sizing: border-box;
+    }
+
+    /* Typography & Utilities */
+    .invoice-text-right { text-align: right; }
+    .invoice-text-left { text-align: left; }
+    .invoice-text-center { text-align: center; }
+    .invoice-uppercase { text-transform: uppercase; letter-spacing: 0.08em; }
+    .invoice-text-muted { color: var(--invoice-muted); }
+    .invoice-text-bold { font-weight: 600; }
+    .invoice-text-small { font-size: 12px; }
+
+    /* Structural Tables for PDF Compatibility */
+    .invoice-layout-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: none;
+        margin-bottom: 40px;
+    }
+    .invoice-layout-table td {
+        vertical-align: top;
+        padding: 0;
+    }
+
+    /* Header Section */
+    .invoice-brand-name {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin: 0 0 8px 0;
+        color: var(--invoice-dark);
+    }
+    .invoice-company-details {
+        font-size: 12px;
+        color: var(--invoice-muted);
+        line-height: 1.6;
+    }
+    .invoice-title {
+        font-size: 36px;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        margin: 0 0 16px 0;
+        text-transform: uppercase;
+    }
+    .invoice-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .invoice-meta-table td {
+        padding: 4px 0;
+        font-size: 13px;
+    }
+    .invoice-meta-label {
+        color: var(--invoice-muted);
+        padding-right: 16px !important;
+        white-space: nowrap;
+    }
+
+    /* Address Section */
+    .invoice-address-box {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    .invoice-address-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--invoice-muted);
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--invoice-border);
+        padding-bottom: 8px;
+        display: inline-block;
+        width: 100%;
+    }
+    .invoice-address-content {
+        color: var(--invoice-charcoal);
+    }
+    .invoice-address-content strong {
+        color: var(--invoice-dark);
+        font-size: 14px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    /* Data Table (Items) */
+    .invoice-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+        font-size: 13px;
+    }
+    .invoice-items-table th {
+        text-align: left;
+        padding: 12px 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--invoice-muted);
+        border-bottom: 2px solid var(--invoice-dark);
+    }
+    .invoice-items-table td {
+        padding: 16px 8px;
+        border-bottom: 1px solid var(--invoice-border);
+        vertical-align: top;
+        color: var(--invoice-charcoal);
+    }
+    .invoice-items-table th:last-child,
+    .invoice-items-table td:last-child {
+        text-align: right;
+    }
+    .invoice-item-name {
+        font-weight: 600;
+        color: var(--invoice-dark);
+        margin-bottom: 4px;
+        display: block;
+    }
+    .invoice-item-meta {
+        font-size: 11px;
+        color: var(--invoice-muted);
+        display: block;
+    }
+
+    /* Financial Summary */
+    .invoice-summary-wrapper {
+        width: 100%;
+        display: table;
+    }
+    .invoice-summary-left {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+        padding-right: 40px;
+    }
+    .invoice-summary-right {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+    }
+    .invoice-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .invoice-summary-table td {
+        padding: 8px 0;
+        color: var(--invoice-charcoal);
+    }
+    .invoice-summary-table td:last-child {
+        text-align: right;
+        font-weight: 500;
+        color: var(--invoice-dark);
+    }
+    .invoice-total-row td {
+        border-top: 2px solid var(--invoice-dark);
+        border-bottom: 2px solid var(--invoice-dark);
+        padding: 16px 0;
+        font-size: 16px;
+        font-weight: 700;
+        margin-top: 8px;
+    }
+
+    /* Additional Info */
+    .invoice-info-block {
+        margin-bottom: 24px;
+    }
+    .invoice-info-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--invoice-muted);
+        margin-bottom: 4px;
+    }
+    .invoice-info-value {
+        font-size: 13px;
+        color: var(--invoice-dark);
+        font-weight: 500;
+    }
+
+    /* Footer */
+    .invoice-footer {
+        margin-top: 60px;
+        padding-top: 24px;
+        border-top: 1px solid var(--invoice-border);
+        text-align: center;
+        font-size: 11px;
+        color: var(--invoice-muted);
+        line-height: 1.6;
+    }
+
+    /* Print Specific Adjustments */
+    @media print {
+        body {
+            background-color: #ffffff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        /* Hide common layout elements outside the invoice */
+        header, footer, nav, .navbar, .site-header, .site-footer, .breadcrumb, .invoice-action-bar, .messages, .alert {
+            display: none !important;
+        }
+        .luxury-invoice-container {
+            box-shadow: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+        .invoice-items-table tr {
+            page-break-inside: avoid;
+        }
+        @page {
+            margin: 1.5cm;
+        }
+    }
+
+    /* Responsive fallbacks for browser viewing */
+    @media (max-width: 768px) {
+        .luxury-invoice-container {
+            padding: 24px;
+        }
+        .invoice-layout-table td, 
+        .invoice-summary-wrapper, 
+        .invoice-summary-left, 
+        .invoice-summary-right {
+            display: block;
+            width: 100%;
+        }
+        .invoice-layout-table td.invoice-text-right {
+            text-align: left;
+            margin-top: 24px;
+        }
+        .invoice-meta-table td {
+            padding-right: 20px;
+        }
+        .invoice-summary-left {
+            margin-bottom: 32px;
+            padding-right: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Action Bar (Hidden in Print) -->
+<div class="invoice-action-bar">
+    <a href="javascript:history.back()" class="btn-invoice-action btn-invoice-secondary">
+        &larr; {% trans "Back to Order" %}
+    </a>
+    <button onclick="window.print()" class="btn-invoice-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        {% trans "Print Invoice" %}
+    </button>
+</div>
+
+<!-- Main Printable Document -->
+<div class="luxury-invoice-container">
+    
+    <!-- Header Area -->
+    <table class="invoice-layout-table">
+        <tr>
+            <td style="width: 50%;">
+                <!-- Company Information -->
+                {% if request.site.name %}
+                    <h1 class="invoice-brand-name">{{ request.site.name }}</h1>
+                {% else %}
+                    <h1 class="invoice-brand-name">{% trans "LUXURY HANDICRAFTS" %}</h1>
+                {% endif %}
+                <div class="invoice-company-details">
+                    {% trans "123 Heritage Avenue, Artisan District" %}<br>
+                    {% trans "Metropolis, NY 10001, United States" %}<br>
+                    support@luxuryhandicrafts.com<br>
+                    +1 (555) 123-4567<br>
+                    {% trans "VAT" %}: US123456789
+                </div>
+            </td>
+            <td class="invoice-text-right" style="width: 50%;">
+                <!-- Invoice Metadata -->
+                <h2 class="invoice-title">{% trans "Invoice" %}</h2>
+                <table class="invoice-meta-table" style="width: auto; margin-left: auto;">
+                    <tr>
+                        <td class="invoice-meta-label invoice-text-right">{% trans "Invoice Number" %}</td>
+                        <td class="invoice-text-bold invoice-text-left">INV-{{ order.order_number|default:order.id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="invoice-meta-label invoice-text-right">{% trans "Invoice Date" %}</td>
+                        <td class="invoice-text-left">{{ order.created_at|date:"F j, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="invoice-meta-label invoice-text-right">{% trans "Order Reference" %}</td>
+                        <td class="invoice-text-left">#{{ order.order_number|default:order.id }}</td>
+                    </tr>
+                    {% if order.payment_status %}
+                    <tr>
+                        <td class="invoice-meta-label invoice-text-right">{% trans "Payment Status" %}</td>
+                        <td class="invoice-text-left invoice-uppercase">{{ order.get_payment_status_display|default:order.payment_status }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Addresses Area -->
+    <table class="invoice-layout-table">
+        <tr>
+            <td style="width: 50%; padding-right: 20px;">
+                <div class="invoice-address-box">
+                    <span class="invoice-address-title">{% trans "Billed To" %}</span>
+                    <div class="invoice-address-content">
+                        {% if order.billing_address %}
+                            <strong>{{ order.billing_address.get_full_name|default:order.customer_name|default:user.get_full_name }}</strong>
+                            {{ order.billing_address.address_line1|default:order.billing_address.line1|default:order.billing_address }}<br>
+                            {% if order.billing_address.address_line2|default:order.billing_address.line2 %}
+                                {{ order.billing_address.address_line2|default:order.billing_address.line2 }}<br>
+                            {% endif %}
+                            {{ order.billing_address.city }}, {{ order.billing_address.state|default:"" }} {{ order.billing_address.postal_code|default:order.billing_address.zip_code }}<br>
+                            {{ order.billing_address.country.name|default:order.billing_address.country }}<br>
+                            {% if order.billing_address.phone|default:order.phone_number %}
+                                <span class="invoice-text-muted">T: {{ order.billing_address.phone|default:order.phone_number }}</span><br>
+                            {% endif %}
+                            {% if order.email %}
+                                <span class="invoice-text-muted">E: {{ order.email }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="invoice-text-muted">{% trans "Billing information not provided." %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+            <td style="width: 50%; padding-left: 20px;">
+                <div class="invoice-address-box">
+                    <span class="invoice-address-title">{% trans "Shipped To" %}</span>
+                    <div class="invoice-address-content">
+                        {% if order.shipping_address %}
+                            <strong>{{ order.shipping_address.get_full_name|default:order.customer_name|default:user.get_full_name }}</strong>
+                            {{ order.shipping_address.address_line1|default:order.shipping_address.line1|default:order.shipping_address }}<br>
+                            {% if order.shipping_address.address_line2|default:order.shipping_address.line2 %}
+                                {{ order.shipping_address.address_line2|default:order.shipping_address.line2 }}<br>
+                            {% endif %}
+                            {{ order.shipping_address.city }}, {{ order.shipping_address.state|default:"" }} {{ order.shipping_address.postal_code|default:order.shipping_address.zip_code }}<br>
+                            {{ order.shipping_address.country.name|default:order.shipping_address.country }}<br>
+                            {% if order.shipping_address.phone|default:order.phone_number %}
+                                <span class="invoice-text-muted">T: {{ order.shipping_address.phone|default:order.phone_number }}</span>
+                            {% endif %}
+                        {% elif order.shipping_required == False %}
+                            <span class="invoice-text-muted">{% trans "Digital Delivery / No Shipping Required" %}</span>
+                        {% else %}
+                            <span class="invoice-text-muted">{% trans "Same as Billing Address" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Line Items Table -->
+    <table class="invoice-items-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">{% trans "Description" %}</th>
+                <th class="invoice-text-center" style="width: 15%;">{% trans "Quantity" %}</th>
+                <th class="invoice-text-center" style="width: 20%;">{% trans "Unit Price" %}</th>
+                <th class="invoice-text-right" style="width: 20%;">{% trans "Total" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all|default:order.orderitem_set.all %}
+            <tr>
+                <td>
+                    <span class="invoice-item-name">{{ item.product.name }}</span>
+                    {% if item.product.sku %}
+                        <span class="invoice-item-meta">{% trans "SKU" %}: {{ item.product.sku }}</span>
+                    {% endif %}
+                    {% if item.variant %}
+                        <span class="invoice-item-meta">{% trans "Variant" %}: {{ item.variant }}</span>
+                    {% endif %}
+                </td>
+                <td class="invoice-text-center">{{ item.quantity }}</td>
+                <td class="invoice-text-center">{{ order.currency|default:"$" }}{{ item.price|floatformat:2 }}</td>
+                <td class="invoice-text-right">{{ order.currency|default:"$" }}{{ item.get_total_price|default:item.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="invoice-text-center invoice-text-muted">{% trans "No items found in this order." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Bottom Section: Info & Summary -->
+    <div class="invoice-summary-wrapper">
+        <!-- Left: Logistics & Payment Specs -->
+        <div class="invoice-summary-left">
+            {% if order.payment_method %}
+            <div class="invoice-info-block">
+                <div class="invoice-info-title">{% trans "Payment Method" %}</div>
+                <div class="invoice-info-value">{{ order.payment_method }}</div>
+                {% if order.transaction_id %}
+                    <div class="invoice-text-small invoice-text-muted" style="margin-top: 2px;">{% trans "Transaction" %}: {{ order.transaction_id }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if order.carrier or order.tracking_number %}
+            <div class="invoice-info-block">
+                <div class="invoice-info-title">{% trans "Shipping Details" %}</div>
+                <div class="invoice-info-value">
+                    {% if order.carrier %}{{ order.carrier }}<br>{% endif %}
+                    {% if order.tracking_number %}
+                        <span class="invoice-text-small invoice-text-muted">{% trans "Tracking" %}: {{ order.tracking_number }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if order.notes %}
+            <div class="invoice-info-block" style="margin-top: 24px;">
+                <div class="invoice-info-title">{% trans "Order Notes" %}</div>
+                <div class="invoice-text-small invoice-text-muted" style="line-height: 1.5; font-style: italic;">
+                    {{ order.notes }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right: Financial Totals -->
+        <div class="invoice-summary-right">
+            <table class="invoice-summary-table">
+                <tr>
+                    <td>{% trans "Subtotal" %}</td>
+                    <td>{{ order.currency|default:"$" }}{{ order.subtotal|default:order.get_subtotal|floatformat:2 }}</td>
+                </tr>
+                
+                {% if order.discount or order.discount_amount %}
+                <tr>
+                    <td>{% trans "Discount" %}</td>
+                    <td style="color: #d32f2f;">-{{ order.currency|default:"$" }}{{ order.discount|default:order.discount_amount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                
+                {% if order.shipping_cost or order.shipping_price or order.shipping_cost == 0 %}
+                <tr>
+                    <td>{% trans "Shipping & Handling" %}</td>
+                    <td>
+                        {% if order.shipping_cost == 0 or order.shipping_price == 0 %}
+                            {% trans "Complimentary" %}
+                        {% else %}
+                            {{ order.currency|default:"$" }}{{ order.shipping_cost|default:order.shipping_price|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                
+                {% if order.tax or order.tax_amount %}
+                <tr>
+                    <td>{% trans "Tax" %}</td>
+                    <td>{{ order.currency|default:"$" }}{{ order.tax|default:order.tax_amount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                
+                <tr class="invoice-total-row">
+                    <td>{% trans "Grand Total" %}</td>
+                    <td>{{ order.currency|default:"$" }}{{ order.total_amount|default:order.total|floatformat:2 }}</td>
+                </tr>
+                
+                {% if order.amount_paid %}
+                <tr>
+                    <td class="invoice-text-muted">{% trans "Amount Paid" %}</td>
+                    <td class="invoice-text-muted">{{ order.currency|default:"$" }}{{ order.amount_paid|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                
+                {% if order.balance_due %}
+                <tr>
+                    <td class="invoice-text-bold">{% trans "Balance Due" %}</td>
+                    <td class="invoice-text-bold">{{ order.currency|default:"$" }}{{ order.balance_due|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Footer Notes -->
+    <div class="invoice-footer">
+        <p class="invoice-text-bold" style="color: var(--invoice-dark); margin-bottom: 8px;">{% trans "Thank you for acquiring a piece of heritage." %}</p>
+        <p>{% trans "All luxury handcrafted artifacts are certified authentic. Returns are accepted within 14 days in original packaging and condition." %}<br>
+        {% trans "For maintenance guidelines, authenticity certificates, or inquiries, please contact our concierge services." %}</p>
+    </div>
+    
+</div>
+{% endblock %}

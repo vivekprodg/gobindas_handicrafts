@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'foundation/css/foundation-pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1 class="page-title">Sign In</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div style="color: red; font-size: 0.85rem; margin-bottom: 1rem; text-align: center;">
+                {{ form.non_field_errors.0 }}
+            </div>
+        {% endif %}
+        <div class="form-group">
+            <label class="form-label" for="id_username">Username</label>
+            <input type="text" name="username" id="id_username" class="form-input" required autofocus>
+            {% if form.username.errors %}
+                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.username.errors.0 }}</span>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="id_password">Password</label>
+            <input type="password" name="password" id="id_password" class="form-input" required>
+            {% if form.password.errors %}
+                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.password.errors.0 }}</span>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+    </form>
+    <div class="auth-links">
+        <a href="{% url 'foundation:register' %}">Create Account</a>
+        <span style="color: var(--text-muted);">|</span>
+        <a href="{% url 'foundation:password_reset' %}">Forgot Password?</a>
+    </div>
+</div>
+{% endblock %}

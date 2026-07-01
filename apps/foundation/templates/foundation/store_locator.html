@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'foundation/css/foundation-pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="locator-container">
+    <h1 class="page-title">Store Locator</h1>
+    <div class="store-grid">
+        <div class="store-list">
+            {% for store in stores %}
+                <div class="store-card {% if forloop.first %}active{% endif %}" data-id="{{ store.id }}">
+                    <h3>{{ store.name }}</h3>
+                    <p><strong>Address:</strong> {{ store.address }}</p>
+                    <p><strong>Phone:</strong> {{ store.phone }}</p>
+                    <p><strong>Hours:</strong> {{ store.hours }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="store-map" id="map-placeholder">
+            <div style="text-align: center; padding: 2rem;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--brand-gold)" stroke-width="1.5" style="margin-bottom: 1rem;">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <h3 style="font-family: var(--font-brand); color: var(--brand-dark); margin-bottom: 0.5rem;">Artisan Showroom Coordinates</h3>
+                <p id="map-detail-text" style="font-size: 0.9rem; color: var(--text-muted); max-width: 320px; margin: 0 auto;">Select a showroom location to view interactive map coordinates.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const cards = document.querySelectorAll(".store-card");
+        const mapDetail = document.getElementById("map-detail-text");
+        
+        const storeMapData = {
+            1: "Jaipur Heritage Showroom\nLatitude: 26.9271° N, Longitude: 75.8203° E\nAmer Road, Jaipur, Rajasthan",
+            2: "New Delhi Flagship Store\nLatitude: 28.6304° N, Longitude: 77.2177° E\nE-Block, Connaught Place, New Delhi",
+            3: "Udaipur Lakefront Gallery\nLatitude: 24.5712° N, Longitude: 73.6821° E\nLal Ghat Road, Udaipur, Rajasthan"
+        };
+        
+        cards.forEach(card => {
+            card.addEventListener("click", () => {
+                cards.forEach(c => c.classList.remove("active"));
+                card.classList.add("active");
+                const storeId = card.getAttribute("data-id");
+                mapDetail.textContent = storeMapData[storeId] || "Showing selected store location coordinates.";
+            });
+        });
+        
+        // Initial setup
+        if(cards.length > 0) {
+            cards[0].click();
+        }
+    });
+</script>
+{% endblock %}

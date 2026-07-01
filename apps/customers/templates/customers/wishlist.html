@@ -1,0 +1,715 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Wishlist | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalog/css/product-card.css' %}">
+<style>
+    /* ==========================================================================
+       Premium Account Layout & Variables
+       ========================================================================== */
+    :root {
+        --dash-surface: #FFFFFF;
+        --dash-bg: #FCFAF8;
+        --dash-border: var(--border-light, #EAE5E0);
+        --dash-text-main: var(--brand-dark, #2C2520);
+        --dash-text-muted: var(--text-muted, #7A726A);
+        --dash-gold: var(--brand-gold, #C5A880);
+        --dash-gold-dark: var(--brand-gold-dark, #9A7B54);
+        --dash-radius-lg: 16px;
+        --dash-radius-md: 12px;
+        --dash-radius-sm: 8px;
+        --dash-shadow-soft: 0 12px 36px rgba(44, 37, 32, 0.06);
+        --dash-shadow-hover: 0 20px 48px rgba(44, 37, 32, 0.1);
+        --dash-transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --auth-error: #C0392B;
+        --auth-error-bg: #FDF0ED;
+    }
+
+    body {
+        background-color: var(--dash-bg);
+    }
+
+    .dashboard-layout {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 3.5rem;
+        align-items: start;
+        animation: dashboardFadeIn 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+
+    @keyframes dashboardFadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       Sidebar Navigation (Consistent with Dashboard)
+       ========================================================================== */
+    .dashboard-sidebar {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 2rem 1.5rem;
+        position: sticky;
+        top: 110px;
+        box-shadow: var(--dash-shadow-soft);
+        z-index: 10;
+    }
+
+    .sidebar-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--dash-border);
+    }
+
+    .sidebar-header h2 {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.25rem;
+        color: var(--dash-text-main);
+        margin: 0;
+        letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 1.25rem;
+        border-radius: var(--dash-radius-sm);
+        color: var(--dash-text-muted);
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: var(--dash-transition);
+        text-decoration: none;
+    }
+
+    .sidebar-link svg {
+        flex-shrink: 0;
+        color: inherit;
+        transition: var(--dash-transition);
+    }
+
+    .sidebar-link:hover {
+        background: rgba(197, 168, 128, 0.08);
+        color: var(--dash-gold-dark);
+    }
+
+    .sidebar-link.active {
+        background: var(--dash-text-main);
+        color: #FFFFFF;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(44, 37, 32, 0.15);
+    }
+
+    .sidebar-link.active svg {
+        color: var(--dash-gold);
+    }
+
+    .sidebar-link.logout-link {
+        margin-top: 1.5rem;
+        color: #C0392B;
+    }
+    
+    .sidebar-link.logout-link:hover {
+        background: #FDF0ED;
+        color: #A93226;
+    }
+
+    /* ==========================================================================
+       Main Wishlist Layout & Hero
+       ========================================================================== */
+    .dashboard-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    .wishlist-hero {
+        background: linear-gradient(135deg, var(--dash-text-main) 0%, #1A1512 100%);
+        border-radius: var(--dash-radius-lg);
+        padding: 3.5rem 3rem;
+        position: relative;
+        overflow: hidden;
+        color: #FFFFFF;
+        box-shadow: 0 20px 40px rgba(44, 37, 32, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .wishlist-hero::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background-image: radial-gradient(rgba(197, 168, 128, 0.12) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.5rem;
+        line-height: 1.2;
+        margin: 0 0 0.5rem 0;
+        color: #FFFFFF;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0;
+        max-width: 500px;
+        line-height: 1.6;
+    }
+
+    .hero-stats {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 1.5rem 2.5rem;
+        border-radius: var(--dash-radius-md);
+        text-align: center;
+    }
+
+    .stat-number {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dash-gold);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* ==========================================================================
+       Wishlist Grid & Product Card Integration
+       ========================================================================== */
+    .wishlist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2.5rem 2rem;
+    }
+
+    .wishlist-item-wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        transition: var(--dash-transition);
+        animation: dashboardFadeIn 0.5s ease-out forwards;
+        animation-fill-mode: both;
+    }
+
+    /* Staggered animation for grid items */
+    .wishlist-item-wrapper:nth-child(1) { animation-delay: 0.1s; }
+    .wishlist-item-wrapper:nth-child(2) { animation-delay: 0.2s; }
+    .wishlist-item-wrapper:nth-child(3) { animation-delay: 0.3s; }
+    .wishlist-item-wrapper:nth-child(4) { animation-delay: 0.4s; }
+
+    /* The actual product card container adjustments */
+    .wishlist-item-wrapper .gobindas-product-card {
+        flex-grow: 1;
+        border-radius: var(--dash-radius-md) var(--dash-radius-md) 0 0;
+        border-bottom: none;
+    }
+
+    .wishlist-item-actions {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-top: none;
+        border-radius: 0 0 var(--dash-radius-md) var(--dash-radius-md);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 12px rgba(44, 37, 32, 0.02);
+        transition: var(--dash-transition);
+    }
+
+    .wishlist-item-wrapper:hover .wishlist-item-actions {
+        border-color: var(--dash-gold);
+        box-shadow: 0 16px 32px rgba(44, 37, 32, 0.08);
+    }
+
+    .date-added {
+        font-size: 0.75rem;
+        color: var(--dash-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .btn-remove-wishlist {
+        background: transparent;
+        border: none;
+        color: var(--dash-text-muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0;
+        transition: var(--dash-transition);
+    }
+
+    .btn-remove-wishlist:hover {
+        color: var(--auth-error);
+    }
+
+    .btn-remove-wishlist svg {
+        transition: transform 0.2s ease;
+    }
+
+    .btn-remove-wishlist:hover svg {
+        transform: scale(1.1);
+    }
+
+    /* ==========================================================================
+       Empty State Architecture
+       ========================================================================== */
+    .empty-wishlist-state {
+        background: var(--dash-surface);
+        border: 2px dashed var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 6rem 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        box-shadow: var(--dash-shadow-soft);
+    }
+
+    .empty-state-icon {
+        width: 90px;
+        height: 90px;
+        background: #FCFAF8;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dash-gold);
+        border: 1px solid var(--dash-border);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2rem;
+        color: var(--dash-text-main);
+        margin: 0;
+    }
+
+    .empty-state-desc {
+        font-size: 1rem;
+        color: var(--dash-text-muted);
+        max-width: 480px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    .btn-premium-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, var(--dash-gold) 0%, var(--dash-gold-dark) 100%);
+        color: #FFFFFF;
+        border: none;
+        border-radius: var(--dash-radius-sm);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(197, 168, 128, 0.25);
+        transition: var(--dash-transition);
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+
+    .btn-premium-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(197, 168, 128, 0.4);
+        color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       Pagination
+       ========================================================================== */
+    .wishlist-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--dash-border);
+    }
+
+    .page-node {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--dash-border);
+        background: var(--dash-surface);
+        color: var(--dash-text-main);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: var(--dash-radius-sm);
+        transition: var(--dash-transition);
+    }
+
+    .page-node:hover, 
+    .page-node.active {
+        background: var(--dash-text-main);
+        color: #FFFFFF;
+        border-color: var(--dash-text-main);
+    }
+
+    .page-node.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+        background: #F5F1ED;
+    }
+
+    /* ==========================================================================
+       Messages & Native Django Alerts
+       ========================================================================== */
+    .dash-alerts {
+        margin-bottom: 1.5rem;
+    }
+
+    .dash-alert {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-radius: var(--dash-radius-sm);
+        font-size: 0.95rem;
+        font-weight: 500;
+        animation: alertSlideDown 0.4s ease-out;
+        margin-bottom: 1rem;
+    }
+
+    .dash-alert.success { background: #E8F5E9; color: #1B5E20; border: 1px solid rgba(45, 106, 79, 0.15); }
+    .dash-alert.error { background: #FDF0ED; color: #C0392B; border: 1px solid rgba(192, 57, 43, 0.15); }
+    .dash-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.15); }
+
+    @keyframes alertSlideDown {
+        0% { opacity: 0; transform: translateY(-8px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       Responsive Engineering Changes
+       ========================================================================== */
+    @media (max-width: 1024px) {
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+            padding: 3rem 1.5rem;
+            gap: 2.5rem;
+        }
+        
+        .dashboard-sidebar {
+            position: static;
+            padding: 1.5rem;
+        }
+
+        .sidebar-nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .sidebar-link {
+            flex: 1;
+            min-width: 150px;
+            justify-content: center;
+        }
+        
+        .sidebar-header { display: none; }
+    }
+
+    @media (max-width: 768px) {
+        .wishlist-hero {
+            flex-direction: column;
+            text-align: center;
+            gap: 2rem;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .hero-stats {
+            width: 100%;
+        }
+
+        .wishlist-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .empty-wishlist-state {
+            padding: 4rem 1.5rem;
+        }
+        
+        .empty-state-title {
+            font-size: 1.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <aside class="dashboard-sidebar" aria-label="Account Management Navigation">
+        <div class="sidebar-header">
+            <h2>My Account</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'customers:dashboard' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                Dashboard Overview
+            </a>
+            <a href="{% url 'customers:order_history' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                Order History
+            </a>
+            <a href="{% url 'customers:wishlist' %}" class="sidebar-link active" aria-current="page">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                My Wishlist
+            </a>
+            <a href="{% url 'customers:saved_cart_list' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Saved Carts
+            </a>
+            <a href="{% url 'customers:address_list' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                Address Book
+            </a>
+            <a href="{% url 'customers:profile' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Profile Settings
+            </a>
+            <a href="{% url 'customers:logout' %}" class="sidebar-link logout-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Sign Out
+            </a>
+        </nav>
+    </aside>
+
+    <main class="dashboard-main">
+        
+        {% if messages %}
+            <div class="dash-alerts" role="alert" aria-live="polite">
+                {% for message in messages %}
+                    <div class="dash-alert {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                        {% if message.tags == 'error' %}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        {% elif message.tags == 'success' %}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        {% else %}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="wishlist-hero" aria-label="Wishlist Summary">
+            <div class="hero-content">
+                <h1 class="hero-title">Your Favorites</h1>
+                <p class="hero-subtitle">Keep track of the handcrafted masterpieces you love. Move them to your shopping bag whenever you're ready to make them yours.</p>
+            </div>
+            
+            <div class="hero-stats" aria-label="Wishlist Statistics">
+                <span class="stat-number">{{ paginator.count|default:wishlist_items|length|default:0 }}</span>
+                <span class="stat-label">Saved Items</span>
+            </div>
+        </section>
+
+        {% if wishlist_items %}
+            <div class="wishlist-grid" aria-label="Saved Products Grid">
+                {% for item in wishlist_items %}
+                    <article class="wishlist-item-wrapper" id="wishlist-item-{{ item.pk }}">
+                        
+                        {# We pass is_wishlisted=True to guarantee the product card renders the active heart #}
+                        {% include "catalog/product-card.html" with product=item.product is_wishlisted=True %}
+                        
+                        <div class="wishlist-item-actions">
+                            <div class="date-added" aria-label="Date added to wishlist">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                {{ item.created_at|date:"M j, Y" }}
+                            </div>
+                            
+                            <form action="{% url 'customers:wishlist_remove' item.pk %}" method="POST" class="remove-wishlist-form" data-item-id="{{ item.pk }}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-remove-wishlist" aria-label="Remove {{ item.product.title|default:'product' }} from wishlist">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
+
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+                <nav class="wishlist-pagination" aria-label="Wishlist Navigation Panel">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="page-node" aria-label="Previous Page">&lt;</a>
+                    {% else %}
+                        <span class="page-node disabled" aria-hidden="true">&lt;</span>
+                    {% endif %}
+
+                    {% for i in paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <span class="page-node active" aria-current="page">{{ i }}</span>
+                        {% else %}
+                            <a href="?page={{ i }}" class="page-node" aria-label="Go to page {{ i }}">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="page-node" aria-label="Next Page">&gt;</a>
+                    {% else %}
+                        <span class="page-node disabled" aria-hidden="true">&gt;</span>
+                    {% endif %}
+                </nav>
+            {% endif %}
+
+        {% else %}
+            <section class="empty-wishlist-state" aria-label="Empty Wishlist Info">
+                <div class="empty-state-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                </div>
+                <h2 class="empty-state-title">Your Wishlist is Empty</h2>
+                <p class="empty-state-desc">You haven't saved any masterpieces yet. Start discovering handcrafted products and save your favorites here for later.</p>
+                
+                <a href="{% url 'foundation:home' %}" class="btn-premium-action">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Continue Shopping
+                </a>
+            </section>
+        {% endif %}
+
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'catalog/js/product-card.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Advanced AJAX Intercept for Explicit Remove Buttons
+        // Prevents full page reload when removing items natively from the dedicated wishlist footer action
+        const removeForms = document.querySelectorAll('.remove-wishlist-form');
+        
+        removeForms.forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const btn = this.querySelector('button');
+                const itemId = this.dataset.itemId;
+                const cardWrapper = document.getElementById(`wishlist-item-${itemId}`);
+                
+                // Prevent duplicate submissions
+                if(btn.disabled) return;
+                
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Beautifully animate the card removal
+                        if (cardWrapper) {
+                            cardWrapper.style.transform = 'scale(0.95)';
+                            cardWrapper.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                cardWrapper.remove();
+                                
+                                // Update count dynamically if possible
+                                const countEl = document.querySelector('.stat-number');
+                                if (countEl) {
+                                    let currentCount = parseInt(countEl.innerText) || 0;
+                                    if (currentCount > 0) {
+                                        countEl.innerText = currentCount - 1;
+                                    }
+                                    
+                                    // Trigger empty state if zero
+                                    if (currentCount - 1 === 0) {
+                                        location.reload(); // Quick refresh to show empty state elegantly
+                                    }
+                                }
+                            }, 400);
+                        }
+                        
+                        // Synchronize global header badge if listening
+                        document.dispatchEvent(new CustomEvent('gobindas:wishlist:removed', {
+                            detail: { wishlistPk: itemId }
+                        }));
+                        
+                    } else {
+                        // Fallback to native submission if non-200
+                        this.submit();
+                    }
+                } catch (error) {
+                    console.error("AJAX Wishlist Removal Failed:", error);
+                    // Fallback to native submission on network failure
+                    this.submit();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,856 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Addresses | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================================================
+       Premium Account Layout & Variables
+       ========================================================================== */
+    :root {
+        --dash-surface: #FFFFFF;
+        --dash-bg: #FCFAF8;
+        --dash-border: var(--border-light, #EAE5E0);
+        --dash-text-main: var(--brand-dark, #2C2520);
+        --dash-text-muted: var(--text-muted, #7A726A);
+        --dash-gold: var(--brand-gold, #C5A880);
+        --dash-gold-dark: var(--brand-gold-dark, #9A7B54);
+        --dash-radius-lg: 16px;
+        --dash-radius-md: 12px;
+        --dash-radius-sm: 8px;
+        --dash-shadow-soft: 0 12px 36px rgba(44, 37, 32, 0.06);
+        --dash-shadow-hover: 0 20px 48px rgba(44, 37, 32, 0.1);
+        --dash-transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --auth-error: #C0392B;
+        --auth-error-bg: #FDF0ED;
+    }
+
+    body {
+        background-color: var(--dash-bg);
+    }
+
+    .dashboard-layout {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 3.5rem;
+        align-items: start;
+        animation: dashboardFadeIn 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+
+    @keyframes dashboardFadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       Sidebar Navigation
+       ========================================================================== */
+    .dashboard-sidebar {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 2rem 1.5rem;
+        position: sticky;
+        top: 110px;
+        box-shadow: var(--dash-shadow-soft);
+        z-index: 10;
+    }
+
+    .sidebar-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--dash-border);
+    }
+
+    .sidebar-header h2 {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.25rem;
+        color: var(--dash-text-main);
+        margin: 0;
+        letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 1.25rem;
+        border-radius: var(--dash-radius-sm);
+        color: var(--dash-text-muted);
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: var(--dash-transition);
+        text-decoration: none;
+    }
+
+    .sidebar-link svg {
+        flex-shrink: 0;
+        color: inherit;
+        transition: var(--dash-transition);
+    }
+
+    .sidebar-link:hover {
+        background: rgba(197, 168, 128, 0.08);
+        color: var(--dash-gold-dark);
+    }
+
+    .sidebar-link.active {
+        background: var(--dash-text-main);
+        color: #FFFFFF;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(44, 37, 32, 0.15);
+    }
+
+    .sidebar-link.active svg {
+        color: var(--dash-gold);
+    }
+
+    .sidebar-link.logout-link {
+        margin-top: 1.5rem;
+        color: #C0392B;
+    }
+    
+    .sidebar-link.logout-link:hover {
+        background: #FDF0ED;
+        color: #A93226;
+    }
+
+    /* ==========================================================================
+       Main Address Layout Elements
+       ========================================================================== */
+    .dashboard-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    /* Premium Hero Banner */
+    .addresses-hero {
+        background: linear-gradient(135deg, var(--dash-text-main) 0%, #1A1512 100%);
+        border-radius: var(--dash-radius-lg);
+        padding: 3rem;
+        position: relative;
+        overflow: hidden;
+        color: #FFFFFF;
+        box-shadow: 0 20px 40px rgba(44, 37, 32, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .addresses-hero::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background-image: radial-gradient(rgba(197, 168, 128, 0.12) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.25rem;
+        line-height: 1.2;
+        margin: 0 0 0.5rem 0;
+        color: #FFFFFF;
+    }
+
+    .hero-subtitle {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0;
+    }
+
+    /* Statistics Row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-md);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        box-shadow: var(--dash-shadow-soft);
+        transition: var(--dash-transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--dash-shadow-hover);
+        border-color: var(--dash-gold);
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        background: rgba(197, 168, 128, 0.1);
+        color: var(--dash-gold-dark);
+        border-radius: var(--dash-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-meta {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dash-text-main);
+        line-height: 1.1;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--dash-text-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Header & Action bar */
+    .section-action-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        border-bottom: 1px solid var(--dash-border);
+        padding-bottom: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .section-action-header h3 {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.5rem;
+        color: var(--dash-text-main);
+        margin: 0;
+    }
+
+    .btn-premium-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1.75rem;
+        background: linear-gradient(135deg, var(--dash-gold) 0%, var(--dash-gold-dark) 100%);
+        color: #FFFFFF;
+        border: none;
+        border-radius: var(--dash-radius-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(197, 168, 128, 0.25);
+        transition: var(--dash-transition);
+        cursor: pointer;
+    }
+
+    .btn-premium-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(197, 168, 128, 0.35);
+        color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       Address Grid and Cards
+       ========================================================================== */
+    .address-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 2rem;
+    }
+
+    .address-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        box-shadow: var(--dash-shadow-soft);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+        transition: var(--dash-transition);
+    }
+
+    .address-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--dash-shadow-hover);
+        border-color: var(--dash-gold);
+    }
+
+    .address-card-body {
+        padding: 2rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .address-card-header-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .address-recipient-name {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--dash-text-main);
+        margin: 0;
+    }
+
+    /* Badge Styles */
+    .address-badge-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .premium-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.3rem 0.65rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 30px;
+    }
+
+    .premium-badge.default-shipping {
+        background: #E8F5E9;
+        color: #1B5E20;
+        border: 1px solid rgba(27, 94, 32, 0.15);
+    }
+
+    .premium-badge.default-billing {
+        background: #E3F2FD;
+        color: #0D47A1;
+        border: 1px solid rgba(13, 71, 161, 0.15);
+    }
+
+    /* Detailed Fields */
+    .address-details-block {
+        font-size: 0.95rem;
+        color: var(--dash-text-main);
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .address-company-line {
+        font-style: italic;
+        color: var(--dash-text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .address-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--dash-text-muted);
+        margin-top: 0.5rem;
+    }
+
+    /* Address Actions Footer */
+    .address-card-footer {
+        background: #FAFAFA;
+        border-top: 1px solid var(--dash-border);
+        padding: 1.25rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .address-footer-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--dash-text-muted);
+        text-decoration: none;
+        transition: var(--dash-transition);
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .action-link:hover {
+        color: var(--dash-text-main);
+    }
+
+    .action-link.edit-btn:hover {
+        color: var(--dash-gold-dark);
+    }
+
+    .action-link.delete-btn {
+        color: rgba(192, 57, 43, 0.8);
+    }
+
+    .action-link.delete-btn:hover {
+        color: #C0392B;
+    }
+
+    /* Dropdown controls for setting defaults */
+    .defaults-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .defaults-dropdown-menu {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        margin-bottom: 0.5rem;
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-sm);
+        box-shadow: var(--dash-shadow-hover);
+        min-width: 180px;
+        display: none;
+        z-index: 20;
+        overflow: hidden;
+    }
+
+    .defaults-dropdown-menu.show {
+        display: block;
+        animation: menuFadeUp 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    @keyframes menuFadeUp {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-btn-item {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        padding: 0.65rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--dash-text-main);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--dash-transition);
+    }
+
+    .dropdown-btn-item:hover {
+        background: #FAFAFA;
+        color: var(--dash-gold-dark);
+    }
+
+    /* ==========================================================================
+       Empty State Architecture
+       ========================================================================== */
+    .empty-address-state {
+        background: var(--dash-surface);
+        border: 2px dashed var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 5rem 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        box-shadow: var(--dash-shadow-soft);
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: #FCFAF8;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dash-gold);
+        border: 1px solid var(--dash-border);
+    }
+
+    .empty-state-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.75rem;
+        color: var(--dash-text-main);
+        margin: 0;
+    }
+
+    .empty-state-desc {
+        font-size: 0.95rem;
+        color: var(--dash-text-muted);
+        max-width: 440px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       Messages & Native Django Alerts
+       ========================================================================== */
+    .dash-alerts {
+        margin-bottom: 1.5rem;
+    }
+
+    .dash-alert {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-radius: var(--dash-radius-sm);
+        font-size: 0.95rem;
+        font-weight: 500;
+        animation: alertSlideDown 0.4s ease-out;
+        margin-bottom: 1rem;
+    }
+
+    .dash-alert.success { background: #E8F5E9; color: #1B5E20; border: 1px solid rgba(45, 106, 79, 0.15); }
+    .dash-alert.error { background: #FDF0ED; color: #C0392B; border: 1px solid rgba(192, 57, 43, 0.15); }
+    .dash-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.15); }
+
+    @keyframes alertSlideDown {
+        0% { opacity: 0; transform: translateY(-8px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       Responsive Engineering Changes
+       ========================================================================== */
+    @media (max-width: 1024px) {
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+            padding: 3rem 1.5rem;
+            gap: 2.5rem;
+        }
+        
+        .dashboard-sidebar {
+            position: static;
+            padding: 1.5rem;
+        }
+
+        .sidebar-nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .sidebar-link {
+            flex: 1;
+            min-width: 150px;
+            justify-content: center;
+        }
+        
+        .sidebar-header { display: none; }
+    }
+
+    @media (max-width: 768px) {
+        .addresses-hero {
+            flex-direction: column;
+            text-align: center;
+            gap: 1.5rem;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .address-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-action-header {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+
+        .btn-premium-action {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .address-card-footer {
+            padding: 1.25rem 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <aside class="dashboard-sidebar" aria-label="Account Management Navigation">
+        <div class="sidebar-header">
+            <h2>My Account</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'customers:dashboard' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                Dashboard Overview
+            </a>
+            <a href="{% url 'customers:order_history' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                Order History
+            </a>
+            <a href="{% url 'customers:wishlist' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                My Wishlist
+            </a>
+            <a href="{% url 'customers:saved_cart_list' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Saved Carts
+            </a>
+            <a href="{% url 'customers:address_list' %}" class="sidebar-link active" aria-current="page">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                Address Book
+            </a>
+            <a href="{% url 'customers:profile' %}" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Profile Settings
+            </a>
+            <a href="{% url 'customers:logout' %}" class="sidebar-link logout-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Sign Out
+            </a>
+        </nav>
+    </aside>
+
+    <main class="dashboard-main">
+        
+        {% if messages %}
+            <div class="dash-alerts" role="alert" aria-live="polite">
+                {% for message in messages %}
+                    <div class="dash-alert {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                        {% if message.tags == 'error' %}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        {% elif message.tags == 'success' %}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        {% else %}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="addresses-hero" aria-label="Address Book Summary">
+            <div class="hero-content">
+                <h1 class="hero-title">Saved Addresses</h1>
+                <p class="hero-subtitle">Organize and manage your delivery paths for an effortless premium artisan checkout experience.</p>
+            </div>
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(197, 168, 128, 0.35)" stroke-width="1.5">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>
+            </svg>
+        </section>
+
+        {% if addresses %}
+            <section class="stats-row" aria-label="Address Summary Counters">
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    </div>
+                    <div class="stat-meta">
+                        <span class="stat-value">{{ addresses|length }}</span>
+                        <span class="stat-label">Total Saved Entries</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                    </div>
+                    <div class="stat-meta">
+                        <span class="stat-value">
+                            {% fill_count_shipping addresses as ship_count %}{{ ship_count|default:"Active" }}
+                        </span>
+                        <span class="stat-label">Shipping Destinations</span>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="section-action-header">
+            <h3>Addresses List</h3>
+            <a href="{% url 'customers:address_create' %}" class="btn-premium-action" aria-label="Add a new address to your address book">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add New Address
+            </a>
+        </section>
+
+        {% if addresses %}
+            <section class="address-grid" aria-label="Saved Addresses List Grid">
+                {% for address in addresses %}
+                    <article class="address-card">
+                        <div class="address-card-body">
+                            <div class="address-card-header-meta">
+                                <h4 class="address-recipient-name">
+                                    {{ address.first_name }} {{ address.last_name }}
+                                </h4>
+                                <div class="address-badge-container">
+                                    {% if address.is_default_shipping %}
+                                        <span class="premium-badge default-shipping" title="Default Shipping Address">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Shipping
+                                        </span>
+                                    {% endif %}
+                                    {% if address.is_default_billing %}
+                                        <span class="premium-badge default-billing" title="Default Billing Address">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Billing
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if address.company %}
+                                <div class="address-company-line">{{ address.company }}</div>
+                            {% endif %}
+
+                            <p class="address-details-block">
+                                {{ address.address_line1 }}<br>
+                                {% if address.address_line2 %}
+                                    {{ address.address_line2 }}<br>
+                                {% endif %}
+                                {{ address.city }}, {% if address.state %}{{ address.state }}, {% endif %}{{ address.postal_code }}<br>
+                                {{ address.get_country_display|default:address.country }}
+                            </p>
+
+                            {% if address.phone_number %}
+                                <div class="address-meta-item">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    <span>{{ address.phone_number }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <footer class="address-card-footer">
+                            <div class="address-footer-group">
+                                <a href="{% url 'customers:address_update' address.pk %}" class="action-link edit-btn" aria-label="Edit address for {{ address.first_name }}">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    Edit
+                                </a>
+                                
+                                <form action="{% url 'customers:address_delete' address.pk %}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently remove this address? This action cannot be undone.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-link delete-btn" aria-label="Delete address for {{ address.first_name }}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+
+                            {% if not address.is_default_shipping or not address.is_default_billing %}
+                                <div class="defaults-dropdown">
+                                    <button type="button" class="action-link toggle-dropdown-js" aria-haspopup="true" aria-expanded="false" aria-label="More default settings options">
+                                        <span>Set Default</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="defaults-dropdown-menu">
+                                        {% if not address.is_default_shipping %}
+                                            <form action="{% url 'customers:address_set_default_shipping' address.pk %}" method="post">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-btn-item">Set as Shipping Default</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if not address.is_default_billing %}
+                                            <form action="{% url 'customers:address_set_default_billing' address.pk %}" method="post">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-btn-item">Set as Billing Default</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </footer>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty-address-state" aria-label="No Addresses Found Info">
+                <div class="empty-state-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <h4 class="empty-state-title">No Addresses Found</h4>
+                <p class="empty-state-desc">Your address book is currently empty. Save your standard billing and shipping destinations to fast-track your checkout journey later.</p>
+                <a href="{% url 'customers:address_create' %}" class="btn-premium-action">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Your First Address
+                </a>
+            </section>
+        {% endif %}
+
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dropdown toggle handling framework functionality logic
+        const toggleButtons = document.querySelectorAll('.toggle-dropdown-js');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                
+                // Close all other instances
+                document.querySelectorAll('.defaults-dropdown-menu').forEach(openMenu => {
+                    if (openMenu !== menu) {
+                        openMenu.classList.remove('show');
+                        openMenu.previousElementSibling.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                // Toggle present targeted dropdown element state
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !isExpanded);
+                menu.classList.toggle('show');
+            });
+        });
+
+        // Safe globally triggered close handler framework context architecture
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.defaults-dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+                menu.previousElementSibling.setAttribute('aria-expanded', 'false');
+            });
+        });
+    });
+</script>
+{% endblock %}
