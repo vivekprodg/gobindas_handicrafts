@@ -153,8 +153,8 @@
             {% endif %}
         </div>
         <div class="brand-text">
-            <div class="brand-title">{{ brand_title|default:"GOBINDAS" }}</div>
-            <div class="brand-subtitle">{{ brand_subtitle|default:"HANDICRAFTS" }}</div>
+            <div class="brand-title">{{ brand_title|default_if_none:"" }}</div>
+            <div class="brand-subtitle">{{ brand_subtitle|default_if_none:"" }}</div>
         </div>
     </a>
 
