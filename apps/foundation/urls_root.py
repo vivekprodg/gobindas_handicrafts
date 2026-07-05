@@ -4,7 +4,7 @@ from .views import (
     TraceabilityPlaceholderView,
     PoliciesShippingPlaceholderView,
     CustomOrdersPlaceholderView,
-    ContactPlaceholderView,
+    ContactPageView,
 )
 
 urlpatterns = [
@@ -12,5 +12,5 @@ urlpatterns = [
     path("traceability/", TraceabilityPlaceholderView.as_view(), name="traceability"),
     path("policies/shipping/", PoliciesShippingPlaceholderView.as_view(), name="policies_shipping"),
     path("custom-orders/", CustomOrdersPlaceholderView.as_view(), name="custom_orders"),
-    path("contact/", ContactPlaceholderView.as_view(), name="contact"),
+    path("contact/", ContactPageView.as_view(), name="contact"),
 ]

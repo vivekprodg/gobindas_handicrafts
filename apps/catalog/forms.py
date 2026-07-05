@@ -5,6 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Min, Max
 
 from .models import (
     Artisan,
@@ -25,7 +26,6 @@ from .models import (
     VariantOption,
     VariantType,
 )
-
 
 class CategoryForm(forms.ModelForm):
     """
@@ -48,7 +48,6 @@ class CategoryForm(forms.ModelForm):
                 self.add_error("parent", _("Nesting categories beyond 2 levels (Category -> Subcategory) is not supported."))
                 
         return cleaned_data
-
 
 class ProductForm(forms.ModelForm):
     """
@@ -122,6 +121,23 @@ class ProductForm(forms.ModelForm):
             
         return cleaned_data
 
+class ProductFilterForm(forms.Form):
+    """
+    Advanced filter form for the Product catalog.
+    """
+    search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Search products...'}))
+    min_price = forms.DecimalField(required=False, min_value=0)
+    max_price = forms.DecimalField(required=False, min_value=0)
+    category = forms.ModelMultipleChoiceField(queryset=Category.objects.filter(is_active=True), required=False)
+    artisan = forms.ModelMultipleChoiceField(queryset=Artisan.objects.filter(is_active=True), required=False)
+    material = forms.ModelMultipleChoiceField(queryset=Material.objects.all(), required=False)
+    hue = forms.ModelMultipleChoiceField(queryset=Hue.objects.all(), required=False)
+    featured = forms.BooleanField(required=False)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Dynamic price range logic could be initialized here if needed
+        self.fields['artisan'].queryset = Artisan.objects.filter(is_active=True).order_by('name')
 
 class ProductVariantForm(forms.ModelForm):
     """
@@ -178,7 +194,6 @@ class ProductVariantForm(forms.ModelForm):
             
         return cleaned_data
 
-
 class ProductImageForm(forms.ModelForm):
     """
     Form for validating primary and legacy gallery image metadata.
@@ -193,7 +208,6 @@ class ProductImageForm(forms.ModelForm):
             alt_text = alt_text.strip()
         return alt_text
 
-
 class ProductGalleryImageForm(forms.ModelForm):
     """
     Form for validating explicitly structured gallery images.
@@ -207,7 +221,6 @@ class ProductGalleryImageForm(forms.ModelForm):
         if alt_text:
             alt_text = alt_text.strip()
         return alt_text
-
 
 class ProductTagForm(forms.ModelForm):
     """
@@ -228,7 +241,6 @@ class ProductTagForm(forms.ModelForm):
                 raise ValidationError(_("A tag with this slug already exists."))
         return slug
 
-
 class ProductCollectionForm(forms.ModelForm):
     """
     Form for Product Collection curation management.
@@ -248,7 +260,6 @@ class ProductCollectionForm(forms.ModelForm):
                 raise ValidationError(_("A collection with this slug already exists."))
         return slug
 
-
 class ProductSEOForm(forms.ModelForm):
     """
     Dedicated form for SEO field management.
@@ -267,7 +278,6 @@ class ProductSEOForm(forms.ModelForm):
         if canonical_url:
             canonical_url = canonical_url.strip()
         return canonical_url
-
 
 class ProductSchemaForm(forms.ModelForm):
     """
@@ -289,7 +299,6 @@ class ProductSchemaForm(forms.ModelForm):
                 except json.JSONDecodeError:
                     raise ValidationError(_("Invalid JSON structure provided for Schema Data."))
         return schema_data
-
 
 class PublishingWorkflowForm(forms.ModelForm):
     """

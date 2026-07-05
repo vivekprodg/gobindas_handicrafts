@@ -29,7 +29,12 @@ from .models import (
     FooterLink,
     FooterSocialLink,
     FooterPaymentMethod,
-    FooterTrustBadge
+    FooterTrustBadge,
+    ContactPage,
+    ContactPhone,
+    ContactEmail,
+    ContactSocialLink,
+    ContactOfficeHour,
 )
 
 # Allow large inputs to be processed by the optimization pipeline.
@@ -44,6 +49,7 @@ HEADER_BAR_CACHE_KEY = f"foundation:cms:v{FOUNDATION_CMS_CACHE_VERSION}:header_b
 NAVBAR_TREE_CACHE_KEY = f"foundation:cms:v{FOUNDATION_CMS_CACHE_VERSION}:navbar_tree"
 NAVBAR_SETTINGS_CACHE_KEY = f"foundation:cms:v{FOUNDATION_CMS_CACHE_VERSION}:navbar_settings"
 FOOTER_DATA_CACHE_KEY = f"foundation:cms:v{FOUNDATION_CMS_CACHE_VERSION}:footer_data"
+CONTACT_PAGE_CACHE_KEY = f"foundation:cms:v{FOUNDATION_CMS_CACHE_VERSION}:contact_page"
 
 def _cache_key(base_key: str) -> str:
     return base_key
@@ -58,6 +64,7 @@ def invalidate_foundation_cms_cache() -> None:
     cache.delete(NAVBAR_TREE_CACHE_KEY)
     cache.delete(NAVBAR_SETTINGS_CACHE_KEY)
     cache.delete(FOOTER_DATA_CACHE_KEY)
+    cache.delete(CONTACT_PAGE_CACHE_KEY)
 
 def _singleton_instance(model_class):
     try:
@@ -400,6 +407,129 @@ def get_navbar_settings_cached(*, use_cache: bool = True) -> dict[str, Any]:
     return data
 
 # =========================================
+# CONTACT PAGE CMS SERVICE IMPLEMENTATION
+# =========================================
+def get_contact_page_data_cached(*, use_cache: bool = True) -> dict[str, Any]:
+    """
+    Retrieves, structures, and caches the Contact Page CMS data.
+    Acts as the single source of truth for all contact information.
+    """
+    if use_cache:
+        cached = cache.get(CONTACT_PAGE_CACHE_KEY)
+        if cached is not None:
+            return cached
+
+    try:
+        contact_obj = ContactPage.objects.prefetch_related(
+            "phones", "emails", "social_links", "office_hours"
+        ).get()
+    except ContactPage.DoesNotExist:
+        contact_obj = None
+    except ContactPage.MultipleObjectsReturned as exc:
+        raise ImproperlyConfigured(
+            "More than one ContactPage record exists. Only one singleton record is allowed."
+        ) from exc
+
+    phones_list = []
+    emails_list = []
+    social_links_list = []
+    office_hours_list = []
+
+    if contact_obj:
+        phones_qs = contact_obj.phones.filter(is_visible=True).order_by("position", "id")
+        emails_qs = contact_obj.emails.filter(is_visible=True).order_by("position", "id")
+        social_links_qs = contact_obj.social_links.filter(is_visible=True).order_by("position", "id")
+        office_hours_qs = contact_obj.office_hours.filter(is_visible=True).order_by("position", "id")
+
+        phones_list = [
+            {
+                "id": p.pk,
+                "label": p.label,
+                "phone_number": p.phone_number,
+                "position": p.position,
+            } for p in phones_qs
+        ]
+
+        emails_list = [
+            {
+                "id": e.pk,
+                "label": e.label,
+                "email_address": e.email_address,
+                "position": e.position,
+            } for e in emails_qs
+        ]
+
+        social_links_list = [
+            {
+                "id": s.pk,
+                "platform": s.platform,
+                "url": s.url,
+                "icon_key": s.icon_key,
+                "icon_class": getattr(s, 'icon_class', None),
+                "position": s.position,
+                "is_visible": s.is_visible,
+            } for s in social_links_qs
+        ]
+
+        office_hours_list = [
+            {
+                "id": oh.pk,
+                "day": oh.day,
+                "opening_time": oh.opening_time,
+                "closing_time": oh.closing_time,
+                "status": oh.status,
+                "status_label": oh.get_status_display() if oh.status else None,
+                "position": oh.position,
+            } for oh in office_hours_qs
+        ]
+
+    # Extract primary contact fields safely
+    primary_phone = phones_list[0]["phone_number"] if phones_list else None
+    primary_email = emails_list[0]["email_address"] if emails_list else None
+    primary_address = contact_obj.physical_address if contact_obj else None
+    primary_contact_person = None  # No contact person field defined in ContactPage model.
+
+    data = {
+        "id": contact_obj.pk if contact_obj else None,
+        "hero_title": contact_obj.hero_title if contact_obj else None,
+        "hero_subtitle": contact_obj.hero_subtitle if contact_obj else None,
+        "hero_description": contact_obj.hero_description if contact_obj else None,
+        "hero_image_url": contact_obj.hero_image.url if contact_obj and contact_obj.hero_image else None,
+        "intro_heading": contact_obj.intro_heading if contact_obj else None,
+        "intro_text": contact_obj.intro_text if contact_obj else None,
+        "address_heading": contact_obj.address_heading if contact_obj else None,
+        "physical_address": primary_address,
+        "map_heading": contact_obj.map_heading if contact_obj else None,
+        "map_embed_url": contact_obj.map_embed_url if contact_obj else None,
+        "hours_heading": contact_obj.hours_heading if contact_obj else None,
+        "hours_description": contact_obj.hours_description if contact_obj else None,
+        "form_heading": contact_obj.form_heading if contact_obj else None,
+        "form_subheading": contact_obj.form_subheading if contact_obj else None,
+        "form_submit_button_label": contact_obj.form_submit_button_label if contact_obj else None,
+        "form_success_message": contact_obj.form_success_message if contact_obj else None,
+        "seo_meta_title": contact_obj.seo_meta_title if contact_obj else None,
+        "seo_meta_description": contact_obj.seo_meta_description if contact_obj else None,
+        "seo_meta_keywords": contact_obj.seo_meta_keywords if contact_obj else None,
+        
+        # Related structures
+        "phones": phones_list,
+        "emails": emails_list,
+        "social_links": social_links_list,
+        "office_hours": office_hours_list,
+
+        # Centralized primary hooks for global consumers
+        "primary_phone": primary_phone,
+        "primary_email": primary_email,
+        "primary_address": primary_address,
+        "primary_contact_person": primary_contact_person,
+    }
+
+    if use_cache:
+        cache.set(CONTACT_PAGE_CACHE_KEY, data, FOUNDATION_CMS_CACHE_TIMEOUT)
+
+    return data
+
+# =========================================
 # CMS DYNAMIC FOOTER IMPLEMENTATION
 # =========================================
 def get_footer_data(*, use_cache: bool = True) -> dict[str, Any]:
@@ -466,7 +596,9 @@ def get_footer_data(*, use_cache: bool = True) -> dict[str, Any]:
             "platform": social.platform,
             "url": social.url,
             "icon_key": social.icon_key,
+            "icon_class": getattr(social, 'icon_class', None),
             "position": social.position,
+            "is_visible": social.is_visible,
         }
         for social in FooterSocialLink.objects.all().order_by("position", "id")
     ]
@@ -493,6 +625,9 @@ def get_footer_data(*, use_cache: bool = True) -> dict[str, Any]:
         for badge in FooterTrustBadge.objects.all().order_by("position", "id")
     ]
 
+    # Sourced directly from Contact Page CMS as single source of truth
+    contact_data = get_contact_page_data_cached(use_cache=use_cache)
+
     result_payload = {
         "brand": brand_dict,
         "newsletter": newsletter_dict,
@@ -500,6 +635,17 @@ def get_footer_data(*, use_cache: bool = True) -> dict[str, Any]:
         "social_links": social_links_list,
         "payment_methods": payment_methods_list,
         "trust_badges": trust_badges_list,
+        # Contact CMS values exposed in footer contexts
+        "contact_info": {
+            "primary_phone": contact_data.get("primary_phone"),
+            "primary_email": contact_data.get("primary_email"),
+            "primary_address": contact_data.get("primary_address"),
+            "primary_contact_person": contact_data.get("primary_contact_person"),
+            "phones": contact_data.get("phones", []),
+            "emails": contact_data.get("emails", []),
+            "social_links": contact_data.get("social_links", []),
+            "office_hours": contact_data.get("office_hours", []),
+        }
     }
 
     if use_cache:
@@ -518,6 +664,7 @@ def get_foundation_cms_payload(*, use_cache: bool = True) -> dict[str, Any]:
         "navbar_items": build_navbar_tree(use_cache=use_cache),
         "navbar_settings": get_navbar_settings_cached(use_cache=use_cache),
         "footer": get_footer_data(use_cache=use_cache),
+        "contact_page": get_contact_page_data_cached(use_cache=use_cache),
     }
 
 def filter_navbar_tree_by_scope(
@@ -725,6 +872,7 @@ def warm_foundation_cms_cache() -> dict[str, Any]:
     cache.set(NAVBAR_TREE_CACHE_KEY, payload["navbar_items"], FOUNDATION_CMS_CACHE_TIMEOUT)
     cache.set(NAVBAR_SETTINGS_CACHE_KEY, payload["navbar_settings"], FOUNDATION_CMS_CACHE_TIMEOUT)
     cache.set(FOOTER_DATA_CACHE_KEY, payload["footer"], FOUNDATION_CMS_CACHE_TIMEOUT)
+    cache.set(CONTACT_PAGE_CACHE_KEY, payload["contact_page"], FOUNDATION_CMS_CACHE_TIMEOUT)
     return payload
 
 def refresh_foundation_cms_cache() -> dict[str, Any]:

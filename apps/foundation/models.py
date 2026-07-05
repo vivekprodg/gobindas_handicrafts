@@ -19,6 +19,10 @@ def _upload_to_navbar_media(instance, filename: str) -> str:
     suffix = Path(filename).suffix.lower() or ".png"
     return f"foundation/navbar/media/{uuid.uuid4().hex}{suffix}"
 
+def _upload_to_contact_media(instance, filename: str) -> str:
+    suffix = Path(filename).suffix.lower() or ".png"
+    return f"foundation/contact/media/{uuid.uuid4().hex}{suffix}"
+
 def _validate_json_structure(value, field_name: str, expected_types: tuple[type, ...]) -> None:
     if value is None:
         return
@@ -1082,10 +1086,22 @@ class FooterSocialLink(CMSBaseModel):
         verbose_name="Icon Library Key Lookup Reference",
         help_text="Identical key matched internally inside standard lookup arrays (e.g., 'instagram', 'pinterest')."
     )
+    icon_class = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Icon CSS Class",
+        help_text="CSS class for the icon (e.g., 'fab fa-facebook-f'). Allows dynamic config without code changes."
+    )
     position = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name="Layout Placement Sort Index Position"
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name="Is Visible",
+        help_text="Control if this social link is active and visible."
     )
 
     class Meta:
@@ -1157,3 +1173,378 @@ class FooterTrustBadge(CMSBaseModel):
 
     def __str__(self):
         return self.badge_name or f"Trust Certificate Seal (ID: {self.id})"
+
+# =========================================
+# CMS DYNAMIC CONTACT PAGE ARCHITECTURE
+# =========================================
+class ContactPage(SingletonCMSModel):
+    """
+    Global CMS settings and structure for the dynamic Contact Us page.
+    """
+    # -- Hero Section --
+    hero_title = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Hero Title",
+        help_text="Main heading displayed in the hero banner of the Contact Page."
+    )
+    hero_subtitle = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Hero Subtitle",
+        help_text="Supporting subtitle text below the hero title."
+    )
+    hero_description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Hero Description",
+        help_text="Paragraph description shown in the hero section."
+    )
+    hero_image = models.ImageField(
+        upload_to=_upload_to_contact_media,
+        blank=True,
+        null=True,
+        verbose_name="Hero Background Image",
+        help_text="Optional large background/featured image for the contact page hero banner."
+    )
+
+    # -- Intro Section --
+    intro_heading = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Intro Heading",
+        help_text="Main intro title displayed prior to physical and communication details."
+    )
+    intro_text = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Intro Description Text",
+        help_text="Brief general contact text block."
+    )
+
+    # -- Address Section --
+    address_heading = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Address Heading",
+        help_text="Heading label for the physical location section."
+    )
+    physical_address = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Physical Address",
+        help_text="Multi-line physical location address text."
+    )
+
+    # -- Google Map Section --
+    map_heading = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Map Section Heading"
+    )
+    map_embed_url = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Google Map Embed URL",
+        help_text="Standard iframe source URL containing the customized embedded location link."
+    )
+
+    # -- Office Hours Section --
+    hours_heading = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Office Hours Heading"
+    )
+    hours_description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Office Hours Description Text",
+        help_text="Supporting caption details under the office hours heading."
+    )
+
+    # -- Contact Form Settings --
+    form_heading = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Form Section Heading",
+        help_text="Header layout title displayed above the interactive submission form."
+    )
+    form_subheading = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Form Section Subheading",
+        help_text="Brief subtitle or prompt guiding user input."
+    )
+    form_submit_button_label = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Form Submit Button Text",
+        help_text="Clickable submission action button text value."
+    )
+    form_success_message = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Form Success Feedback Message",
+        help_text="Popup or banner alert text appearing upon successful verification submissions."
+    )
+
+    # -- SEO Section --
+    seo_meta_title = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="SEO Meta Title",
+        help_text="Custom title tag optimized specifically for search engines."
+    )
+    seo_meta_description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="SEO Meta Description",
+        help_text="Search engine index description text snippets."
+    )
+    seo_meta_keywords = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="SEO Meta Keywords",
+        help_text="Comma-separated keywords mapping search engine priority references."
+    )
+
+    class Meta:
+        verbose_name = "Contact Page Settings"
+        verbose_name_plural = "Contact Page Settings"
+
+    def save(self, *args, **kwargs):
+        if self.hero_image and not getattr(self.hero_image, '_committed', True):
+            from .services import optimize_uploaded_image
+            try:
+                result = optimize_uploaded_image(
+                    self.hero_image.file,
+                    target_max_bytes=500 * 1024,
+                    max_width=2000,
+                    min_width=640,
+                    filename_prefix="foundation/contact/media",
+                )
+                self.hero_image.save(result.filename, result.file, save=False)
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return "Global Contact Page Settings"
+
+class ContactPhone(CMSBaseModel):
+    """
+    Dynamically configurable phone contact channels for the Contact Page.
+    """
+    contact_page = models.ForeignKey(
+        ContactPage,
+        related_name="phones",
+        on_delete=models.CASCADE,
+        verbose_name="Parent Contact Page Settings"
+    )
+    label = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Phone Label/Department",
+        help_text="e.g., General Inquiries, Technical Support"
+    )
+    phone_number = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Phone Number",
+        help_text="Callable phone number value."
+    )
+    position = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Display Order Position",
+        help_text="Lower numeric positions dictate vertical sort priority ranking."
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name="Is Visible",
+        help_text="Control if this phone entry is visible on the frontend page."
+    )
+
+    class Meta:
+        verbose_name = "Contact Phone"
+        verbose_name_plural = "Contact Phones"
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"{self.label or 'Phone'}: {self.phone_number or 'Empty'}"
+
+class ContactEmail(CMSBaseModel):
+    """
+    Dynamically configurable email addresses for the Contact Page.
+    """
+    contact_page = models.ForeignKey(
+        ContactPage,
+        related_name="emails",
+        on_delete=models.CASCADE,
+        verbose_name="Parent Contact Page Settings"
+    )
+    label = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Email Label/Department",
+        help_text="e.g., Customer Care, Press/PR"
+    )
+    email_address = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name="Email Address",
+        help_text="Valid email reference target destination."
+    )
+    position = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Display Order Position",
+        help_text="Lower numeric positions dictate vertical sort priority ranking."
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name="Is Visible",
+        help_text="Control if this email entry is visible on the frontend page."
+    )
+
+    class Meta:
+        verbose_name = "Contact Email"
+        verbose_name_plural = "Contact Emails"
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"{self.label or 'Email'}: {self.email_address or 'Empty'}"
+
+class ContactSocialLink(CMSBaseModel):
+    """
+    Individual social profiles highlighted specifically inside the Contact Page layout space.
+    """
+    contact_page = models.ForeignKey(
+        ContactPage,
+        related_name="social_links",
+        on_delete=models.CASCADE,
+        verbose_name="Parent Contact Page Settings"
+    )
+    platform = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Platform Name"
+    )
+    url = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="Profile URL Destination Path"
+    )
+    icon_key = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Icon Library Key Lookup Reference",
+        help_text="System programmatic token to map vector icon assets (e.g., 'instagram', 'pinterest')."
+    )
+    icon_class = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Icon CSS Class",
+        help_text="CSS class for the icon (e.g., 'fab fa-facebook-f'). Allows dynamic config without code changes."
+    )
+    position = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Display Order Position"
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name="Is Visible",
+        help_text="Control if this social link is active and visible."
+    )
+
+    class Meta:
+        verbose_name = "Contact Social Link"
+        verbose_name_plural = "Contact Social Links"
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"{self.platform or 'Social Link'} ({self.url or 'No URL'})"
+
+class ContactOfficeHour(CMSBaseModel):
+    """
+    Configurable business operating schedules assigned to the Contact Page layout grid.
+    """
+    class StatusChoices(models.TextChoices):
+        OPEN = "open", "Open"
+        CLOSED = "closed", "Closed"
+        BY_APPOINTMENT = "by_appointment", "By Appointment Only"
+
+    contact_page = models.ForeignKey(
+        ContactPage,
+        related_name="office_hours",
+        on_delete=models.CASCADE,
+        verbose_name="Parent Contact Page Settings"
+    )
+    day = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Day/Day Range",
+        help_text="e.g., Monday, Monday - Friday, Weekends"
+    )
+    opening_time = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Opening Time",
+        help_text="Custom time format string (e.g., '9:00 AM', '09:00')."
+    )
+    closing_time = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name="Closing Time",
+        help_text="Custom time format string (e.g., '5:00 PM', '17:00')."
+    )
+    status = models.CharField(
+        max_length=50,
+        choices=StatusChoices.choices,
+        default=StatusChoices.OPEN,
+        blank=True,
+        null=True,
+        verbose_name="Operating Status",
+        help_text="System state for the scheduled timeframe display."
+    )
+    position = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Display Order Position",
+        help_text="Ascending sort position order values controlling tabular render ranking."
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name="Is Visible",
+        help_text="Toggle operating schedule visibility."
+    )
+
+    class Meta:
+        verbose_name = "Contact Office Hour"
+        verbose_name_plural = "Contact Office Hours"
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"{self.day or 'Schedule'}: {self.opening_time or ''} - {self.closing_time or ''}"

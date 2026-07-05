@@ -11,11 +11,9 @@ from django.core.validators import MinValueValidator
 from apps.foundation.models import CMSBaseModel, SingletonCMSModel
 from apps.foundation.services import optimize_uploaded_image
 
-
 def _upload_to_catalog_media(instance, filename: str) -> str:
     suffix = Path(filename).suffix.lower() or ".webp"
     return f"catalog/media/{uuid.uuid4().hex}{suffix}"
-
 
 class CatalogSettings(SingletonCMSModel):
     default_items_per_page = models.PositiveIntegerField(
@@ -53,7 +51,6 @@ class CatalogSettings(SingletonCMSModel):
 
     def __str__(self):
         return "Catalog Settings Configuration"
-
 
 class Category(CMSBaseModel):
     name = models.CharField(
@@ -163,7 +160,6 @@ class Category(CMSBaseModel):
             return f"{parent_name} > {cat_name}"
         return cat_name
 
-
 class Artisan(CMSBaseModel):
     name = models.CharField(
         max_length=120,
@@ -237,7 +233,6 @@ class Artisan(CMSBaseModel):
     def __str__(self):
         return self.name or "Unnamed Artisan"
 
-
 class Material(CMSBaseModel):
     name = models.CharField(
         max_length=100,
@@ -254,7 +249,6 @@ class Material(CMSBaseModel):
 
     def __str__(self):
         return self.name or "Unnamed Material"
-
 
 class Hue(CMSBaseModel):
     name = models.CharField(
@@ -280,7 +274,6 @@ class Hue(CMSBaseModel):
     def __str__(self):
         return f"{self.name or 'Unnamed Hue'} ({self.color_code or 'No Code'})"
 
-
 class EthicalStandard(CMSBaseModel):
     name = models.CharField(
         max_length=120,
@@ -299,7 +292,6 @@ class EthicalStandard(CMSBaseModel):
     def __str__(self):
         return self.name or "Unnamed Standard"
 
-
 class Collection(CMSBaseModel):
     name = models.CharField(max_length=120, verbose_name="Collection Name")
     slug = models.SlugField(max_length=150, unique=True)
@@ -315,7 +307,6 @@ class Collection(CMSBaseModel):
     def __str__(self):
         return self.name
 
-
 class Tag(CMSBaseModel):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=50, unique=True)
@@ -328,7 +319,6 @@ class Tag(CMSBaseModel):
     def __str__(self):
         return self.name
 
-
 class VariantType(CMSBaseModel):
     name = models.CharField(max_length=50, verbose_name="Variant Type", help_text="e.g., Size, Color")
     
@@ -339,7 +329,6 @@ class VariantType(CMSBaseModel):
         
     def __str__(self):
         return self.name
-
 
 class VariantOption(CMSBaseModel):
     variant_type = models.ForeignKey(VariantType, on_delete=models.CASCADE, related_name="options")
@@ -353,7 +342,67 @@ class VariantOption(CMSBaseModel):
     def __str__(self):
         return f"{self.variant_type.name}: {self.value}"
 
+# ==============================================================================
+# PREMIUM ECOMMERCE STRUCTURAL MODELS
+# ==============================================================================
+class ProductHighlight(CMSBaseModel):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Highlight Name")
+    icon_class = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., fas fa-leaf", verbose_name="Icon Class")
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
 
+    class Meta:
+        verbose_name = "Product Highlight"
+        verbose_name_plural = "Product Highlights"
+        ordering = ["display_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+class TrustBadge(CMSBaseModel):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Badge Name")
+    image = models.ImageField(upload_to=_upload_to_catalog_media, blank=True, null=True, verbose_name="Badge Image")
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
+
+    class Meta:
+        verbose_name = "Trust Badge"
+        verbose_name_plural = "Trust Badges"
+        ordering = ["display_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+class ProductLabel(CMSBaseModel):
+    name = models.CharField(max_length=50, unique=True, verbose_name="Label Name")
+    slug = models.SlugField(max_length=50, unique=True, verbose_name="Slug")
+    text_color = models.CharField(max_length=7, default="#FFFFFF", verbose_name="Text Color")
+    bg_color = models.CharField(max_length=7, default="#2C2520", verbose_name="Background Color")
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
+
+    class Meta:
+        verbose_name = "Product Label"
+        verbose_name_plural = "Product Labels"
+        ordering = ["display_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+class ProductIcon(CMSBaseModel):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Icon Name")
+    icon_class = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., fas fa-star", verbose_name="Icon Class")
+    image = models.ImageField(upload_to=_upload_to_catalog_media, blank=True, null=True, verbose_name="Icon Image")
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
+
+    class Meta:
+        verbose_name = "Product Icon"
+        verbose_name_plural = "Product Icons"
+        ordering = ["display_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+# ==============================================================================
+# MAIN PRODUCT MASTERPIECE MODEL
+# ==============================================================================
 class Product(CMSBaseModel):
     class StockChoices(models.TextChoices):
         IN_STOCK = "in", "In Stock"
@@ -407,6 +456,41 @@ class Product(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name="Full Description"
+    )
+
+    # --- Premium Narrative Fields ---
+    story = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Artisan / Product Story",
+        help_text="Legacy narratives and storyboards."
+    )
+    crafting_process = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Crafting Process",
+        help_text="Detailed explanation of how this masterpiece is crafted."
+    )
+    care_instructions = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Care Instructions",
+        help_text="Detailed care steps to preserve heritage materials."
+    )
+    shipping_information = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Shipping Information"
+    )
+    delivery_promise = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Delivery Promise"
+    )
+    return_policy = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Return Policy"
     )
 
     # --- Pricing ---
@@ -465,12 +549,54 @@ class Product(CMSBaseModel):
         related_name="products",
         verbose_name="Ethical Standards"
     )
+    
+    # --- Structural Relational Features ---
+    highlights = models.ManyToManyField(
+        ProductHighlight,
+        blank=True,
+        related_name="products",
+        verbose_name="Product Highlights"
+    )
+    trust_badges = models.ManyToManyField(
+        TrustBadge,
+        blank=True,
+        related_name="products",
+        verbose_name="Trust Badges"
+    )
+    labels = models.ManyToManyField(
+        ProductLabel,
+        blank=True,
+        related_name="products",
+        verbose_name="Product Labels"
+    )
+    icons = models.ManyToManyField(
+        ProductIcon,
+        blank=True,
+        related_name="products",
+        verbose_name="Product Icons"
+    )
+
+    # --- Merchandising Relationships ---
     related_products = models.ManyToManyField(
         'self',
         blank=True,
         symmetrical=False,
         related_name="related_to",
         verbose_name="Related Products"
+    )
+    upsell_products = models.ManyToManyField(
+        'self',
+        blank=True,
+        symmetrical=False,
+        related_name="upsold_by",
+        verbose_name="Upsell Products"
+    )
+    cross_sell_products = models.ManyToManyField(
+        'self',
+        blank=True,
+        symmetrical=False,
+        related_name="cross_sold_by",
+        verbose_name="Cross Sell Products"
     )
 
     # --- Core Images (Legacy & Primary) ---
@@ -523,6 +649,25 @@ class Product(CMSBaseModel):
         null=True,
         verbose_name="Secondary Badge Text",
         help_text="e.g. Traditional, Bestseller"
+    )
+    ribbon_text = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Ribbon Text",
+        help_text="e.g. Sale, New Arrival"
+    )
+    ribbon_bg_color = models.CharField(
+        max_length=7,
+        default="#C5A880",
+        verbose_name="Ribbon Background Color",
+        help_text="Hex color code, e.g. #C5A880"
+    )
+    ribbon_text_color = models.CharField(
+        max_length=7,
+        default="#FFFFFF",
+        verbose_name="Ribbon Text Color",
+        help_text="Hex color code, e.g. #FFFFFF"
     )
     rating = models.PositiveIntegerField(
         default=5,
@@ -610,6 +755,9 @@ class Product(CMSBaseModel):
     )
     seo_description = models.TextField(
         blank=True, null=True, verbose_name="SEO Description"
+    )
+    seo_keywords = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="SEO Keywords"
     )
     meta_title = models.CharField(
         max_length=150, blank=True, null=True, verbose_name="Meta Title"
@@ -700,7 +848,6 @@ class Product(CMSBaseModel):
     # =========================================
     # CUSTOMER INTERACTION HELPER METHODS
     # =========================================
-
     @property
     def favorite_count(self):
         """Computed property for favorite statistics."""
@@ -768,11 +915,102 @@ class Product(CMSBaseModel):
             is_active=True
         ).order_by('-view_count', '-reviews_count')[:limit]
 
+# ==============================================================================
+# PRODUCT RELATIONAL SPECIFICATION, FAQ, AND VIDEO MODULES
+# ==============================================================================
+class ProductSpecification(CMSBaseModel):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="specifications",
+        verbose_name="Product"
+    )
+    label = models.CharField(max_length=100, verbose_name="Specification Label")
+    value = models.CharField(max_length=255, verbose_name="Specification Value")
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
 
-# =========================================
-# NEW ENTERPRISE PRODUCT MODULES
-# =========================================
+    class Meta:
+        verbose_name = "Product Specification"
+        verbose_name_plural = "Product Specifications"
+        ordering = ["display_order", "label"]
 
+    def __str__(self):
+        return f"{self.label}: {self.value}"
+
+class ProductFAQ(CMSBaseModel):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="faqs",
+        verbose_name="Product"
+    )
+    question = models.CharField(max_length=255, verbose_name="Question")
+    answer = models.TextField(verbose_name="Answer")
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name="Is Active")
+
+    class Meta:
+        verbose_name = "Product FAQ"
+        verbose_name_plural = "Product FAQs"
+        ordering = ["display_order", "id"]
+
+    def __str__(self):
+        return self.question
+
+class ProductVideo(CMSBaseModel):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="videos",
+        verbose_name="Product"
+    )
+    title = models.CharField(max_length=150, blank=True, null=True, verbose_name="Video Title")
+    video_url = models.URLField(verbose_name="Video URL")
+    thumbnail = models.ImageField(
+        upload_to=_upload_to_catalog_media,
+        blank=True,
+        null=True,
+        verbose_name="Video Thumbnail"
+    )
+    display_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="Display Order")
+
+    class Meta:
+        verbose_name = "Product Video"
+        verbose_name_plural = "Product Videos"
+        ordering = ["display_order", "id"]
+
+    def __str__(self):
+        return self.title or self.video_url
+
+# ==============================================================================
+# RECENTLY VIEWED UTILITY MODEL
+# ==============================================================================
+class RecentlyViewedProduct(CMSBaseModel):
+    user_id = models.IntegerField(null=True, blank=True, db_index=True, verbose_name="User ID")
+    session_key = models.CharField(max_length=40, db_index=True, blank=True, null=True, verbose_name="Session Key")
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="recently_viewed",
+        verbose_name="Product"
+    )
+    viewed_at = models.DateTimeField(auto_now=True, db_index=True, verbose_name="Viewed At")
+
+    class Meta:
+        verbose_name = "Recently Viewed Product"
+        verbose_name_plural = "Recently Viewed Products"
+        ordering = ["-viewed_at"]
+        indexes = [
+            models.Index(fields=["session_key", "-viewed_at"]),
+            models.Index(fields=["user_id", "-viewed_at"]),
+        ]
+
+    def __str__(self):
+        return f"Viewed Product {self.product_id} at {self.viewed_at}"
+
+# ==============================================================================
+# LEGACY & ENTERPRISE COMPATIBILITY MODULES
+# ==============================================================================
 class ProductVariant(CMSBaseModel):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="variants", verbose_name="Product"
@@ -802,7 +1040,6 @@ class ProductVariant(CMSBaseModel):
 
     def __str__(self):
         return f"{self.product.title} - {self.name}"
-
 
 class ProductImage(CMSBaseModel):
     """
@@ -875,7 +1112,6 @@ class ProductImage(CMSBaseModel):
         product_title = self.product.title if (self.product and self.product.title) else "Unknown Product"
         return f"Gallery Image for {product_title}"
 
-
 class ProductGalleryImage(CMSBaseModel):
     """
     Additional structured gallery model strictly as requested for separated gallery handling.
@@ -914,7 +1150,6 @@ class ProductGalleryImage(CMSBaseModel):
     def __str__(self):
         return f"Gallery Image {self.id} for {self.product.title}"
 
-
 class ProductTag(CMSBaseModel):
     name = models.CharField(max_length=50, unique=True, verbose_name="Tag Name")
     slug = models.SlugField(max_length=50, unique=True, verbose_name="Slug")
@@ -929,7 +1164,6 @@ class ProductTag(CMSBaseModel):
 
     def __str__(self):
         return self.name
-
 
 class ProductCollection(CMSBaseModel):
     name = models.CharField(max_length=120, verbose_name="Collection Name")
@@ -963,7 +1197,6 @@ class ProductCollection(CMSBaseModel):
     def __str__(self):
         return self.name
 
-
 class ProductSEO(CMSBaseModel):
     product = models.OneToOneField(
         Product, on_delete=models.CASCADE, related_name="seo_config", verbose_name="Product"
@@ -988,7 +1221,6 @@ class ProductSEO(CMSBaseModel):
 
     def __str__(self):
         return f"SEO for {self.product.title}"
-
 
 class ProductSchema(CMSBaseModel):
     product = models.OneToOneField(

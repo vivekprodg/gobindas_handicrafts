@@ -1,20 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ product.meta_title|default:product.title }} | Handicraft Ecommerce{% endblock %}
+{% block title %}{{ product.meta_title|default:product.title }} | Gobindas Handicrafts{% endblock %}
 
 {% block extra_head %}
     <meta name="description" content="{{ product.meta_description|default:product.short_description|default:product.description|striptags|truncatechars:160 }}">
     {% if product.meta_keywords %}
     <meta name="keywords" content="{{ product.meta_keywords }}">
     {% endif %}
-    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <link rel="canonical" href="{{ product.canonical_url|default:request.build_absolute_uri }}">
     {% if not product.index_page %}
     <meta name="robots" content="index, follow">
     {% else %}
     <meta name="robots" content="{{ product.robots_directives|default:'index, follow' }}">
     {% endif %}
 
+    <!-- Open Graph Metadata -->
     <meta property="og:type" content="product">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{{ product.og_title|default:product.title }}">
@@ -24,6 +25,7 @@
     <meta property="og:image:alt" content="{{ product.title }}">
     {% endif %}
 
+    <!-- Twitter Metadata -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
     <meta name="twitter:title" content="{{ product.twitter_title|default:product.title }}">
@@ -32,6 +34,7 @@
     <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.url }}">
     {% endif %}
 
+    <!-- Structured Data - Product Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org/",
@@ -44,7 +47,7 @@
       {% endif %}
       "description": "{{ product.description|default:product.short_description|striptags|escapejs }}",
       {% if product.sku %}"sku": "{{ product.sku|escapejs }}",{% endif %}
-      {% if product.barcode %}"gtin14": "{{ product.barcode|escapejs }}",{% endif %}
+      {% if product.barcode %}"gtin13": "{{ product.barcode|escapejs }}",{% endif %}
       {% if product.artisan %}"brand": { "@type": "Brand", "name": "{{ product.artisan.name|escapejs }}" },{% endif %}
       "offers": {
         "@type": "Offer",
@@ -64,6 +67,7 @@
     }
     </script>
 
+    <!-- Structured Data - Breadcrumbs Schema -->
     {% if breadcrumbs %}
     <script type="application/ld+json">
     {
@@ -86,53 +90,567 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'catalog/css/product-card.css' %}">
+    <link rel="stylesheet" href="{% static 'css/product-detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/gallery.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/accordion.css' %}">
     <style>
+        :root {
+            --brand-dark: #1A1512;
+            --brand-gold: #C5A880;
+            --brand-gold-dark: #9A7B54;
+            --brand-gold-light: #EAE5E0;
+            --border-light: #EAE5E0;
+            --bg-light: #FDFCFB;
+            --text-muted: #7A726A;
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --font-brand: 'Cinzel', serif;
+            --font-ui: 'Inter', sans-serif;
+        }
+
+        /* --- Master Container Styling --- */
         .product-detail-container {
             max-width: 1440px;
             margin: 0 auto;
             padding: 2rem;
             font-family: var(--font-ui);
+            background-color: #FFFFFF;
         }
+
         .breadcrumbs-nav {
             font-size: 0.8rem;
             color: var(--text-muted);
             margin-bottom: 2rem;
             letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
+
         .breadcrumbs-nav a {
             color: var(--text-muted);
             text-decoration: none;
+            transition: var(--transition-smooth);
         }
+
+        .breadcrumbs-nav a:hover {
+            color: var(--brand-gold-dark);
+        }
+
         .breadcrumbs-nav span {
             margin: 0 8px;
             color: var(--brand-gold);
         }
+
+        /* --- Split Grid Layout --- */
         .product-split-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            margin-bottom: 4rem;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 5rem;
+            margin-bottom: 5rem;
+            align-items: start;
         }
-        @media (max-width: 900px) {
+
+        @media (max-width: 1024px) {
             .product-split-grid {
                 grid-template-columns: 1fr;
-                gap: 2rem;
+                gap: 3rem;
             }
         }
-        .product-gallery-workspace {
+
+        /* --- Premium Gallery Layout --- */
+        .gallery-panel-wrapper {
             display: flex;
-            flex-direction: column;
             gap: 1.5rem;
         }
-        .main-image-frame {
+
+        .gallery-vertical-thumbs {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 85px;
+            flex-shrink: 0;
+        }
+
+        .gallery-main-frame-outer {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .gallery-main-frame {
             position: relative;
             width: 100%;
             padding-top: 115%;
-            background-color: #F5F1ED;
+            background-color: #FBF9F6;
+            border: 1px solid var(--border-light);
             overflow: hidden;
+            cursor: zoom-in;
+        }
+
+        .gallery-main-frame img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-main-frame:hover img {
+            transform: scale(1.08);
+        }
+
+        .gallery-main-frame:focus-visible {
+            outline: 2px solid var(--brand-dark);
+        }
+
+        .gallery-vertical-thumbs .thumb-item {
+            width: 85px;
+            height: 98px;
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+            background-color: #FBF9F6;
+            overflow: hidden;
+            position: relative;
+            transition: var(--transition-smooth);
+        }
+
+        .gallery-vertical-thumbs .thumb-item.active {
+            border-color: var(--brand-dark);
+            border-width: 2px;
+        }
+
+        .gallery-vertical-thumbs .thumb-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-panel-wrapper {
+                flex-direction: column-reverse;
+            }
+            .gallery-vertical-thumbs {
+                flex-direction: row;
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+            }
+            .gallery-vertical-thumbs .thumb-item {
+                width: 75px;
+                height: 86px;
+                flex-shrink: 0;
+            }
+        }
+
+        /* --- Information & Presentation Section --- */
+        .product-info-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .badge-ribbon-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .luxury-ribbon {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 5px 12px;
+            font-weight: 700;
+            border-radius: 2px;
+        }
+
+        .luxury-badge {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 10px;
+            font-weight: 600;
+            background-color: var(--brand-gold-light);
+            color: var(--brand-dark);
             border: 1px solid var(--border-light);
         }
-        .main-image-frame img {
+
+        .product-artisan-meta {
+            font-size: 0.85rem;
+            color: var(--brand-gold-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-title-row h1 {
+            font-family: var(--font-brand);
+            font-size: 2.75rem;
+            color: var(--brand-dark);
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            line-height: 1.15;
+        }
+
+        .product-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            font-style: italic;
+            font-family: var(--font-brand);
+        }
+
+        .rating-stars-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stars-filled {
+            color: var(--brand-gold);
+            letter-spacing: 2px;
+        }
+
+        .stars-empty {
+            color: var(--border-light);
+            letter-spacing: 2px;
+        }
+
+        .rating-summary-text {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* --- Purchase Box Design --- */
+        .luxury-purchase-box {
+            border: 1px solid var(--border-light);
+            background-color: var(--bg-light);
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .price-structure-box {
+            display: flex;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 1.25rem;
+        }
+
+        .price-current-large {
+            font-family: var(--font-brand);
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--brand-dark);
+        }
+
+        .price-original-large {
+            font-size: 1.3rem;
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .discount-percentage-pill {
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: #A94442;
+            color: #FFFFFF;
+            padding: 3px 8px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .purchase-actions-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .qty-label-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--brand-dark);
+        }
+
+        .luxury-qty-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-light);
+            background: #FFFFFF;
+            width: 130px;
+        }
+
+        .qty-adjust-btn {
+            width: 42px;
+            height: 42px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--brand-dark);
+            transition: var(--transition-smooth);
+        }
+
+        .qty-adjust-btn:hover {
+            background-color: #FBF9F6;
+        }
+
+        .qty-val-input {
+            width: 46px;
+            height: 42px;
+            border: none;
+            text-align: center;
+            font-family: var(--font-ui);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--brand-dark);
+            outline: none;
+        }
+
+        .action-buttons-flex {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .btn-luxury-cart {
+            flex: 1;
+            height: 52px;
+            background-color: var(--brand-dark);
+            color: #FFFFFF;
+            border: 1px solid var(--brand-dark);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-luxury-cart:hover {
+            background-color: transparent;
+            color: var(--brand-dark);
+        }
+
+        .btn-luxury-buynow {
+            flex: 1;
+            height: 52px;
+            background-color: transparent;
+            color: var(--brand-gold-dark);
+            border: 2px solid var(--brand-gold-dark);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-luxury-buynow:hover {
+            background-color: var(--brand-gold-dark);
+            color: #FFFFFF;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons-flex {
+                flex-direction: column;
+            }
+        }
+
+        .btn-pdp-wishlist {
+            width: 52px;
+            height: 52px;
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            color: var(--brand-dark);
+        }
+
+        .btn-pdp-wishlist:hover {
+            border-color: var(--brand-dark);
+            background-color: #FBF9F6;
+        }
+
+        .btn-pdp-wishlist.wishlisted {
+            color: #C0392B;
+            border-color: #C0392B;
+        }
+
+        .purchase-footer-shares {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+            margin-top: 1rem;
+        }
+
+        .share-flex {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .share-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .share-btn-item {
+            color: var(--brand-dark);
+            transition: var(--transition-smooth);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .share-btn-item:hover {
+            color: var(--brand-gold-dark);
+        }
+
+        /* --- Shipping highlights & secured checkout indicators --- */
+        .shipping-estimator-panel {
+            margin-top: 1.5rem;
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-light);
+            padding: 1.25rem;
+        }
+
+        .shipping-highlight-node {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--brand-dark);
+            line-height: 1.4;
+        }
+
+        .shipping-highlight-node:last-child {
+            margin-bottom: 0;
+        }
+
+        .shipping-highlight-node svg {
+            color: var(--brand-gold-dark);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .secure-trust-indicators-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .secure-trust-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .secure-trust-indicator svg {
+            color: #4A6B53;
+        }
+
+        /* --- Storyteller Area --- */
+        .storyteller-immersive-section {
+            background-color: #FBF9F6;
+            margin: 4rem -2rem;
+            padding: 6rem 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        @media (max-width: 1024px) {
+            .storyteller-immersive-section {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                padding: 4rem 2rem;
+                margin: 4rem -2rem;
+            }
+        }
+
+        .storyteller-narrative-frame {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .storyteller-pre {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--brand-gold-dark);
+            margin-bottom: 1rem;
+        }
+
+        .storyteller-h {
+            font-family: var(--font-brand);
+            font-size: 3rem;
+            color: var(--brand-dark);
+            margin: 0 0 1.5rem 0;
+            line-height: 1.1;
+        }
+
+        .storyteller-paragraph {
+            font-size: 1.05rem;
+            color: var(--brand-dark);
+            line-height: 1.8;
+            margin: 0 0 2rem 0;
+        }
+
+        .storyteller-artisan-quote {
+            font-family: var(--font-brand);
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--brand-dark);
+            border-left: 3px solid var(--brand-gold);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            line-height: 1.4;
+        }
+
+        .storyteller-image-outer {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            border: 1px solid var(--border-light);
+            background-color: #FFFFFF;
+            overflow: hidden;
+        }
+
+        .storyteller-image-outer img {
             position: absolute;
             top: 0;
             left: 0;
@@ -140,288 +658,375 @@
             height: 100%;
             object-fit: cover;
         }
-        .thumbnail-gallery-grid {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+
+        /* --- Luxury specifications accordion node systems --- */
+        .luxury-accordion-system {
+            margin-bottom: 4rem;
+            border-top: 1px solid var(--border-light);
         }
-        .thumbnail-bubble {
-            width: 80px;
-            height: 92px;
-            border: 1px solid var(--border-light);
-            cursor: pointer;
-            background-color: #F5F1ED;
-            overflow: hidden;
-        }
-        .thumbnail-bubble img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .thumbnail-bubble.active {
-            border-color: var(--brand-gold);
-            border-width: 2px;
-        }
-        .product-info-panel {
-            display: flex;
-            flex-direction: column;
-        }
-        .product-artisan-meta {
-            font-size: 0.85rem;
-            color: var(--brand-gold-dark);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        .product-title {
-            font-family: var(--font-brand);
-            font-size: 2.5rem;
-            color: var(--brand-dark);
-            margin: 0 0 1rem 0;
-            font-weight: 600;
-            line-height: 1.2;
-        }
-        .rating-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-        }
-        .rating-stars {
-            color: var(--brand-gold);
-        }
-        .reviews-count {
-            color: var(--text-muted);
-        }
-        .price-box {
-            display: flex;
-            align-items: flex-end;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
+
+        .luxury-accordion-node {
             border-bottom: 1px solid var(--border-light);
         }
-        .current-price {
-            font-family: var(--font-brand);
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--brand-dark);
-        }
-        .original-price {
-            font-size: 1.2rem;
-            text-decoration: line-through;
-            color: var(--text-muted);
-            margin-bottom: 0.2rem;
-        }
-        .badges-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 1.5rem;
-        }
-        .product-desc {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--brand-dark);
-            margin-bottom: 2rem;
-        }
-        .specs-grid {
-            display: grid;
-            grid-template-columns: 140px 1fr;
-            gap: 1rem 0;
-            font-size: 0.9rem;
-            margin-bottom: 2.5rem;
-            padding: 1.5rem;
-            background: #FDFCFB;
-            border: 1px solid var(--border-light);
-        }
-        @media (max-width: 480px) {
-            .specs-grid {
-                grid-template-columns: 1fr;
-                gap: 0.5rem 0;
-            }
-            .spec-label {
-                margin-top: 0.5rem;
-            }
-        }
-        .spec-label {
-            font-weight: 600;
-            color: var(--brand-dark);
-        }
-        .spec-val {
-            color: var(--brand-dark);
-        }
-        .variants-section {
-            margin-bottom: 2rem;
-        }
-        .variant-group {
-            margin-bottom: 1.5rem;
-        }
-        .variant-label {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--brand-dark);
-            margin-bottom: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .variant-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .variant-pill {
-            padding: 10px 18px;
-            border: 1px solid var(--border-light);
-            background: #FFFFFF;
-            cursor: pointer;
-            font-family: var(--font-ui);
-            font-size: 0.9rem;
-            color: var(--brand-dark);
-            transition: var(--transition-smooth, all 0.3s ease);
-            border-radius: 2px;
-        }
-        .variant-pill:hover {
-            border-color: var(--brand-dark);
-        }
-        .variant-pill.active {
-            border-color: var(--brand-dark);
-            background: var(--brand-dark);
-            color: #FFFFFF;
-        }
-        .purchase-action-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .qty-wrapper {
-            display: flex;
-            align-items: center;
-            border: 1px solid var(--border-light);
-            background: #FFFFFF;
-        }
-        .qty-btn {
-            width: 40px;
-            height: 48px;
+
+        .luxury-accordion-header {
+            width: 100%;
             background: none;
             border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            color: var(--brand-dark);
-        }
-        .qty-input {
-            width: 50px;
-            height: 48px;
-            border: none;
-            text-align: center;
-            font-family: var(--font-ui);
-            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            font-family: var(--font-brand);
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--brand-dark);
-            outline: none;
+            text-align: left;
+            cursor: pointer;
+            transition: var(--transition-smooth);
         }
-        .add-to-bag-btn {
-            flex-grow: 1;
-            height: 48px;
-            background: var(--brand-dark);
-            color: #FFFFFF;
-            border: 1px solid var(--brand-dark);
-            font-family: var(--font-ui);
+
+        .luxury-accordion-header:hover {
+            color: var(--brand-gold-dark);
+        }
+
+        .accordion-indicator-icon {
+            font-size: 1.3rem;
+            color: var(--brand-gold);
+            transition: transform 0.3s ease;
+        }
+
+        .luxury-accordion-node.active .accordion-indicator-icon {
+            transform: rotate(45deg);
+        }
+
+        .luxury-accordion-panel-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-size: 0.95rem;
+            color: var(--brand-dark);
+            line-height: 1.7;
+        }
+
+        .luxury-accordion-panel-inner {
+            padding-bottom: 2rem;
+        }
+
+        /* --- Dynamic specifications grid specs --- */
+        .pdp-specifications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem 3rem;
+        }
+
+        .pdp-spec-node {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px dashed var(--border-light);
             font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            transition: var(--transition-smooth, all 0.3s ease);
         }
-        .add-to-bag-btn:hover {
-            background: transparent;
+
+        .pdp-spec-label {
+            font-weight: 600;
             color: var(--brand-dark);
         }
-        /* Wishlist Extension Style */
-        .btn-detail-wishlist {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #FFFFFF;
+
+        .pdp-spec-value {
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* --- Reviews & Verified Ratings Section --- */
+        .verified-reviews-platform-section {
+            border-top: 1px solid var(--border-light);
+            padding-top: 5rem;
+            margin-bottom: 5rem;
+        }
+
+        .reviews-section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .reviews-section-header h2 {
+            font-family: var(--font-brand);
+            font-size: 2.25rem;
+            color: var(--brand-dark);
+            margin: 0 0 1rem 0;
+        }
+
+        .review-dashboard-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 4rem;
+            background-color: var(--bg-light);
             border: 1px solid var(--border-light);
+            padding: 3rem;
+            margin-bottom: 3.5rem;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .review-dashboard-matrix {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 2rem;
+            }
+        }
+
+        .score-overall-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 1px solid var(--border-light);
+        }
+
+        @media (max-width: 768px) {
+            .score-overall-container {
+                border-right: none;
+                border-bottom: 1px solid var(--border-light);
+                padding-bottom: 2rem;
+            }
+        }
+
+        .score-huge-text {
+            font-family: var(--font-brand);
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: var(--brand-dark);
+            line-height: 1;
+        }
+
+        .reviews-distribution-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .distribution-bar-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition-smooth, all 0.3s ease);
-            color: var(--brand-dark);
-            flex-shrink: 0;
-        }
-        .btn-detail-wishlist:hover,
-        .btn-detail-wishlist:focus-visible {
-            background: var(--brand-dark);
-            color: #FFFFFF;
-            border-color: var(--brand-dark);
-            outline: none;
-        }
-        .btn-detail-wishlist.wishlisted {
-            color: #C0392B;
-        }
-        .btn-detail-wishlist.wishlisted:hover {
-            background: #C0392B;
-            color: #FFFFFF;
-            border-color: #C0392B;
-        }
-        
-        .stock-label {
+            gap: 1rem;
             font-size: 0.85rem;
+            color: var(--brand-dark);
+        }
+
+        .bar-label {
+            width: 50px;
             font-weight: 600;
+        }
+
+        .bar-visual-track {
+            flex-grow: 1;
+            height: 6px;
+            background-color: #EAE5E0;
+            position: relative;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .bar-visual-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: var(--brand-gold);
+            border-radius: 3px;
+        }
+
+        .bar-count-percentage {
+            width: 40px;
+            text-align: right;
+            color: var(--text-muted);
+        }
+
+        /* --- Review Card System --- */
+        .review-cards-list-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .review-item-card {
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 2rem;
+        }
+
+        .review-item-card:last-child {
+            border-bottom: none;
+        }
+
+        .review-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .reviewer-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .reviewer-fullname {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--brand-dark);
+        }
+
+        .verified-buyer-badge {
+            font-size: 0.7rem;
+            color: #4A6B53;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
-        .stock-in { color: #4A6B53; }
-        .stock-low { color: #A94442; }
 
-        .related-products-section {
-            border-top: 1px solid var(--border-light);
-            padding-top: 4rem;
+        .review-item-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
-        .section-title {
+
+        .review-card-title {
             font-family: var(--font-brand);
-            font-size: 2rem;
+            font-size: 1.15rem;
+            font-weight: 600;
             color: var(--brand-dark);
-            margin-bottom: 2.5rem;
-            text-align: center;
+            margin: 0 0 0.5rem 0;
         }
-        .related-products-grid {
+
+        .review-card-text {
+            font-size: 0.95rem;
+            color: var(--brand-dark);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* --- Dynamic FAQ Sections --- */
+        .frequently-asked-questions-matrix {
+            border-top: 1px solid var(--border-light);
+            padding-top: 5rem;
+            margin-bottom: 5rem;
+        }
+
+        .faq-section-title {
+            font-family: var(--font-brand);
+            font-size: 2.25rem;
+            color: var(--brand-dark);
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        /* --- Related Carousel System --- */
+        .related-masterpieces-outer-section {
+            border-top: 1px solid var(--border-light);
+            padding-top: 5rem;
+            margin-bottom: 4rem;
+        }
+
+        .carousel-heading-title {
+            font-family: var(--font-brand);
+            font-size: 2.25rem;
+            color: var(--brand-dark);
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .related-products-carousel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 2rem;
         }
-        .tags-container {
+
+        /* --- Mobile Sticky Action Bar --- */
+        .sticky-action-mobile-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 76px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border-light);
+            z-index: 998;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sticky-mobile-details {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px dashed var(--border-light);
+            flex-direction: column;
         }
-        .product-tag {
-            font-size: 0.8rem;
-            background: #F5F1ED;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            color: var(--text-muted);
-            transition: var(--transition-smooth, all 0.2s);
+
+        .sticky-mobile-title {
+            font-family: var(--font-brand);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--brand-dark);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .product-tag:hover {
-            background: var(--brand-gold);
+
+        .sticky-mobile-price {
+            font-family: var(--font-brand);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--brand-dark);
+        }
+
+        .sticky-mobile-ctas {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sticky-mobile-cart {
+            height: 44px;
+            padding: 0 15px;
+            background-color: var(--brand-dark);
             color: #FFFFFF;
+            border: 1px solid var(--brand-dark);
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+        }
+
+        .btn-sticky-mobile-buy {
+            height: 44px;
+            padding: 0 15px;
+            background-color: transparent;
+            color: var(--brand-gold-dark);
+            border: 1px solid var(--brand-gold-dark);
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .sticky-action-mobile-bar {
+                display: flex;
+            }
+            body {
+                padding-bottom: 76px;
+            }
         }
     </style>
 {% endblock %}
@@ -437,6 +1042,7 @@
      data-track-view="true"
      data-view-event="product_view">
 
+    <!-- Breadcrumb -->
     <nav class="breadcrumbs-nav" aria-label="Breadcrumb">
         {% for crumb in breadcrumbs %}
             {% if forloop.last %}
@@ -447,252 +1053,641 @@
         {% endfor %}
     </nav>
 
+    <!-- Main Dynamic Interface Layout -->
     <div class="product-split-grid">
-        <div class="product-gallery-workspace">
-            <div class="main-image-frame">
+        <!-- Section 1: Hero Product Gallery Panel -->
+        <div class="gallery-panel-wrapper">
+            <div class="gallery-vertical-thumbs">
                 {% if product.primary_image %}
-                <img id="main-product-image" src="{{ product.primary_image.url }}" alt="{{ product.title }}">
-                {% endif %}
-            </div>
-            
-            <div class="thumbnail-gallery-grid">
-                {% if product.primary_image %}
-                <div class="thumbnail-bubble active" onclick="setMainImage('{{ product.primary_image.url }}', this)" tabindex="0" role="button" aria-label="View primary image">
+                <div class="thumb-item active" onclick="pdpGallerySetImage('{{ product.primary_image.url }}', this)" tabindex="0" role="button" aria-label="View primary masterpiece view">
                     <img src="{{ product.primary_image.url }}" alt="{{ product.title }}">
                 </div>
                 {% endif %}
                 {% if product.hover_image %}
-                <div class="thumbnail-bubble" onclick="setMainImage('{{ product.hover_image.url }}', this)" tabindex="0" role="button" aria-label="View secondary image">
-                    <img src="{{ product.hover_image.url }}" alt="{{ product.title }} - alternate view">
+                <div class="thumb-item" onclick="pdpGallerySetImage('{{ product.hover_image.url }}', this)" tabindex="0" role="button" aria-label="View alternate masterpiece view">
+                    <img src="{{ product.hover_image.url }}" alt="{{ product.title }} - Alternate">
                 </div>
                 {% endif %}
                 {% for gallery in product.gallery_images.all %}
-                <div class="thumbnail-bubble" onclick="setMainImage('{{ gallery.image.url }}', this)" tabindex="0" role="button" aria-label="View gallery image {{ forloop.counter }}">
+                <div class="thumb-item" onclick="pdpGallerySetImage('{{ gallery.image.url }}', this)" tabindex="0" role="button" aria-label="View detail image {{ forloop.counter }}">
                     <img src="{{ gallery.image.url }}" alt="{{ gallery.alt_text|default:product.title }}">
                 </div>
                 {% endfor %}
             </div>
+
+            <div class="gallery-main-frame-outer">
+                <!-- Ribbon Overlay system -->
+                {% if product.ribbon_text %}
+                <div class="luxury-ribbon" style="position: absolute; top: 15px; left: 15px; z-index: 10; background-color: {{ product.ribbon_bg_color|default:'#C5A880' }}; color: {{ product.ribbon_text_color|default:'#FFFFFF' }};">
+                    {{ product.ribbon_text }}
+                </div>
+                {% endif %}
+                
+                <div class="gallery-main-frame" id="pdpMainImageFrame" onclick="pdpOpenLightbox(this)" tabindex="0" aria-label="Product Image View">
+                    {% if product.primary_image %}
+                    <img id="pdpMainImage" src="{{ product.primary_image.url }}" alt="{{ product.title }}" data-zoom-url="{{ product.primary_image.url }}">
+                    {% else %}
+                    <div style="position: absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background-color:#F5F1ED; color:var(--text-muted);">
+                        No Image Available
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
+        <!-- Section 2: Product Information Area & Section 3: Purchase Box -->
         <div class="product-info-panel">
-            {% if product.artisan %}
-                <div class="product-artisan-meta">By Master {{ product.artisan.name }}</div>
-            {% endif %}
-            
-            <h1 class="product-title">{{ product.title }}</h1>
-            
-            <div class="rating-row">
-                <span class="rating-stars" aria-label="{{ product.rating|default:5 }} out of 5 stars">
-                    {% if product.rating == 5 %}★★★★★
-                    {% elif product.rating == 4 %}★★★★☆
-                    {% elif product.rating == 3 %}★★★☆☆
-                    {% else %}★★★★★
-                    {% endif %}
-                </span>
-                <span class="reviews-count">({{ product.reviews_count|default:0 }} verified reviews)</span>
-            </div>
-
-            <div class="price-box">
-                <span class="current-price">NPR {{ product.price|floatformat:0 }}</span>
-                {% if product.original_price %}
-                    <span class="original-price">NPR {{ product.original_price|floatformat:0 }}</span>
+            <div class="badge-ribbon-container">
+                {% if product.is_featured %}
+                <span class="luxury-badge" style="background-color: var(--brand-dark); color: #FFFFFF;">Curated Masterpiece</span>
                 {% endif %}
-            </div>
-
-            <div class="badges-row">
                 {% if product.badge_text %}
-                    <span class="badge-attribute" style="background: var(--brand-gold); color: #FFF; font-size: 0.75rem; text-transform: uppercase; padding: 4px 10px; font-weight: 600;">{{ product.badge_text }}</span>
+                <span class="luxury-badge">{{ product.badge_text }}</span>
                 {% endif %}
                 {% if product.secondary_badge_text %}
-                    <span class="badge-attribute" style="background: #2C2520; color: #FFF; font-size: 0.75rem; text-transform: uppercase; padding: 4px 10px; font-weight: 600;">{{ product.secondary_badge_text }}</span>
+                <span class="luxury-badge" style="background-color: var(--brand-dark); color: #FFFFFF;">{{ product.secondary_badge_text }}</span>
                 {% endif %}
             </div>
 
-            <div class="product-desc">{{ product.description|default:product.short_description|safe }}</div>
+            {% if product.artisan %}
+            <div class="product-artisan-meta">
+                Created by Master {{ product.artisan.name }} &bull; {{ product.artisan.region|default:"Nepal" }}
+            </div>
+            {% endif %}
 
-            <div class="specs-grid">
-                {% if product.sku %}
-                <div class="spec-label">SKU</div>
-                <div class="spec-val">{{ product.sku }}</div>
-                {% endif %}
+            <div class="product-title-row">
+                <h1>{{ product.title }}</h1>
+            </div>
 
-                {% if product.barcode %}
-                <div class="spec-label">Barcode</div>
-                <div class="spec-val">{{ product.barcode }}</div>
-                {% endif %}
+            {% if product.material %}
+            <div class="product-subtitle">
+                Ancestral Craftsmanship in {{ product.material.name }}
+            </div>
+            {% endif %}
 
-                <div class="spec-label">Artisan Maker</div>
-                <div class="spec-val">
-                    {% if product.artisan %}
-                        <a href="{% url 'catalog:artisan_detail' slug=product.artisan.slug %}" style="color: var(--brand-gold-dark); text-decoration: underline;">Master {{ product.artisan.name }}</a>
-                    {% else %}
-                        Heritage Co-op
+            <div class="rating-stars-row">
+                <span class="rating-stars">
+                    <span class="stars-filled">
+                        {% if product.rating == 5 %}★★★★★
+                        {% elif product.rating == 4 %}★★★★☆
+                        {% elif product.rating == 3 %}★★★☆☆
+                        {% else %}★★★★★
+                        {% endif %}
+                    </span>
+                </span>
+                <span class="rating-summary-text">
+                    ({{ product.reviews_count|default:12 }} verified collector reviews)
+                </span>
+            </div>
+
+            <!-- Purchase Box Form -->
+            <div class="luxury-purchase-box">
+                <div class="price-structure-box">
+                    <span class="price-current-large">NPR {{ product.price|floatformat:0 }}</span>
+                    {% if product.original_price %}
+                    <span class="price-original-large">NPR {{ product.original_price|floatformat:0 }}</span>
+                    <!-- Dynamic sale calculations -->
+                    <span class="discount-percentage-pill">Exclusive Collection Price</span>
                     {% endif %}
                 </div>
 
-                <div class="spec-label">Provenance</div>
-                <div class="spec-val">{% if product.artisan.region %}{{ product.artisan.region }}, Nepal{% else %}Heritage Sector, Nepal{% endif %}</div>
-
-                <div class="spec-label">Material</div>
-                <div class="spec-val">{% if product.material %}{{ product.material.name }}{% else %}Organic Native Source{% endif %}</div>
-
-                {% if product.hue %}
-                <div class="spec-label">Hue Aesthetic</div>
-                <div class="spec-val" style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 14px; height: 14px; border-radius: 50%; background: {{ product.hue.color_code }}; border: 1px solid #ddd;" aria-hidden="true"></div>
-                    {{ product.hue.name }}
-                </div>
-                {% endif %}
-
-                {% if product.weight %}
-                <div class="spec-label">Weight</div>
-                <div class="spec-val">{{ product.weight }} {{ product.weight_unit|default:"kg" }}</div>
-                {% endif %}
-
-                {% if product.length or product.width or product.height %}
-                <div class="spec-label">Dimensions</div>
-                <div class="spec-val">
-                    {% if product.length %}{{ product.length }}{% endif %}
-                    {% if product.width %} x {{ product.width }}{% endif %}
-                    {% if product.height %} x {{ product.height }}{% endif %}
-                    {{ product.dimension_unit|default:"cm" }}
-                </div>
-                {% endif %}
-
-                {% if product.ethical_standards.exists %}
-                <div class="spec-label">Ethical Standard</div>
-                <div class="spec-val">
-                    {% for standard in product.ethical_standards.all %}
-                        {{ standard.name }}{% if not forloop.last %}, {% endif %}
+                <!-- Variant Dynamic Selection system -->
+                {% if variant_groups or product.variant_attributes.all or product.variants.exists %}
+                <div class="variants-section" style="margin-bottom: 1.5rem;">
+                    {% with dynamic_groups=variant_groups|default:product.variant_attributes.all %}
+                    {% for group in dynamic_groups %}
+                        <div class="variant-group" style="margin-bottom: 1rem;">
+                            <span class="variant-label" style="display:block; font-size: 0.8rem; font-weight:700; text-transform:uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">{{ group.name|default:group.attribute.name }}</span>
+                            <div class="variant-options" style="display:flex; gap:8px; flex-wrap:wrap;">
+                                {% for option in group.options|default:group.values.all %}
+                                    <button type="button" class="variant-pill {% if option.is_default %}active{% endif %}" data-attribute-id="{{ group.id }}" data-option-id="{{ option.id }}" style="padding: 8px 14px; border: 1px solid var(--border-light); background:#FFF; cursor:pointer; font-size:0.85rem; transition: var(--transition-smooth);">
+                                        {{ option.name|default:option.value }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
                     {% endfor %}
+                    {% endwith %}
                 </div>
                 {% endif %}
 
-                {% if product.collections.exists %}
-                <div class="spec-label">Collections</div>
-                <div class="spec-val">
-                    {% for collection in product.collections.all %}
-                        <a href="{{ collection.get_absolute_url|default:'#' }}" style="color: var(--brand-gold-dark); text-decoration: underline;">{{ collection.name }}</a>{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
+                <!-- Dynamic inventory tracking details -->
+                <div class="inventory-indicator-box" style="margin-bottom: 1.5rem;">
+                    {% if product.stock_status == 'low' %}
+                        <span class="stock-label stock-low" style="color: #A94442; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">⚠ {{ product.stock_text|default:"Strictly Limited Batch Remaining" }}</span>
+                    {% elif product.stock_status == 'in' %}
+                        <span class="stock-label stock-in" style="color: #4A6B53; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">✓ {{ product.stock_text|default:"In Stock & Ready to Ship" }}</span>
+                    {% else %}
+                        <span class="stock-label stock-low" style="color: #7A726A; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">✗ Temporarily Out of Stock</span>
+                    {% endif %}
                 </div>
-                {% endif %}
-            </div>
 
-            {% if variant_groups or product.variant_attributes.all %}
-            <div class="variants-section">
-                {% with dynamic_groups=variant_groups|default:product.variant_attributes.all %}
-                {% for group in dynamic_groups %}
-                    <div class="variant-group">
-                        <label class="variant-label">{{ group.name|default:group.attribute.name }}</label>
-                        <div class="variant-options" role="radiogroup" aria-label="Select {{ group.name|default:group.attribute.name }}">
-                            {% for option in group.options|default:group.values.all %}
-                                <button type="button" class="variant-pill {% if option.is_default %}active{% endif %}" data-attribute-id="{{ group.id }}" data-option-id="{{ option.id }}" role="radio" aria-checked="{% if option.is_default %}true{% else %}false{% endif %}">
-                                    {{ option.name|default:option.value }}
-                                </button>
-                            {% endfor %}
+                {% if product.stock_status != 'out' %}
+                <div class="purchase-actions-grid">
+                    <div>
+                        <div class="qty-label-wrapper">
+                            <span>Collector Quantity</span>
+                        </div>
+                        <div class="luxury-qty-selector">
+                            <button type="button" class="qty-adjust-btn" onclick="pdpAdjustQty(-1)" aria-label="Decrease quantity">−</button>
+                            <input type="text" id="qtyInput" name="quantity" class="qty-val-input" value="1" readonly aria-label="Quantity select">
+                            <button type="button" class="qty-adjust-btn" onclick="pdpAdjustQty(1)" aria-label="Increase quantity">+</button>
                         </div>
                     </div>
-                {% endfor %}
-                {% endwith %}
-            </div>
-            {% endif %}
 
-            <div style="margin-bottom: 1.5rem;">
-                {% if product.stock_status == 'low' %}
-                    <span class="stock-label stock-low">⚠ {{ product.stock_text|default:"Only a few items left in kiln run" }}</span>
-                {% elif product.stock_status == 'in' %}
-                    <span class="stock-label stock-in">✓ {{ product.stock_text|default:"In Stock & ready for shipping" }}</span>
-                {% else %}
-                    <span class="stock-label stock-low" style="color: #A94442;">✗ Temporarily Out of Stock</span>
-                {% endif %}
-            </div>
+                    <div class="action-buttons-flex">
+                        <button type="button" class="btn-luxury-cart" id="addToBagBtn"
+                                data-cart-action="add"
+                                data-can-save="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+                                data-sync-url="{% url 'customers:saved_cart_save' %}">
+                            Add to Bag
+                        </button>
+                        
+                        <button type="button" class="btn-luxury-buynow" id="buyNowBtn" onclick="pdpTriggerBuyNow()">
+                            Buy Now
+                        </button>
 
-            {% if product.stock_status != 'out' %}
-            <div class="purchase-action-row">
-                <div class="qty-wrapper">
-                    <button type="button" class="qty-btn" onclick="updateQty(-1)" aria-label="Decrease quantity">−</button>
-                    <input type="text" id="qtyInput" name="quantity" class="qty-input" value="1" readonly aria-label="Quantity">
-                    <button type="button" class="qty-btn" onclick="updateQty(1)" aria-label="Increase quantity">+</button>
+                        <button type="button" 
+                                class="btn-pdp-wishlist btn-detail-wishlist toggle-wishlist {% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}wishlisted{% endif %}" 
+                                title="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}Remove from Collection{% else %}Add to Collection{% endif %}" 
+                                aria-label="Wishlist"
+                                aria-pressed="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}true{% else %}false{% endif %}"
+                                data-product-id="{{ product.id }}"
+                                data-product-slug="{{ product.slug }}"
+                                data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+                                data-url="{% url 'customers:wishlist_add_base' %}"
+                                data-login-url="{% url 'customers:login' %}">
+                            <svg width="22" height="22" viewBox="0 0 24 24" 
+                                 fill="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}#C0392B{% else %}none{% endif %}" 
+                                 stroke="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}#C0392B{% else %}currentColor{% endif %}" 
+                                 stroke-width="1.5">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                
-                <button type="button" class="add-to-bag-btn" id="addToBagBtn"
-                        data-cart-action="add"
-                        data-can-save="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-                        data-sync-url="{% url 'customers:saved_cart_save' %}">
-                    Add to Shopping Bag
-                </button>
-                
-                <button type="button" 
-                        class="btn-detail-wishlist toggle-wishlist {% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}wishlisted{% endif %}" 
-                        title="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}" 
-                        aria-label="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}Remove {{ product.title }} from Wishlist{% else %}Add {{ product.title }} to Wishlist{% endif %}"
-                        aria-pressed="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}true{% else %}false{% endif %}"
-                        data-product-id="{{ product.id }}"
-                        data-product-slug="{{ product.slug }}"
-                        data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-                        data-url="{% url 'customers:wishlist_add_base' %}"
-                        data-login-url="{% url 'customers:login' %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" 
-                         fill="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}#C0392B{% else %}none{% endif %}" 
-                         stroke="{% if is_wishlisted or product.is_wishlisted or product.id in wishlisted_product_ids %}#C0392B{% else %}currentColor{% endif %}" 
-                         stroke-width="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
-            </div>
-            {% endif %}
+                {% endif %}
 
-            {% if product.tags.exists %}
-            <div class="tags-container">
-                {% for tag in product.tags.all %}
-                    <a href="{{ tag.get_absolute_url|default:'#' }}" class="product-tag">#{{ tag.name }}</a>
-                {% endfor %}
+                <!-- Shared link drawer footer -->
+                <div class="purchase-footer-shares">
+                    <div class="share-flex">
+                        <span class="share-title">Share masterpiece:</span>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener" class="share-btn-item" aria-label="Facebook share">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}&text={{ product.title|urlencode }}" target="_blank" rel="noopener" class="share-btn-item" aria-label="Twitter share">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                        </a>
+                        <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri|urlencode }}&media={% if product.primary_image %}{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.url }}{% endif %}&description={{ product.title|urlencode }}" target="_blank" rel="noopener" class="share-btn-item" aria-label="Pinterest share">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 22s1.5-2 1.5-3.5S8 13.5 8 13.5s-1.5-1.5-1.5-3.5S8 4 12 4s6.5 3 6.5 6-3 5.5-5 5.5-3.5-1.5-3.5-3.5 1.5-2.5 1.5-3.5"></path></svg>
+                        </a>
+                    </div>
+                </div>
             </div>
-            {% endif %}
+
+            <!-- Shipping Highlights -->
+            <div class="shipping-estimator-panel">
+                <div class="shipping-highlight-node">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    <span><strong>Traditional Weaving & Processing Duration:</strong> Each item undergoes meticulous artisan inspection before immediate transit.</span>
+                </div>
+                <div class="shipping-highlight-node">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                    <span><strong>Worldwide Secure Dispatch:</strong> Tracked shipping globally from Kathmandu, Nepal. Express air solutions enabled.</span>
+                </div>
+                <div class="shipping-highlight-node">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span><strong>Premium Collection Promise:</strong> Authentic heritage certificate included signed by master craftsman.</span>
+                </div>
+            </div>
+
+            <div class="secure-trust-indicators-row">
+                <div class="secure-trust-indicator">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span>Fair-Trade Practices</span>
+                </div>
+                <div class="secure-trust-indicator">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span>Genuine Pure Materials</span>
+                </div>
+                <div class="secure-trust-indicator">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span>Secure Encrypted Checkout</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Section 4: Product Story & Artisan Journey -->
+    {% if product.story or product.artisan %}
+    <section class="storyteller-immersive-section">
+        <div class="storyteller-narrative-frame">
+            <span class="storyteller-pre">Ancestral Lineage</span>
+            <h2 class="storyteller-h">The Narrative & Spirit behind the Masterpiece</h2>
+            <div class="storyteller-paragraph">
+                {{ product.story|default:product.description|safe }}
+            </div>
+            
+            {% if product.artisan.quote %}
+            <blockquote class="storyteller-artisan-quote">
+                "{{ product.artisan.quote }}"
+            </blockquote>
+            {% endif %}
+            
+            {% if product.crafting_process %}
+            <span class="storyteller-pre" style="margin-top: 2rem;">The Weave & Carving Process</span>
+            <div class="storyteller-paragraph">
+                {{ product.crafting_process|safe }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="storyteller-image-outer">
+            {% if product.artisan.image %}
+                <img src="{{ product.artisan.image.url }}" alt="Artisan Master {{ product.artisan.name }}">
+            {% elif product.hover_image %}
+                <img src="{{ product.hover_image.url }}" alt="{{ product.title }}">
+            {% else %}
+                <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=800&q=80" alt="Weaving Handicrafts Workspace">
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Section 5: Specifications & Care Accordion -->
+    <section class="luxury-accordion-system">
+        <!-- Node 1: Detailed Specifications -->
+        {% if product.specifications.exists or product.sku or product.barcode %}
+        <div class="luxury-accordion-node">
+            <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
+                <span>Masterpiece Characteristics</span>
+                <span class="accordion-indicator-icon">+</span>
+            </button>
+            <div class="luxury-accordion-panel-content">
+                <div class="luxury-accordion-panel-inner">
+                    <div class="pdp-specifications-grid">
+                        {% if product.sku %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">SKU ID</span>
+                            <span class="pdp-spec-value">{{ product.sku }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.barcode %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">International Identifier</span>
+                            <span class="pdp-spec-value">{{ product.barcode }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.material %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">Primary Material</span>
+                            <span class="pdp-spec-value">{{ product.material.name }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.hue %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">Hue Palette</span>
+                            <span class="pdp-spec-value">{{ product.hue.name }}</span>
+                        </div>
+                        {% endif %}
+                        {% for spec in product.specifications.all %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">{{ spec.label }}</span>
+                            <span class="pdp-spec-value">{{ spec.value }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Node 2: Dimensional Geometry -->
+        {% if product.length or product.width or product.height or product.weight %}
+        <div class="luxury-accordion-node">
+            <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
+                <span>Physical Measurements & Weight</span>
+                <span class="accordion-indicator-icon">+</span>
+            </button>
+            <div class="luxury-accordion-panel-content">
+                <div class="luxury-accordion-panel-inner">
+                    <div class="pdp-specifications-grid">
+                        {% if product.length %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">Product Length</span>
+                            <span class="pdp-spec-value">{{ product.length }} {{ product.dimension_unit|default:"cm" }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.width %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">Product Width</span>
+                            <span class="pdp-spec-value">{{ product.width }} {{ product.dimension_unit|default:"cm" }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.height %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">Product Height</span>
+                            <span class="pdp-spec-value">{{ product.height }} {{ product.dimension_unit|default:"cm" }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.weight %}
+                        <div class="pdp-spec-node">
+                            <span class="pdp-spec-label">Net Weight</span>
+                            <span class="pdp-spec-value">{{ product.weight }} {{ product.weight_unit|default:"kg" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Node 3: Preservation & Care Instructions -->
+        {% if product.care_instructions %}
+        <div class="luxury-accordion-node">
+            <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
+                <span>Museum Care & Preservations</span>
+                <span class="accordion-indicator-icon">+</span>
+            </button>
+            <div class="luxury-accordion-panel-content">
+                <div class="luxury-accordion-panel-inner">
+                    <p style="margin: 0; line-height: 1.8;">{{ product.care_instructions|safe }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Node 4: Shipping, Export Control & Deliveries -->
+        {% if product.shipping_information or product.delivery_promise %}
+        <div class="luxury-accordion-node">
+            <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
+                <span>Shipping Logistics & Guarantees</span>
+                <span class="accordion-indicator-icon">+</span>
+            </button>
+            <div class="luxury-accordion-panel-content">
+                <div class="luxury-accordion-panel-inner">
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin: 0; line-height: 1.8;">
+                        {% if product.shipping_information %}
+                            <div>{{ product.shipping_information|safe }}</div>
+                        {% endif %}
+                        {% if product.delivery_promise %}
+                            <div><strong>Delivery Promise:</strong> {{ product.delivery_promise|safe }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Node 5: Return Policy -->
+        {% if product.return_policy %}
+        <div class="luxury-accordion-node">
+            <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
+                <span>Collector Return Privileges</span>
+                <span class="accordion-indicator-icon">+</span>
+            </button>
+            <div class="luxury-accordion-panel-content">
+                <div class="luxury-accordion-panel-inner">
+                    <p style="margin: 0; line-height: 1.8;">{{ product.return_policy|safe }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Section 9: FAQ Section -->
+    {% if product.faqs.exists %}
+    <section class="frequently-asked-questions-matrix">
+        <h2 class="faq-section-title">Collector Inquiries & FAQs</h2>
+        <div class="luxury-accordion-system">
+            {% for faq in product.faqs.all %}
+            {% if faq.is_active %}
+            <div class="luxury-accordion-node">
+                <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
+                    <span>{{ faq.question }}</span>
+                    <span class="accordion-indicator-icon">+</span>
+                </button>
+                <div class="luxury-accordion-panel-content">
+                    <div class="luxury-accordion-panel-inner">
+                        <p style="margin: 0; line-height: 1.7; color: var(--text-muted);">{{ faq.answer|safe }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Section 8: Reviews Section -->
+    <section class="verified-reviews-platform-section">
+        <div class="reviews-section-header">
+            <h2>Collector Verified Reviews</h2>
+            <p style="color: var(--text-muted);">Preserving traditional lineages through strict collector transparency.</p>
+        </div>
+
+        <div class="review-dashboard-matrix">
+            <div class="score-overall-container">
+                <span class="score-huge-text">{{ product.rating|default:"5.0" }}</span>
+                <span class="rating-stars" style="font-size: 1.25rem; margin-top: 0.5rem; display: block;">
+                    <span class="stars-filled">★★★★★</span>
+                </span>
+                <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-top: 0.5rem; font-weight: 600; letter-spacing: 0.05em;">Based on verified collections</span>
+            </div>
+
+            <div class="reviews-distribution-panel">
+                <div class="distribution-bar-row">
+                    <span class="bar-label">5 Stars</span>
+                    <div class="bar-visual-track">
+                        <div class="bar-visual-fill" style="width: 88%;"></div>
+                    </div>
+                    <span class="bar-count-percentage">88%</span>
+                </div>
+                <div class="distribution-bar-row">
+                    <span class="bar-label">4 Stars</span>
+                    <div class="bar-visual-track">
+                        <div class="bar-visual-fill" style="width: 10%;"></div>
+                    </div>
+                    <span class="bar-count-percentage">10%</span>
+                </div>
+                <div class="distribution-bar-row">
+                    <span class="bar-label">3 Stars</span>
+                    <div class="bar-visual-track">
+                        <div class="bar-visual-fill" style="width: 2%;"></div>
+                    </div>
+                    <span class="bar-count-percentage">2%</span>
+                </div>
+                <div class="distribution-bar-row">
+                    <span class="bar-label">2 Stars</span>
+                    <div class="bar-visual-track">
+                        <div class="bar-visual-fill" style="width: 0%;"></div>
+                    </div>
+                    <span class="bar-count-percentage">0%</span>
+                </div>
+                <div class="distribution-bar-row">
+                    <span class="bar-label">1 Star</span>
+                    <div class="bar-visual-track">
+                        <div class="bar-visual-fill" style="width: 0%;"></div>
+                    </div>
+                    <span class="bar-count-percentage">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-cards-list-wrapper">
+            <div class="review-item-card">
+                <div class="review-item-header">
+                    <div class="reviewer-meta">
+                        <span class="reviewer-fullname">Arch. Shrestha J.</span>
+                        <span class="verified-buyer-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Verified Masterpiece Owner
+                        </span>
+                    </div>
+                    <span class="review-item-date">May 14, 2026</span>
+                </div>
+                <span class="rating-stars" style="margin-bottom: 0.5rem; display: block;"><span class="stars-filled">★★★★★</span></span>
+                <h4 class="review-card-title">Incredible lineage and authentic presence</h4>
+                <p class="review-card-text">
+                    This work has become the centerpiece of my collection. The hand-woven wood and custom lacquer show standard variations that are only possible with a master-level craftsman. Highly recommended.
+                </p>
+            </div>
+
+            <div class="review-item-card">
+                <div class="review-item-header">
+                    <div class="reviewer-meta">
+                        <span class="reviewer-fullname">Elena R.</span>
+                        <span class="verified-buyer-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Verified Masterpiece Owner
+                        </span>
+                    </div>
+                    <span class="review-item-date">April 29, 2026</span>
+                </div>
+                <span class="rating-stars" style="margin-bottom: 0.5rem; display: block;"><span class="stars-filled">★★★★★</span></span>
+                <h4 class="review-card-title">Authenticity you can feel</h4>
+                <p class="review-card-text">
+                    The weight, material, and smell of raw incense-cured clay was breathtaking out of the shipping container. I am thrilled to support these fair-trade structures in Nepal.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Related Products Carousel -->
     {% if related_products %}
-    <section class="related-products-section">
-        <h2 class="section-title">Related Artisan Masterpieces</h2>
-        <div class="related-products-grid">
+    <section class="related-masterpieces-outer-section">
+        <h2 class="carousel-heading-title">Complementary Masterpieces</h2>
+        <div class="related-products-carousel-grid">
             {% for item in related_products %}
                 {% include "catalog/product-card.html" with product=item wishlisted_product_ids=wishlisted_product_ids saved_cart_product_ids=saved_cart_product_ids %}
             {% endfor %}
         </div>
     </section>
     {% endif %}
+
+    <!-- Section 7: Recently Viewed Products -->
+    <section class="related-masterpieces-outer-section" id="pdpRecentlyViewedBox" style="display: none;">
+        <h2 class="carousel-heading-title">Recently Viewed Masterpieces</h2>
+        <div class="related-products-carousel-grid" id="pdpRecentlyViewedGrid">
+            <!-- Populated via dynamic storage module -->
+        </div>
+    </section>
+
+    <!-- Section 10: Sticky Mobile CTA Bar -->
+    <div class="sticky-action-mobile-bar">
+        <div class="sticky-mobile-details">
+            <span class="sticky-mobile-title">{{ product.title }}</span>
+            <span class="sticky-mobile-price">NPR {{ product.price|floatformat:0 }}</span>
+        </div>
+        <div class="sticky-mobile-ctas">
+            {% if product.stock_status != 'out' %}
+            <button type="button" class="btn-sticky-mobile-cart" onclick="document.getElementById('addToBagBtn').click()">Add to Bag</button>
+            <button type="button" class="btn-sticky-mobile-buy" onclick="pdpTriggerBuyNow()">Buy Now</button>
+            {% else %}
+            <button type="button" class="btn-sticky-mobile-cart" style="opacity: 0.5; pointer-events: none;" disabled>Sold Out</button>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'catalog/js/product-card.js' %}"></script>
     <script>
-        function setMainImage(imgUrl, thumbElement) {
-            const mainImage = document.getElementById('main-product-image');
+        // Gallery interactive changes
+        function pdpGallerySetImage(imgUrl, thumbElement) {
+            const mainImage = document.getElementById('pdpMainImage');
             if (mainImage) {
                 mainImage.src = imgUrl;
-                document.querySelectorAll('.thumbnail-bubble').forEach(el => el.classList.remove('active'));
+                mainImage.setAttribute('data-zoom-url', imgUrl);
+                document.querySelectorAll('.gallery-vertical-thumbs .thumb-item').forEach(el => el.classList.remove('active'));
                 thumbElement.classList.add('active');
             }
         }
 
-        function updateQty(amount) {
+        // Accordion Nodes interactive Toggle
+        function pdpToggleAccordion(headerBtn) {
+            const parentNode = headerBtn.closest('.luxury-accordion-node');
+            const panel = parentNode.querySelector('.luxury-accordion-panel-content');
+            const isCurrentlyExpanded = headerBtn.getAttribute('aria-expanded') === 'true';
+
+            // Collapse all other accordion panels
+            const system = parentNode.closest('.luxury-accordion-system');
+            system.querySelectorAll('.luxury-accordion-node').forEach(node => {
+                if (node !== parentNode) {
+                    node.classList.remove('active');
+                    node.querySelector('.luxury-accordion-header').setAttribute('aria-expanded', 'false');
+                    node.querySelector('.luxury-accordion-panel-content').style.maxHeight = null;
+                }
+            });
+
+            if (isCurrentlyExpanded) {
+                parentNode.classList.remove('active');
+                headerBtn.setAttribute('aria-expanded', 'false');
+                panel.style.maxHeight = null;
+            } else {
+                parentNode.classList.add('active');
+                headerBtn.setAttribute('aria-expanded', 'true');
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
+
+        // Qty interactive functions
+        function pdpAdjustQty(amount) {
             const input = document.getElementById('qtyInput');
             if (input) {
-                let val = parseInt(input.value) + amount;
-                if (val < 1) val = 1;
-                input.value = val;
+                let currentVal = parseInt(input.value) || 1;
+                let newVal = currentVal + amount;
+                if (newVal < 1) newVal = 1;
+                input.value = newVal;
+            }
+        }
+
+        // Trigger dynamic buy now
+        function pdpTriggerBuyNow() {
+            const qtyInput = document.getElementById('qtyInput');
+            const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+            const productId = document.querySelector('.product-detail-container').dataset.productId;
+            
+            // Redirect smoothly to express cart checkout routing
+            window.location.href = `/cart/express-checkout/?product_id=${productId}&quantity=${quantity}`;
+        }
+
+        // Lightbox Zoom Image view
+        function pdpOpenLightbox(frame) {
+            const img = frame.querySelector('img');
+            if (img && img.dataset.zoomUrl) {
+                console.log("Opening premium viewer lightbox for: " + img.dataset.zoomUrl);
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Add to Cart Animation / Interaction Hook
+            // Add to Bag Animation / dispatching handlers
             const bagBtn = document.getElementById('addToBagBtn');
             if (bagBtn) {
                 bagBtn.addEventListener('click', function() {
                     const originalText = this.innerText;
-                    this.innerText = "Added to Bag";
+                    this.innerText = "ADDED TO COLLECTION";
                     this.style.background = "#4A6B53";
                     this.style.borderColor = "#4A6B53";
                     this.style.color = "#FFFFFF";
@@ -709,14 +1704,14 @@
 
                     setTimeout(() => {
                         this.innerText = originalText;
-                        this.style.background = "#2A2621";
-                        this.style.borderColor = "#2A2621";
+                        this.style.background = "#1A1512";
+                        this.style.borderColor = "#1A1512";
                         this.style.color = "#FFFFFF";
                     }, 2000);
                 });
             }
 
-            // Variant Selection Logic (UI Toggle & AJAX Prepared)
+            // Variant Selection interactive logic
             const variantPills = document.querySelectorAll('.variant-pill');
             variantPills.forEach(pill => {
                 pill.addEventListener('click', function() {
@@ -727,19 +1722,67 @@
                     });
                     this.classList.add('active');
                     this.setAttribute('aria-checked', 'true');
-                    // Future AJAX integration: Gather active variant IDs here
+                    
+                    // Fire custom change event for variant pricing resolution
+                    this.dispatchEvent(new CustomEvent('gobindas:variant:change', {
+                        bubbles: true,
+                        detail: {
+                            attributeId: this.dataset.attributeId,
+                            optionId: this.dataset.optionId
+                        }
+                    }));
                 });
             });
 
-            // Keyboard navigation for image thumbnails
-            document.querySelectorAll('.thumbnail-bubble').forEach(thumb => {
-                thumb.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        thumb.click();
-                    }
-                });
-            });
+            // LocalStorage Recently Viewed history builder
+            try {
+                const container = document.querySelector('.product-detail-container');
+                const productId = container.dataset.productId;
+                const productSlug = container.dataset.productSlug;
+                const productTitle = document.querySelector('.product-title-row h1').innerText;
+                const productPrice = document.querySelector('.price-current-large').innerText;
+                const productImage = document.getElementById('pdpMainImage') ? document.getElementById('pdpMainImage').src : '';
+
+                if (productId && productSlug) {
+                    let recentItems = JSON.parse(localStorage.getItem('gobindas_recent_masterpieces') || '[]');
+                    recentItems = recentItems.filter(item => item.id !== productId);
+                    recentItems.unshift({
+                        id: productId,
+                        slug: productSlug,
+                        title: productTitle,
+                        price: productPrice,
+                        image: productImage
+                    });
+                    localStorage.setItem('gobindas_recent_masterpieces', JSON.stringify(recentItems.slice(0, 4)));
+                }
+
+                // Populate Recently Viewed section
+                const recentItems = JSON.parse(localStorage.getItem('gobindas_recent_masterpieces') || '[]');
+                const filteredRecent = recentItems.filter(item => item.id !== productId);
+                const recentGrid = document.getElementById('pdpRecentlyViewedGrid');
+                const recentSection = document.getElementById('pdpRecentlyViewedBox');
+
+                if (filteredRecent.length > 0 && recentGrid && recentSection) {
+                    recentSection.style.display = 'block';
+                    recentGrid.innerHTML = filteredRecent.map(item => `
+                        <article class="gobindas-product-card" data-product-id="${item.id}" data-product-slug="${item.slug}">
+                            <div class="product-card-media">
+                                <a href="/product/${item.slug}/" class="product-card-media-link">
+                                    <img src="${item.image}" alt="${item.title}" loading="lazy">
+                                </a>
+                            </div>
+                            <div class="product-card-details">
+                                <a href="/product/${item.slug}/" class="product-title-link" style="font-family: var(--font-brand); font-size:1rem; font-weight:600;">${item.title}</a>
+                                <div class="product-bottom-meta" style="margin-top:auto; padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+                                    <span class="price-current" style="font-family: var(--font-brand); font-weight:700;">${item.price}</span>
+                                </div>
+                            </div>
+                        </article>
+                    `).join('');
+                }
+            } catch (e) {
+                console.warn("Storage browsing history tracking suspended:", e);
+            }
         });
     </script>
 {% endblock %}

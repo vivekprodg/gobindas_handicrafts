@@ -12,7 +12,6 @@ from django.template.exceptions import TemplateDoesNotExist
 
 from .services import get_foundation_cms_payload
 
-
 class HomePageView(TemplateView):
     template_name = "home.html"
 
@@ -201,7 +200,6 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         })
         return context
 
-
 class CareGuidesPlaceholderView(TemplateView):
     template_name = "foundation/placeholder.html"
 
@@ -212,7 +210,6 @@ class CareGuidesPlaceholderView(TemplateView):
             "description": "Learn how to preserve the quality and heritage of your handcrafted wood, ceramics, and textiles. Our care guides are coming soon."
         })
         return context
-
 
 class TraceabilityPlaceholderView(TemplateView):
     template_name = "foundation/placeholder.html"
@@ -225,7 +222,6 @@ class TraceabilityPlaceholderView(TemplateView):
         })
         return context
 
-
 class PoliciesShippingPlaceholderView(TemplateView):
     template_name = "foundation/placeholder.html"
 
@@ -236,7 +232,6 @@ class PoliciesShippingPlaceholderView(TemplateView):
             "description": "Details regarding our international shipping policies, direct-to-artisan payouts, and carbon-neutral distribution are being updated."
         })
         return context
-
 
 class CustomOrdersPlaceholderView(TemplateView):
     template_name = "foundation/placeholder.html"
@@ -249,23 +244,65 @@ class CustomOrdersPlaceholderView(TemplateView):
         })
         return context
 
+class ContactForm(forms.Form):
+    name = forms.CharField(
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={"placeholder": "Your Name", "class": "form-input"}),
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={"placeholder": "Your Email Address", "class": "form-input"}),
+    )
+    subject = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Subject", "class": "form-input"}),
+    )
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={"placeholder": "How can we help you?", "rows": 5, "class": "form-textarea"}),
+        required=True,
+    )
 
-class ContactPlaceholderView(TemplateView):
-    template_name = "foundation/placeholder.html"
+class ContactPageView(FormView):
+    template_name = "foundation/contact.html"
+    form_class = ContactForm
+    success_url = reverse_lazy("foundation:contact")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        cms_payload = get_foundation_cms_payload(use_cache=True)
+        contact_data = cms_payload.get("contact_page") or {}
+
+        page_title = contact_data.get("seo_meta_title") or "Contact Us | Gobindas Handicrafts"
+        meta_description = contact_data.get("seo_meta_description") or "Reach our client care team regarding artisan lineages, custom orders, and other support."
+        meta_keywords = contact_data.get("seo_meta_keywords") or "contact, support, artisan, handicrafts"
+
         context.update({
-            "title": "Contact Us",
-            "description": "Have questions about our artisan lineages? Reach our client care team at support@gobindashandicraft.com or call our concierge."
+            "page_title": page_title,
+            "meta_description": meta_description,
+            "meta_keywords": meta_keywords,
+            "site_settings": cms_payload["site_settings"],
+            "header_bar": cms_payload["header_bar"],
+            "navbar_items": cms_payload["navbar_items"],
+            "footer_data": cms_payload["footer"],
+            "footer_logo": cms_payload["footer"]["brand"]["logo_url"] if cms_payload["footer"] and cms_payload["footer"].get("brand") else None,
+            "contact_data": contact_data,
         })
         return context
 
+    def form_valid(self, form):
+        context = self.get_context_data(form=form)
+        context["form_submitted"] = True
+        return self.render_to_response(context)
+
+# Alias mapping for backward compatibility with urls.py references
+class ContactPlaceholderView(ContactPageView):
+    pass
 
 # =================================================
 # CUSTOM ERROR HANDLERS
 # =================================================
-
 def bad_request_view(request, exception):
     """Handler for 400 Bad Request."""
     try:

@@ -9,6 +9,10 @@ from .views import (
     ProductManageUpdateView,
     ProductManageDeleteView,
     ProductPublishActionView,
+    ProductQuickViewView,
+    ProductSearchView,
+    CollectionView,
+    MaterialView,
 )
 
 app_name = "catalog"
@@ -39,12 +43,44 @@ urlpatterns = [
         ArtisansListView.as_view(), 
         name="artisans"
     ),
+    path(
+        "artisan/", 
+        ArtisansListView.as_view(), 
+        name="artisan_list_alias"
+    ),
     
     # Artisan detail / profile view
     path(
         "artisans/<slug:slug>/", 
         ArtisanDetailView.as_view(), 
         name="artisan_detail"
+    ),
+    path(
+        "artisan/<slug:slug>/", 
+        ArtisanDetailView.as_view(), 
+        name="artisan_detail_singular"
+    ),
+
+    # New Discovery & Merchandising Routes
+    path(
+        "quick-view/<slug:slug>/",
+        ProductQuickViewView.as_view(),
+        name="product_quick_view"
+    ),
+    path(
+        "search/",
+        ProductSearchView.as_view(),
+        name="product_search"
+    ),
+    path(
+        "collection/<slug:slug>/",
+        CollectionView.as_view(),
+        name="collection_detail"
+    ),
+    path(
+        "material/<slug:slug>/",
+        MaterialView.as_view(),
+        name="material_detail"
     ),
 
     # ==============================================================================

@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 
 # Core catalog models
 from apps.catalog.models import (
@@ -34,10 +35,15 @@ from apps.catalog.models import (
 
 # Services
 from apps.catalog.services import (
+    ProductService,
+    CategoryService,
+    CollectionService,
+    RecommendationService,
+    RecentlyViewedService,
+    BreadcrumbService,
+    SearchService,
     get_catalog_settings,
-    query_products_for_category,
-    get_sidebar_filter_metadata,
-    paginate_products,
+    CATALOG_CACHE_TIMEOUT,
 )
 
 # Forms for Management Module
@@ -52,31 +58,35 @@ logger = logging.getLogger(__name__)
 
 
 # ==============================================================================
-# PUBLIC-FACING CATALOG VIEWS (Refactored & Optimized)
+# PUBLIC-FACING CATALOG VIEWS (Service-Layer Refactored)
 # ==============================================================================
 
 class CategoryListingView(TemplateView):
     """
     Public product listing and merchandising discovery view for categories.
-    Handles dynamic faceted filtering, pagination, sorting, and breadcrumbs.
+    Delegates dynamic faceted filtering, sorting, pagination, and structural
+    breadcrumbs mapping directly to modular services.
     """
     template_name = "catalog/product-list.html"
-    slug = None # Set via URL conf for legacy routing
+    slug = None  # Set via URL conf for legacy routing
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # 1. Resolve category slug directly via apps.catalog.models.Category
         slug = self.slug or self.kwargs.get("slug", "")
-        category = Category.objects.filter(slug=slug, is_active=True).select_related('parent').first()
+        
+        # Safe cache extraction of Category details
+        category = cache.get_or_set(
+            f"catalog:cat:slug:{slug}",
+            lambda: CategoryService.get_category_by_slug(slug),
+            CATALOG_CACHE_TIMEOUT
+        )
         
         if not category:
             raise Http404("Category not found")
 
-        # 2. Extract GET filter parameters
+        # Extract parameters for faceted searches
         sort_by = self.request.GET.get("sort", "featured")
         
-        # Price filtering
         price_max_raw = self.request.GET.get("price_max")
         price_max = None
         if price_max_raw:
@@ -91,9 +101,9 @@ class CategoryListingView(TemplateView):
         selected_hues = self.request.GET.getlist("hue")
         selected_ethical = self.request.GET.getlist("ethical")
 
-        # 3. Query dynamic products and filter (Service optimizes DB queries)
-        products_qs = query_products_for_category(
-            category,
+        # Delegation of query generation to the search services layer
+        products_qs = SearchService.query_products_for_category(
+            category=category,
             sort_by=sort_by,
             min_price=None,
             max_price=price_max,
@@ -104,16 +114,20 @@ class CategoryListingView(TemplateView):
             selected_ethical_standards=selected_ethical
         )
 
-        # 4. Paginate products
-        catalog_settings = get_catalog_settings()
+        # Pagination resolution
+        catalog_settings = cache.get_or_set(
+            "catalog:settings",
+            ProductService.get_catalog_settings,
+            CATALOG_CACHE_TIMEOUT
+        )
         page_number = self.request.GET.get("page", 1)
-        paginated_products = paginate_products(
+        paginated_products = SearchService.paginate_products(
             products_qs,
             page_number,
             catalog_settings.default_items_per_page
         )
 
-        # 5. Populate Sidebar Meta Filters
+        # Facets and UI criteria details
         current_selections = {
             "materials": selected_materials,
             "artisans": selected_artisans,
@@ -121,21 +135,14 @@ class CategoryListingView(TemplateView):
             "hues": selected_hues,
             "ethical": selected_ethical
         }
-        sidebar_filters = get_sidebar_filter_metadata(category, current_selections)
+        sidebar_filters = SearchService.get_sidebar_filter_metadata(category, current_selections)
 
-        # Format price boundaries for template output
         min_bound = sidebar_filters["price_bounds"]["min"] or catalog_settings.price_filter_min
         max_bound = sidebar_filters["price_bounds"]["max"] or catalog_settings.price_filter_max
         current_val = int(price_max) if price_max is not None else max_bound
 
-        # 6. Format breadcrumbs
-        breadcrumbs = [
-            {"label": "Home", "url": "/"},
-            {"label": "Handicrafts", "url": "#"}
-        ]
-        if category.parent:
-            breadcrumbs.append({"label": category.parent.name, "url": f"/category/{category.parent.slug}/"})
-        breadcrumbs.append({"label": category.name, "url": f"/category/{category.slug}/"})
+        # Breadcrumbs built by dedicated builder service
+        breadcrumbs = BreadcrumbService.build_for_category(category)
 
         context.update({
             "category": category,
@@ -198,7 +205,7 @@ class ArtisanDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         artisan = self.get_object()
         
-        # Fetch products made by this artisan (Optimized)
+        # Retrieve optimized artisan masterpieces
         products = Product.objects.filter(artisan=artisan, is_active=True).select_related(
             'category', 'material', 'hue'
         ).prefetch_related('ethical_standards')
@@ -213,56 +220,35 @@ class ArtisanDetailView(DetailView):
 
 class ProductDetailView(DetailView):
     """
-    Public product detail view. Enhanced with SEO metadata, structured data, variants, and gallery images.
+    Public product detail view. Enriches rendering with structured microdata schemas, SEO configuration profiles,
+    and records client-side browsing context safely using the Recently Viewed Service layer.
     """
     model = Product
     template_name = "catalog/product-detail.html"
     context_object_name = "product"
     slug_url_kwarg = "slug"
 
-    def get_queryset(self):
-        """
-        Heavily optimized queryset to avoid N+1 issues when resolving 
-        complex product relationships including SEO, tags, and collections.
-        """
-        return Product.objects.filter(is_active=True).select_related(
-            'category', 'category__parent', 'artisan', 'material', 'hue', 
-            'seo_config', 'schema_config'
-        ).prefetch_related(
-            'ethical_standards', 
-            'variants', 
-            'gallery_images', 
-            'tags', 
-            'in_collections'
-        )
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        product = ProductService.get_product_by_slug(slug)
+        if not product:
+            raise Http404("Product not found")
+        return product
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        product = self.get_object()
+        product = self.object
         
-        # Breadcrumbs
-        breadcrumbs = [
-            {"label": "Home", "url": "/"},
-            {"label": "Handicrafts", "url": "#"}
-        ]
-        
-        # Defensive check since category is non-mandatory (blank=True, null=True)
-        if product.category:
-            if product.category.parent:
-                breadcrumbs.append({"label": product.category.parent.name, "url": f"/category/{product.category.parent.slug}/"})
-            breadcrumbs.append({"label": product.category.name, "url": f"/category/{product.category.slug}/"})
-            
-        breadcrumbs.append({"label": product.title, "url": "#"})
+        # Build breadcrumbs using the breadcrumb builder service
+        breadcrumbs = BreadcrumbService.build_for_product(product)
 
-        # Get related products (same category, excluding self)
-        if product.category:
-            related_products = Product.objects.filter(
-                category=product.category, is_active=True
-            ).exclude(id=product.id).select_related('artisan', 'material').prefetch_related('ethical_standards')[:4]
-        else:
-            related_products = Product.objects.none()
+        # Pull matching product recommendations safely through the recommendation service
+        related_products = RecommendationService.get_related_products(product, limit=4)
 
-        # Resolve SEO fields securely
+        # Get variants
+        variants = ProductService.get_product_variants(product)
+
+        # Resolve SEO fields cleanly
         seo_title = product.title
         seo_desc = product.short_description
         if hasattr(product, 'seo_config') and product.seo_config:
@@ -272,17 +258,224 @@ class ProductDetailView(DetailView):
             seo_title = product.seo_title or product.title
             seo_desc = product.seo_description or product.short_description
 
+        # Safely track browser browsing context
+        if not self.request.session.session_key:
+            self.request.session.create()
+        session_key = self.request.session.session_key
+        RecentlyViewedService.add_to_recently_viewed(
+            product=product,
+            user=self.request.user,
+            session_key=session_key
+        )
+
+        # Increment analytical display metric counts
+        product.increment_view_count(commit=True)
+
         context.update({
             "title": seo_title,
             "description": seo_desc,
             "breadcrumbs": breadcrumbs,
             "related_products": related_products,
-            "variants": product.variants.filter(is_active=True).order_by('sort_order'),
+            "variants": variants,
             "active_tags": product.tags.filter(is_active=True),
             "active_collections": product.in_collections.filter(is_active=True)
         })
         return context
+    
+# ==============================================================================
+# DISCOVERY & MERCHANDISING VIEWS
+# ==============================================================================
 
+class ProductQuickViewView(DetailView):
+    """
+    Lightweight product detail view intended for AJAX quick-view modals.
+    """
+    model = Product
+    template_name = "catalog/product-quick-view.html"
+    context_object_name = "product"
+    slug_url_kwarg = "slug"
+
+    def get_queryset(self):
+        return (
+            Product.objects.filter(
+                is_active=True,
+                status=Product.ProductStatus.PUBLISHED,
+            )
+            .select_related("category", "artisan", "material", "hue")
+            .prefetch_related(
+                "gallery_images",
+                "variants",
+                "ethical_standards",
+                "tags",
+                "in_collections",
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+
+        context.update({
+            "variants": product.variants.filter(is_active=True),
+            "gallery": product.gallery_images.all(),
+            "related_products": RecommendationService.get_related_products(
+                product,
+                limit=4,
+            ),
+        })
+        return context
+
+
+class ProductSearchView(ListView):
+    """
+    Product search results.
+    """
+    model = Product
+    template_name = "catalog/product-search.html"
+    context_object_name = "products"
+    paginate_by = 12
+
+    def get_queryset(self):
+        query = self.request.GET.get("q", "").strip()
+
+        qs = (
+            Product.objects.filter(
+                is_active=True,
+                status=Product.ProductStatus.PUBLISHED,
+            )
+            .select_related(
+                "category",
+                "artisan",
+                "material",
+                "hue",
+            )
+            .prefetch_related(
+                "tags",
+                "in_collections",
+            )
+        )
+
+        if query:
+            qs = qs.filter(
+                Q(title__icontains=query)
+                | Q(short_description__icontains=query)
+                | Q(description__icontains=query)
+                | Q(sku__icontains=query)
+                | Q(category__name__icontains=query)
+                | Q(material__name__icontains=query)
+                | Q(artisan__name__icontains=query)
+            ).distinct()
+
+        return qs.order_by("position", "-created_at")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        query = self.request.GET.get("q", "").strip()
+
+        context.update({
+            "search_query": query,
+            "title": f"Search: {query}" if query else "Search Products",
+            "description": f"Search results for '{query}'." if query else "Browse our handcrafted products.",
+            "total_products": self.get_queryset().count(),
+        })
+
+        return context
+
+
+class CollectionView(DetailView):
+    """
+    Displays all products belonging to a ProductCollection.
+    """
+    model = ProductCollection
+    template_name = "catalog/collection-detail.html"
+    context_object_name = "collection"
+    slug_url_kwarg = "slug"
+
+    def get_queryset(self):
+        return ProductCollection.objects.filter(is_active=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        collection = self.object
+
+        products = (
+            collection.products.filter(
+                is_active=True,
+                status=Product.ProductStatus.PUBLISHED,
+            )
+            .select_related(
+                "category",
+                "artisan",
+                "material",
+                "hue",
+            )
+            .prefetch_related(
+                "tags",
+                "gallery_images",
+            )
+        )
+
+        context.update({
+            "products": products,
+            "title": collection.name,
+            "description": collection.description,
+            "breadcrumbs": [
+                ("Collections", reverse("catalog:collection_detail", kwargs={"slug": collection.slug})),
+                (collection.name, ""),
+            ],
+        })
+
+        return context
+
+
+class MaterialView(DetailView):
+    """
+    Displays all products using a particular material.
+    """
+    model = Material
+    template_name = "catalog/material-detail.html"
+    context_object_name = "material"
+    slug_url_kwarg = "slug"
+
+    def get_queryset(self):
+        return Material.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        material = self.object
+
+        products = (
+            Product.objects.filter(
+                material=material,
+                is_active=True,
+                status=Product.ProductStatus.PUBLISHED,
+            )
+            .select_related(
+                "category",
+                "artisan",
+                "hue",
+            )
+            .prefetch_related(
+                "gallery_images",
+                "tags",
+            )
+            .order_by("position", "-created_at")
+        )
+
+        context.update({
+            "products": products,
+            "title": material.name,
+            "description": f"Products crafted from {material.name}.",
+            "breadcrumbs": [
+                ("Materials", ""),
+                (material.name, ""),
+            ],
+        })
+
+        return context
 
 # ==============================================================================
 # ENTERPRISE PRODUCT MANAGEMENT MODULE (Staff / CMS Facing)
@@ -392,7 +585,6 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
         product = self.object
         
         # Initialize supplementary forms

@@ -96,6 +96,43 @@
                         {% endif %}
                     </div>
                 {% endfor %}
+
+                {% with contact=contact_page_data|default:footer_data.contact_info %}
+                    {% if contact.primary_phone or contact.primary_email or contact.primary_address or contact.primary_contact_person %}
+                        <div class="footer-column" role="region" aria-labelledby="h-section-contact">
+                            <h4 id="h-section-contact">
+                                {{ contact.address_heading|default:"Contact Us" }}
+                                <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle Contact Info">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M6 9l6 6 6-6"/>
+                                    </svg>
+                                </button>
+                            </h4>
+                            <ul>
+                                {% if contact.primary_contact_person %}
+                                    <li>
+                                        <span>{{ contact.primary_contact_person }}</span>
+                                    </li>
+                                {% endif %}
+                                {% if contact.primary_address %}
+                                    <li>
+                                        <span>{{ contact.primary_address|linebreaksbr }}</span>
+                                    </li>
+                                {% endif %}
+                                {% if contact.primary_phone %}
+                                    <li>
+                                        <a href="tel:{{ contact.primary_phone }}">{{ contact.primary_phone }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if contact.primary_email %}
+                                    <li>
+                                        <a href="mailto:{{ contact.primary_email }}">{{ contact.primary_email }}</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                {% endwith %}
             </div>
         {% else %}
             <div class="footer-grid">
@@ -147,6 +184,43 @@
                         <li><a href="/contact">Contact Us</a></li>
                     </ul>
                 </div>
+
+                {% with contact=contact_page_data|default:footer_data.contact_info %}
+                    {% if contact.primary_phone or contact.primary_email or contact.primary_address or contact.primary_contact_person %}
+                        <div class="footer-column" role="region" aria-labelledby="h-section-contact">
+                            <h4 id="h-section-contact">
+                                {{ contact.address_heading|default:"Contact Us" }}
+                                <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle Contact Info">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M6 9l6 6 6-6"/>
+                                    </svg>
+                                </button>
+                            </h4>
+                            <ul>
+                                {% if contact.primary_contact_person %}
+                                    <li>
+                                        <span>{{ contact.primary_contact_person }}</span>
+                                    </li>
+                                {% endif %}
+                                {% if contact.primary_address %}
+                                    <li>
+                                        <span>{{ contact.primary_address|linebreaksbr }}</span>
+                                    </li>
+                                {% endif %}
+                                {% if contact.primary_phone %}
+                                    <li>
+                                        <a href="tel:{{ contact.primary_phone }}">{{ contact.primary_phone }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if contact.primary_email %}
+                                    <li>
+                                        <a href="mailto:{{ contact.primary_email }}">{{ contact.primary_email }}</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                {% endwith %}
             </div>
         {% endif %}
 

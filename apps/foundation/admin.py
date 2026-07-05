@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 from django.contrib import admin
+from django.db.models.signals import post_save, post_delete
 from django.utils.html import format_html
 from nested_admin import NestedModelAdmin, NestedTabularInline
 
 from .models import (
+    ContactEmail,
+    ContactOfficeHour,
+    ContactPage,
+    ContactPhone,
+    ContactSocialLink,
     FooterLink,
     FooterPaymentMethod,
     FooterSection,
@@ -24,8 +30,49 @@ from .models import (
     SiteSettings,
 )
 
+class CacheInvalidationMixin:
+    """
+    Mixin to guarantee immediate CMS cache invalidation when objects
+    are saved, updated, deleted, or bulk modified within Django Admin.
+    """
+
+    def invalidate_foundation_cache(self):
+        try:
+            from .services import invalidate_foundation_cms_cache
+            invalidate_foundation_cms_cache()
+        except Exception:
+            pass
+
+        try:
+            from .services import refresh_foundation_cms_cache
+            refresh_foundation_cms_cache()
+        except Exception:
+            pass
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        self.invalidate_foundation_cache()
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        self.invalidate_foundation_cache()
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        self.invalidate_foundation_cache()
+
+    def delete_queryset(self, request, queryset):
+        super().delete_queryset(request, queryset)
+        self.invalidate_foundation_cache()
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(request, extra_context)
+        if request.method == "POST":
+            self.invalidate_foundation_cache()
+        return response
+
 @admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
+class SiteSettingsAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "brand_title",
@@ -117,7 +164,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     default_featured_preview.short_description = "Featured Image Preview"
 
 @admin.register(NavbarSettings)
-class NavbarSettingsAdmin(admin.ModelAdmin):
+class NavbarSettingsAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "is_enabled",
@@ -211,7 +258,7 @@ class NavbarMegaMenuColumnInline(NestedTabularInline):
     verbose_name_plural = "Mega Menu Columns"
 
 @admin.register(NavbarItem)
-class NavbarItemAdmin(NestedModelAdmin):
+class NavbarItemAdmin(CacheInvalidationMixin, NestedModelAdmin):
     list_display = (
         "label",
         "menu_type",
@@ -332,7 +379,7 @@ class HeaderUtilityLinkInline(admin.TabularInline):
     fields = ("utility_type", "label", "link_url", "side", "icon_key", "show_dropdown_icon", "position", "is_visible")
 
 @admin.register(HeaderBar)
-class HeaderBarAdmin(admin.ModelAdmin):
+class HeaderBarAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "is_enabled",
@@ -396,7 +443,7 @@ class HeaderBarAdmin(admin.ModelAdmin):
 # CMS DYNAMIC FOOTER ADMIN REGISTRATION
 # =========================================
 @admin.register(FooterSettings)
-class FooterSettingsAdmin(admin.ModelAdmin):
+class FooterSettingsAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "brand_name",
@@ -464,7 +511,7 @@ class FooterLinkInline(admin.TabularInline):
     fields = ("label", "route", "link_type", "action", "position")
 
 @admin.register(FooterSection)
-class FooterSectionAdmin(admin.ModelAdmin):
+class FooterSectionAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "title",
         "position",
@@ -495,7 +542,7 @@ class FooterSectionAdmin(admin.ModelAdmin):
     )
 
 @admin.register(FooterLink)
-class FooterLinkAdmin(admin.ModelAdmin):
+class FooterLinkAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "label",
         "section",
@@ -543,16 +590,22 @@ class FooterLinkAdmin(admin.ModelAdmin):
     )
 
 @admin.register(FooterSocialLink)
-class FooterSocialLinkAdmin(admin.ModelAdmin):
+class FooterSocialLinkAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "platform",
         "url",
         "icon_key",
+        "icon_class",
         "position",
+        "is_visible",
         "updated_at",
     )
-    list_editable = ("position",)
-    search_fields = ("platform", "url", "icon_key")
+    list_editable = (
+        "position",
+        "is_visible",
+    )
+    list_filter = ("is_visible",)
+    search_fields = ("platform", "url", "icon_key", "icon_class")
     ordering = ("position", "id")
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (
@@ -563,7 +616,9 @@ class FooterSocialLinkAdmin(admin.ModelAdmin):
                     "platform",
                     "url",
                     "icon_key",
+                    "icon_class",
                     "position",
+                    "is_visible",
                 )
             },
         ),
@@ -577,7 +632,7 @@ class FooterSocialLinkAdmin(admin.ModelAdmin):
     )
 
 @admin.register(FooterPaymentMethod)
-class FooterPaymentMethodAdmin(admin.ModelAdmin):
+class FooterPaymentMethodAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "method_name",
         "icon_key",
@@ -609,7 +664,7 @@ class FooterPaymentMethodAdmin(admin.ModelAdmin):
     )
 
 @admin.register(FooterTrustBadge)
-class FooterTrustBadgeAdmin(admin.ModelAdmin):
+class FooterTrustBadgeAdmin(CacheInvalidationMixin, admin.ModelAdmin):
     list_display = (
         "badge_name",
         "icon_key",
@@ -639,3 +694,184 @@ class FooterTrustBadgeAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+# =========================================
+# CMS DYNAMIC CONTACT PAGE ADMIN REGISTRATION
+# =========================================
+class ContactPhoneInline(admin.TabularInline):
+    model = ContactPhone
+    extra = 1
+    ordering = ("position", "id")
+    fields = ("label", "phone_number", "position", "is_visible")
+
+class ContactEmailInline(admin.TabularInline):
+    model = ContactEmail
+    extra = 1
+    ordering = ("position", "id")
+    fields = ("label", "email_address", "position", "is_visible")
+
+class ContactSocialLinkInline(admin.TabularInline):
+    model = ContactSocialLink
+    extra = 1
+    ordering = ("position", "id")
+    fields = ("platform", "url", "icon_key", "icon_class", "position", "is_visible")
+
+class ContactOfficeHourInline(admin.TabularInline):
+    model = ContactOfficeHour
+    extra = 1
+    ordering = ("position", "id")
+    fields = ("day", "opening_time", "closing_time", "status", "position", "is_visible")
+
+@admin.register(ContactPage)
+class ContactPageAdmin(CacheInvalidationMixin, admin.ModelAdmin):
+    list_display = (
+        "id",
+        "hero_title",
+        "hero_subtitle",
+        "hero_image_preview",
+        "updated_at",
+    )
+    readonly_fields = ("hero_image_preview", "created_at", "updated_at")
+    search_fields = ("hero_title", "hero_subtitle", "intro_heading", "seo_meta_title")
+    inlines = [
+        ContactPhoneInline,
+        ContactEmailInline,
+        ContactSocialLinkInline,
+        ContactOfficeHourInline,
+    ]
+    fieldsets = (
+        (
+            "Hero Banner Settings",
+            {
+                "fields": (
+                    "hero_title",
+                    "hero_subtitle",
+                    "hero_description",
+                    "hero_image",
+                    "hero_image_preview",
+                )
+            },
+        ),
+        (
+            "Introductory Narrative",
+            {
+                "fields": (
+                    "intro_heading",
+                    "intro_text",
+                )
+            },
+        ),
+        (
+            "Physical Location Details",
+            {
+                "fields": (
+                    "address_heading",
+                    "physical_address",
+                )
+            },
+        ),
+        (
+            "Google Maps Integration",
+            {
+                "fields": (
+                    "map_heading",
+                    "map_embed_url",
+                )
+            },
+        ),
+        (
+            "Operating Hours Section Header",
+            {
+                "fields": (
+                    "hours_heading",
+                    "hours_description",
+                )
+            },
+        ),
+        (
+            "Interactive Contact Form Setup",
+            {
+                "fields": (
+                    "form_heading",
+                    "form_subheading",
+                    "form_submit_button_label",
+                    "form_success_message",
+                )
+            },
+        ),
+        (
+            "Search Engine Optimization (SEO)",
+            {
+                "fields": (
+                    "seo_meta_title",
+                    "seo_meta_description",
+                    "seo_meta_keywords",
+                )
+            },
+        ),
+        (
+            "System Meta Records",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def has_add_permission(self, request):
+        return not ContactPage.objects.exists()
+
+    def hero_image_preview(self, obj):
+        if not obj or not obj.hero_image:
+            return "-"
+        return format_html(
+            '<img src="{}" style="max-height: 90px; max-width: 160px; object-fit: cover; border: 1px solid #ddd; padding: 4px; background: #fff;" />',
+            obj.hero_image.url,
+        )
+
+    hero_image_preview.short_description = "Hero Image Preview"
+
+# =========================================
+# CMS CACHE INVALIDATION SIGNALS
+# =========================================
+def trigger_cms_cache_invalidation(sender, **kwargs):
+    try:
+        from .services import invalidate_foundation_cms_cache
+        invalidate_foundation_cms_cache()
+    except Exception:
+        pass
+
+    try:
+        from .services import refresh_foundation_cms_cache
+        refresh_foundation_cms_cache()
+    except Exception:
+        pass
+
+CMS_MODELS = [
+    ContactEmail,
+    ContactOfficeHour,
+    ContactPage,
+    ContactPhone,
+    ContactSocialLink,
+    FooterLink,
+    FooterPaymentMethod,
+    FooterSection,
+    FooterSettings,
+    FooterSocialLink,
+    FooterTrustBadge,
+    HeaderBar,
+    HeaderAnnouncement,
+    HeaderCountry,
+    HeaderCurrency,
+    HeaderLanguage,
+    HeaderUtilityLink,
+    NavbarItem,
+    NavbarMegaMenuColumn,
+    NavbarMegaMenuLink,
+    NavbarSettings,
+    SiteSettings,
+]
+
+for model_cls in CMS_MODELS:
+    post_save.connect(trigger_cms_cache_invalidation, sender=model_cls)
+    post_delete.connect(trigger_cms_cache_invalidation, sender=model_cls)

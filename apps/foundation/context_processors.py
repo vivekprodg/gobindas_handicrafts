@@ -19,6 +19,7 @@ from .services import (
     get_footer_data,
     get_header_bar_cached,
     get_site_settings_cached,
+    get_contact_page_data_cached,
 )
 from apps.catalog.models import Category, Product, Artisan
 
@@ -34,6 +35,7 @@ def foundation_cms_context(request):
     - menu_categories: dynamically retrieved categories matching the catalog structure
     - navbar_queryset: raw queryset for advanced template usage if needed
     - footer_data: dynamic compiled footer structures for global render pipelines
+    - contact_page_data: fully CMS-driven contact settings, lists, and channels
     - ALL Expanded Header CMS data (utilities, config, visibility, datasets, contacts, selectors)
     - ALL Expanded Navbar CMS data (navigation structure, settings, features, branding)
     """
@@ -64,6 +66,12 @@ def foundation_cms_context(request):
         footer_data = get_footer_data()
     except Exception:
         footer_data = {}
+
+    # 1E. Contact Page Data (Hero, Info, Operating Hours, Forms, SEO)
+    try:
+        contact_page_data = get_contact_page_data_cached()
+    except Exception:
+        contact_page_data = {}
 
     # =========================================================
     # 2. EXPANDED SETTINGS (CACHED DIRECTLY FOR PERFORMANCE)
@@ -172,6 +180,7 @@ def foundation_cms_context(request):
         "menu_categories": menu_categories,
         "navbar_queryset": navbar_qs,
         "footer_data": footer_data,
+        "contact_page_data": contact_page_data,
 
         # --- BRANDING & IDENTITY ---
         "brand_title": brand_title,
