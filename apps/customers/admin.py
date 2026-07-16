@@ -10,7 +10,6 @@ from apps.customers.models import (
     SocialAccountMetadata,
 )
 
-
 class CustomerAddressInline(admin.TabularInline):
     """
     Inline rendering of customer addresses directly within the CustomerProfile administrative page.

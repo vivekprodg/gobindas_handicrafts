@@ -1,183 +1,499 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{% trans "Order History" %} | {{ site_name|default:"Luxury eCommerce" }}{% endblock %}
+{% block title %}
+    {% trans "Order History" %} | {% trans "Luxury Handicrafts" %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Order List Styling synchronized with the finalized enterprise architecture */
+    :root {
+        --luxury-gold: #C5A880;
+        --luxury-gold-hover: #B3966E;
+        --luxury-dark: #111111;
+        --luxury-charcoal: #2A2A2A;
+        --luxury-muted: #767676;
+        --luxury-bg-light: #FBFBFA;
+        --luxury-border: #EAEAEA;
+        --luxury-success: #2E7D32;
+        --luxury-pending: #C62828;
+        --luxury-pending-bg: #FFEBEE;
+        --luxury-radius: 4px;
+        --luxury-shadow: 0 4px 12px rgba(17, 17, 17, 0.03);
+    }
+
+    .premium-order-list-container {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--luxury-dark);
+        background-color: #FFFFFF;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+        letter-spacing: -0.01em;
+    }
+
+    /* Breadcrumbs */
+    .luxury-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 32px;
+        color: var(--luxury-muted);
+        flex-wrap: wrap;
+    }
+    .luxury-breadcrumbs a {
+        color: var(--luxury-muted);
+        text-decoration: none;
+        transition: color 0.2s ease;
+        font-weight: 500;
+    }
+    .luxury-breadcrumbs a:hover {
+        color: var(--luxury-dark);
+    }
+    .luxury-breadcrumbs .separator::after {
+        content: "/";
+        margin-left: 8px;
+    }
+    .luxury-breadcrumbs .current {
+        color: var(--luxury-dark);
+        font-weight: 600;
+    }
+
+    /* Header */
+    .list-header {
+        border-bottom: 1px solid var(--luxury-border);
+        padding-bottom: 24px;
+        margin-bottom: 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .list-header h1 {
+        font-family: "Cinzel", serif;
+        font-size: 36px;
+        font-weight: 400;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.02em;
+    }
+    .list-header p {
+        font-size: 14px;
+        color: var(--luxury-muted);
+        margin: 0;
+    }
+    .order-total-count {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--luxury-muted);
+    }
+
+    /* Status pill (canonical) */
+    .status-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 20px;
+        border: 1px solid currentColor;
+    }
+    .status-pill.is-pending,
+    .status-pill.is-awaiting_payment,
+    .status-pill.is-on_hold { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-processing,
+    .status-pill.is-completed { background: #E8F5E9; color: #2E7D32; }
+    .status-pill.is-shipped { background: #E3F2FD; color: #0D47A1; }
+    .status-pill.is-delivered { background: #E0F2F1; color: #00695C; }
+    .status-pill.is-cancelled,
+    .status-pill.is-failed { background: #FFEBEE; color: #C62828; }
+    .status-pill.is-refunded,
+    .status-pill.is-partially_refunded { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-paid,
+    .status-pill.is-captured { background: #E8F5E9; color: #2E7D32; }
+
+    /* Premium order cards */
+    .luxury-order-card {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 0;
+        background: #FFFFFF;
+        border: 1px solid var(--luxury-border);
+        border-radius: var(--luxury-radius);
+        box-shadow: var(--luxury-shadow);
+        margin-bottom: 24px;
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+    .luxury-order-card:hover {
+        box-shadow: 0 8px 24px rgba(17, 17, 17, 0.06);
+    }
+    @media (max-width: 768px) {
+        .luxury-order-card {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .luxury-order-card-left {
+        background-color: var(--luxury-bg-light);
+        padding: 32px;
+        border-right: 1px solid var(--luxury-border);
+    }
+    @media (max-width: 768px) {
+        .luxury-order-card-left {
+            border-right: none;
+            border-bottom: 1px solid var(--luxury-border);
+        }
+    }
+    .luxury-order-card-right {
+        padding: 32px;
+    }
+    @media (max-width: 768px) {
+        .luxury-order-card-right { padding: 24px; }
+        .luxury-order-card-left { padding: 24px; }
+    }
+
+    .luxury-label-small {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--luxury-muted);
+        margin-bottom: 4px;
+    }
+    .luxury-value-medium {
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--luxury-dark);
+        margin-bottom: 20px;
+    }
+    .luxury-value-large {
+        font-size: 24px;
+        font-weight: 500;
+        color: var(--luxury-dark);
+    }
+
+    /* Action buttons */
+    .luxury-btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .btn-luxury-primary {
+        background-color: var(--luxury-dark);
+        color: #FFFFFF;
+        border: 1px solid var(--luxury-dark);
+        padding: 10px 18px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-luxury-primary:hover {
+        background-color: var(--luxury-gold);
+        border-color: var(--luxury-gold);
+        color: #FFFFFF;
+    }
+    .btn-luxury-secondary {
+        background-color: transparent;
+        color: var(--luxury-dark);
+        border: 1px solid var(--luxury-border);
+        padding: 10px 18px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-luxury-secondary:hover {
+        border-color: var(--luxury-dark);
+        background-color: var(--luxury-bg-light);
+    }
+    .btn-luxury-danger {
+        background-color: var(--luxury-pending);
+        color: #FFFFFF;
+        border: 1px solid var(--luxury-pending);
+        padding: 10px 18px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-luxury-danger:hover {
+        background-color: #B71C1C;
+        border-color: #B71C1C;
+    }
+    .btn-luxury-link {
+        color: var(--luxury-dark);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+    .btn-luxury-link:hover { color: var(--luxury-gold); }
+    .btn-luxury-danger-link {
+        color: var(--luxury-pending);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+    .btn-luxury-danger-link:hover { color: #B71C1C; }
+
+    /* Section title */
+    .luxury-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--luxury-muted);
+        margin: 0 0 20px 0;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 80px 24px;
+        background-color: var(--luxury-bg-light);
+        border: 1px solid var(--luxury-border);
+        border-radius: var(--luxury-radius);
+    }
+    .empty-state .empty-icon {
+        background: #FFFFFF;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        box-shadow: var(--luxury-shadow);
+    }
+    .empty-state h3 {
+        font-family: "Cinzel", serif;
+        font-size: 24px;
+        font-weight: 400;
+        margin: 0 0 12px 0;
+    }
+    .empty-state p {
+        font-size: 14px;
+        color: var(--luxury-muted);
+        max-width: 480px;
+        margin: 0 auto 24px auto;
+        line-height: 1.6;
+    }
+
+    /* Pagination */
+    .luxury-pagination {
+        margin-top: 40px;
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+    }
+    .luxury-pagination a, .luxury-pagination span {
+        padding: 10px 16px;
+        border: 1px solid var(--luxury-border);
+        color: var(--luxury-dark);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .luxury-pagination .current {
+        background-color: var(--luxury-dark);
+        color: #FFFFFF;
+        border-color: var(--luxury-dark);
+    }
+    .luxury-pagination .disabled {
+        color: var(--luxury-muted);
+    }
+
+    /* Messages */
+    .luxury-alert {
+        padding: 16px 24px;
+        border-radius: var(--luxury-radius);
+        margin-bottom: 16px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .luxury-alert.success { background: #E8F5E9; color: var(--luxury-success); border: 1px solid rgba(46, 125, 50, 0.2); }
+    .luxury-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.2); }
+    .luxury-alert.warning { background: #FFF3E0; color: #E65100; border: 1px solid rgba(230, 81, 0, 0.2); }
+    .luxury-alert.error { background: #FFEBEE; color: var(--luxury-pending); border: 1px solid rgba(198, 40, 40, 0.2); }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Main Container: Designed for ultra-premium, mobile-first responsive layouts -->
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 w-100 container">
-    
-    <!-- Breadcrumb Navigation -->
-    <nav class="flex d-flex text-xs font-medium text-gray-500 text-muted mb-8 tracking-widest uppercase" aria-label="Breadcrumb">
-        <ol class="inline-flex d-inline-flex items-center space-x-2 list-unstyled mb-0 pl-0">
-            <li class="inline-flex d-inline-flex items-center">
-                <a href="/" class="hover:text-black text-decoration-none transition-colors duration-200">{% trans "Home" %}</a>
-            </li>
-            <li class="inline-flex d-inline-flex items-center">
-                <span class="mx-2 text-gray-300">/</span>
-                <a href="{% url 'orders:list' %}" class="hover:text-black text-decoration-none transition-colors duration-200">{% trans "Account" %}</a>
-            </li>
-            <li class="inline-flex d-inline-flex items-center" aria-current="page">
-                <span class="mx-2 text-gray-300">/</span>
-                <span class="text-black text-dark font-bold">{% trans "Order History" %}</span>
-            </li>
-        </ol>
+<div class="premium-order-list-container" aria-label="{% trans 'Order History' %}">
+
+    <nav class="luxury-breadcrumbs" aria-label="Breadcrumb">
+        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a>
+        <span class="separator"></span>
+        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a>
+        <span class="separator"></span>
+        <span class="current" aria-current="page">{% trans "Order History" %}</span>
     </nav>
 
-    <!-- Page Header & Order Statistics -->
-    <header class="border-b border-gray-200 pb-6 mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 d-flex flex-column flex-md-row align-items-md-end justify-content-between border-bottom pb-4 mb-5">
+    <header class="list-header">
         <div>
-            <h1 class="text-3xl md:text-4xl font-serif text-black text-dark tracking-tight mb-2 display-6 fw-normal">
-                {% trans "Order History" %}
-            </h1>
-            <p class="text-sm text-gray-500 text-muted mb-0">
-                {% trans "Review your past purchases, track shipments, and manage returns." %}
-            </p>
+            <h1>{% trans "Order History" %}</h1>
+            <p>{% trans "Review your past purchases, track shipments, and manage returns." %}</p>
         </div>
-        
-        <!-- Filters & Summary -->
-        <div class="flex items-center gap-4 d-flex align-items-center">
-            <span class="text-xs font-semibold uppercase tracking-widest text-gray-400 text-muted">
-                {{ page_obj.paginator.count|default:orders.count|default:0 }} {% trans "Orders Total" %}
-            </span>
-            <a href="{% url 'orders:order_history' %}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-xs font-bold uppercase tracking-wider rounded-full text-black bg-white hover:bg-gray-50 transition-all duration-200 text-decoration-none btn btn-outline-dark rounded-pill btn-sm">
-                {% trans "View Archive" %}
-            </a>
-        </div>
+        <span class="order-total-count">
+            {{ paginator.count|default:0 }} {% trans "Orders" %}
+        </span>
     </header>
 
-    <!-- Orders Feed -->
-    <section class="space-y-8 d-flex flex-column gap-4" aria-label="{% trans 'List of Orders' %}">
-        {% for order in page_obj|default:object_list|default:orders %}
-            <!-- Premium Order Card -->
-            <article class="border border-gray-200 rounded-2xl bg-white overflow-hidden flex flex-col lg:flex-row hover:shadow-md transition-shadow duration-300 card border-0 shadow-sm rounded-4 mb-4">
-                
-                <!-- Order Metadata (Left Column / Top) -->
-                <div class="bg-gray-50 p-6 md:p-8 lg:w-1/3 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-200 card-header bg-light border-bottom-0 p-4 p-md-5">
-                    <div>
-                        <!-- Order ID -->
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 text-muted small">{% trans "Order Number" %}</h3>
-                        <p class="text-xl font-medium text-black mb-6 fw-bold">#{{ order.id }}</p>
+    {% if messages %}
+        <div role="alert" aria-live="polite">
+            {% for message in messages %}
+                <div class="luxury-alert {{ message.tags|default:'info' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-                        <!-- Order Date -->
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 text-muted small">{% trans "Date Placed" %}</h3>
-                        <p class="text-sm text-gray-800 mb-6">
+    {% if orders %}
+        <section aria-label="{% trans 'List of Orders' %}">
+            {% for order in orders %}
+                <article class="luxury-order-card" aria-label="{% trans 'Order' %} #{{ order.order_number|default:order.id }}">
+
+                    {# Left column: order metadata #}
+                    <div class="luxury-order-card-left">
+                        <p class="luxury-label-small">{% trans "Order Number" %}</p>
+                        <p class="luxury-value-medium">
+                            <a href="{% url 'orders:order_detail' order.id %}" style="color: var(--luxury-dark); text-decoration: none; font-weight: 500;">
+                                #{{ order.order_number|default:order.id }}
+                            </a>
+                        </p>
+
+                        <p class="luxury-label-small">{% trans "Date Placed" %}</p>
+                        <p class="luxury-value-medium">
                             <time datetime="{{ order.created_at|date:'Y-m-d' }}">{{ order.created_at|date:"F j, Y" }}</time>
                         </p>
 
-                        <!-- Order Total -->
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 text-muted small">{% trans "Total Amount" %}</h3>
-                        <p class="text-xl font-medium text-black fw-bold">
-                            {{ order.total_amount|default:order.total|default:"0.00" }}
+                        <p class="luxury-label-small">{% trans "Total Amount" %}</p>
+                        <p class="luxury-value-large">
+                            {{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}
                         </p>
-                    </div>
-                    
-                    <!-- Primary Status -->
-                    <div class="mt-8 mt-md-4">
-                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-black text-white badge bg-dark rounded-pill px-3 py-2 font-weight-normal">
-                            {{ order.get_status_display|default:order.status|title }}
-                        </span>
-                    </div>
-                </div>
 
-                <!-- Order Actions & Secondary Details (Right Column / Bottom) -->
-                <div class="p-6 md:p-8 lg:w-2/3 flex flex-col justify-center bg-white card-body p-4 p-md-5">
-                    
-                    <!-- Action Buttons Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 row g-3">
-                        
-                        <!-- View Details -->
-                        <div class="col-12 col-sm-6">
-                            <a href="{% url 'orders:order_detail' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-decoration-none btn btn-outline-secondary w-100 py-2 rounded-3">
-                                {% trans "View Order Details" %}
-                            </a>
+                        <div class="luxury-btn-group" style="margin-top: 16px;">
+                            <span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span>
+                            {% if order.payment_status %}
+                                <span class="status-pill is-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span>
+                            {% endif %}
                         </div>
-                        
-                        <!-- Track Shipment -->
-                        <div class="col-12 col-sm-6">
-                            <a href="{% url 'orders:track_order' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-black hover:bg-gray-900 transition-all duration-200 text-decoration-none btn btn-dark w-100 py-2 rounded-3">
-                                {% trans "Track Shipment" %}
+                    </div>
+
+                    {# Right column: action grid #}
+                    <div class="luxury-order-card-right">
+                        <h3 class="luxury-section-title">{% trans "Actions" %}</h3>
+                        <div class="luxury-btn-group">
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn-luxury-primary">
+                                {% trans "View Order" %}
                             </a>
-                        </div>
-                        
-                        <!-- Download Invoice -->
-                        <div class="col-12 col-sm-6">
-                            <a href="{% url 'orders:download_invoice' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-decoration-none btn btn-outline-secondary w-100 py-2 rounded-3">
-                                <svg class="w-4 h-4 mr-2 text-gray-500 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            {% if order.tracking_number or order.shipments.all %}
+                                <a href="{% url 'orders:track_order' order.id %}" class="btn-luxury-secondary">
+                                    {% trans "Track Shipment" %}
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'orders:download_invoice' order.id %}" class="btn-luxury-secondary">
                                 {% trans "Download Invoice" %}
                             </a>
                         </div>
-                        
-                        <!-- Reorder -->
-                        <div class="col-12 col-sm-6">
-                            <a href="{% url 'orders:reorder' id=order.id %}" class="flex items-center justify-center w-full px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-decoration-none btn btn-outline-secondary w-100 py-2 rounded-3">
-                                <svg class="w-4 h-4 mr-2 text-gray-500 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                {% trans "Buy Again" %}
-                            </a>
-                        </div>
-                    </div>
 
-                    <!-- Secondary States (Payment & Returns) -->
-                    <div class="mt-8 pt-6 border-t border-gray-100 flex flex-wrap gap-6 text-sm border-top mt-4 pt-4 d-flex justify-content-between align-items-center">
-                        <div class="flex items-center gap-4 d-flex gap-3">
-                            <!-- Payment Status -->
-                            {% if order.payment_status %}
-                            <a href="{% url 'orders:payment_details' id=order.id %}" class="text-gray-500 hover:text-black transition-colors flex items-center text-decoration-none text-muted">
-                                <svg class="w-4 h-4 mr-1.5 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                                {{ order.get_payment_status_display|default:order.payment_status|title }}
-                            </a>
+                        <div class="luxury-btn-group" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--luxury-border);">
+                            {# Reorder is always available for completed orders #}
+                            {% if order.status == 'delivered' or order.status == 'completed' or order.status == 'shipped' %}
+                                <a href="{% url 'orders:reorder' order.id %}" class="btn-luxury-link">
+                                    {% trans "Buy Again" %}
+                                </a>
                             {% endif %}
-                            
-                            <!-- Shipment Status -->
-                            {% if order.shipment_status %}
-                            <a href="{% url 'orders:shipment_details' id=order.id %}" class="text-gray-500 hover:text-black transition-colors flex items-center text-decoration-none text-muted">
-                                <svg class="w-4 h-4 mr-1.5 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                                {{ order.get_shipment_status_display|default:order.shipment_status|title }}
-                            </a>
-                            {% endif %}
-                        </div>
 
-                        <!-- Reverse Logistics Actions -->
-                        <div class="flex items-center gap-4 d-flex gap-3">
-                            {% if order.status == 'delivered' or order.status == 'shipped' %}
-                                <a href="{% url 'orders:return_request' id=order.id %}" class="text-gray-500 hover:text-black transition-colors underline underline-offset-4 text-muted">
+                            {# Returns only available for delivered/completed orders #}
+                            {% if order.status == 'delivered' or order.status == 'completed' %}
+                                <a href="{% url 'orders:return_request' order.id %}" class="btn-luxury-link">
                                     {% trans "Request Return" %}
                                 </a>
-                            {% elif order.status == 'pending' or order.status == 'processing' %}
-                                <a href="{% url 'orders:cancel_order' id=order.id %}" class="text-red-500 hover:text-red-700 transition-colors underline underline-offset-4 text-danger">
+                            {% endif %}
+
+                            {# Cancellation only available for pre-dispatch states #}
+                            {% if order.status == 'pending' or order.status == 'awaiting_payment' or order.status == 'processing' or order.status == 'on_hold' %}
+                                <a href="{% url 'orders:cancel_order' order.id %}" class="btn-luxury-danger-link">
                                     {% trans "Cancel Order" %}
                                 </a>
                             {% endif %}
                         </div>
                     </div>
-                </div>
-            </article>
 
-        {% empty %}
-            <!-- Beautiful Empty State -->
-            <div class="text-center py-20 px-4 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-5 bg-light rounded-4 border">
-                <div class="bg-white p-6 rounded-full shadow-sm mb-6 bg-white p-4 rounded-circle shadow-sm d-inline-block mb-4">
-                    <svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" style="width:48px;height:48px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-serif text-black mb-2 h4 fw-normal">{% trans "No orders found" %}</h3>
-                <p class="text-sm text-gray-500 max-w-md mx-auto mb-8 text-muted mb-4">
-                    {% trans "You haven't placed any orders yet. Discover our latest collection of premium handcrafted items and begin your journey." %}
-                </p>
-                <a href="/" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-black hover:bg-gray-900 transition-all duration-300 text-decoration-none btn btn-dark rounded-pill px-4 py-2">
-                    {% trans "Continue Shopping" %}
-                </a>
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true" style="color: var(--luxury-muted);">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
             </div>
-        {% endfor %}
-    </section>
-
-    <!-- Pagination Integration -->
-    {% if is_paginated or page_obj.has_other_pages %}
-        <div class="mt-12 flex justify-center mt-5 d-flex justify-content-center">
-            {% include "partials/pagination.html" fallback="includes/pagination.html" %}
+            <h3>{% trans "No orders found" %}</h3>
+            <p>{% trans "You haven't placed any orders yet. Discover our latest collection of premium handcrafted items and begin your journey." %}</p>
+            <a href="{% url 'foundation:home' %}" class="btn-luxury-primary">
+                {% trans "Continue Shopping" %}
+            </a>
         </div>
     {% endif %}
 
-</main>
+    {# Pagination #}
+    {% if is_paginated %}
+        <nav class="luxury-pagination" aria-label="{% trans 'Pagination' %}">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="{% trans 'Previous' %}">&larr;</a>
+            {% else %}
+                <span class="disabled" aria-hidden="true">&larr;</span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="current" aria-current="page">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="{% trans 'Next' %}">&rarr;</a>
+            {% else %}
+                <span class="disabled" aria-hidden="true">&rarr;</span>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+</div>
 {% endblock %}

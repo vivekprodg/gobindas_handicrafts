@@ -2,7 +2,7 @@
 {% load static i18n %}
 
 {% block title %}
-    {% trans "Cancel Order" %} #{{ view.order.order_number|default:view.order.id }} | {% trans "Luxury Handicrafts" %}
+    {% trans "Cancel Order" %} #{{ order.order_number|default:order.id }} | {% trans "Luxury Handicrafts" %}
 {% endblock %}
 
 {% block extra_css %}
@@ -43,6 +43,7 @@
         letter-spacing: 0.1em;
         margin-bottom: 40px;
         color: var(--luxury-muted);
+        flex-wrap: wrap;
     }
     .luxury-breadcrumbs a {
         color: var(--luxury-muted);
@@ -56,6 +57,10 @@
     .luxury-breadcrumbs .separator::after {
         content: "/";
         margin-left: 8px;
+    }
+    .luxury-breadcrumbs .current {
+        color: var(--luxury-dark);
+        font-weight: 600;
     }
 
     /* Main Header Layout */
@@ -81,10 +86,34 @@
         gap: 24px;
         font-size: 14px;
         color: var(--luxury-muted);
+        flex-wrap: wrap;
     }
     .order-meta-info strong {
         color: var(--luxury-dark);
     }
+
+    /* Status badge */
+    .status-pill {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 20px;
+        border: 1px solid currentColor;
+    }
+    .status-pill.is-pending,
+    .status-pill.is-awaiting_payment,
+    .status-pill.is-on_hold { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-processing,
+    .status-pill.is-completed { background: #E8F5E9; color: #2E7D32; }
+    .status-pill.is-shipped { background: #E3F2FD; color: #0D47A1; }
+    .status-pill.is-delivered { background: #E0F2F1; color: #00695C; }
+    .status-pill.is-cancelled { background: #FFEBEE; color: #C62828; }
+    .status-pill.is-refunded,
+    .status-pill.is-partially_refunded { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-failed { background: #FFEBEE; color: #C62828; }
 
     /* Grid Layout split */
     .order-content-grid {
@@ -151,7 +180,8 @@
         margin-bottom: 8px;
     }
 
-    .premium-input {
+    .premium-input,
+    .premium-textarea {
         width: 100%;
         padding: 16px;
         border: 1px solid var(--luxury-border);
@@ -165,7 +195,8 @@
         box-sizing: border-box;
     }
 
-    .premium-input:focus {
+    .premium-input:focus,
+    .premium-textarea:focus {
         outline: none;
         border-color: var(--luxury-dark);
         background: #FFFFFF;
@@ -187,6 +218,11 @@
         color: var(--luxury-muted);
         margin-top: 6px;
         line-height: 1.5;
+    }
+
+    .required-indicator {
+        color: var(--luxury-pending);
+        margin-left: 2px;
     }
 
     /* Action Buttons */
@@ -305,11 +341,18 @@
         object-fit: cover;
         flex-shrink: 0;
     }
+    .item-preview-info {
+        flex: 1;
+        min-width: 0;
+    }
     .item-preview-info h5 {
         margin: 0 0 4px 0;
         font-size: 14px;
         font-weight: 500;
         color: var(--luxury-dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .item-preview-info p {
         margin: 0;
@@ -331,6 +374,7 @@
         accent-color: var(--luxury-dark);
         margin-top: 2px;
         cursor: pointer;
+        flex-shrink: 0;
     }
     .luxury-checkbox span {
         font-size: 14px;
@@ -353,7 +397,20 @@
         gap: 12px;
     }
     .luxury-alert.error { background: var(--luxury-pending-bg); color: var(--luxury-pending); border: 1px solid rgba(198, 40, 40, 0.2); }
+    .luxury-alert.success { background: #E8F5E9; color: var(--luxury-success); border: 1px solid rgba(46, 125, 50, 0.2); }
+    .luxury-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.2); }
     
+    .ineligible-notice {
+        background-color: #FFF8E7;
+        border: 1px solid rgba(154, 123, 84, 0.3);
+        color: #9A7B54;
+        padding: 24px;
+        border-radius: var(--luxury-radius);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .ineligible-notice strong { color: var(--luxury-dark); }
+
     @media (max-width: 768px) {
         .action-row {
             flex-direction: column-reverse;
@@ -362,20 +419,22 @@
         .btn-luxury-primary, .btn-luxury-secondary, .btn-luxury-danger {
             width: 100%;
         }
+        .premium-order-container { padding: 24px 16px 60px; }
+        .order-title-area h1 { font-size: 28px; }
+        .luxury-section-card { padding: 20px; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-{% with order=view.order %}
 <div class="premium-order-container" aria-label="Order Cancellation Flow">
     
     <nav class="luxury-breadcrumbs" aria-label="Breadcrumb">
-        <a href="{% url 'foundation:home'|default:'/' %}">{% trans "Home" %}</a>
+        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a>
         <span class="separator"></span>
-        <a href="{% url 'customers:dashboard'|default:'/account/' %}">{% trans "Dashboard" %}</a>
+        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a>
         <span class="separator"></span>
-        <a href="{% url 'orders:list'|default:'/orders/' %}">{% trans "Orders" %}</a>
+        <a href="{% url 'orders:order_list' %}">{% trans "Orders" %}</a>
         <span class="separator"></span>
         <a href="{% url 'orders:order_detail' order.id %}">#{{ order.order_number|default:order.id }}</a>
         <span class="separator"></span>
@@ -388,9 +447,26 @@
             <div class="order-meta-info">
                 <div>{% trans "Reference" %}: <strong>#{{ order.order_number|default:order.id }}</strong></div>
                 <div>{% trans "Placed on" %}: <strong>{{ order.created_at|date:"F j, Y" }}</strong></div>
+                {% if order.get_status_display %}
+                    <div>
+                        {% trans "Status" %}:
+                        <span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </header>
+
+    {% if messages %}
+        <div class="form-alerts" role="alert" aria-live="polite">
+            {% for message in messages %}
+                <div class="luxury-alert {{ message.tags|default:'info' }}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <div>{{ message }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {% if form.non_field_errors %}
         <div class="form-alerts" role="alert" aria-live="polite">
@@ -409,62 +485,125 @@
         
         <div class="main-order-left-pane">
             
-            <div class="luxury-section-card warning-card">
-                <h3 class="luxury-section-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    {% trans "Important Notice" %}
-                </h3>
-                <div style="font-size: 14px; line-height: 1.6; color: var(--luxury-dark);">
-                    <p style="margin-top: 0;">{% trans "You are about to submit a permanent cancellation request for this order. Please note the following policies:" %}</p>
-                    <ul style="padding-left: 20px; margin-bottom: 0;">
-                        <li style="margin-bottom: 8px;"><strong>{% trans "Irreversible Action:" %}</strong> {% trans "Once an order is cancelled, the inventory is immediately released back to our artisans and cannot be reserved again without placing a new order." %}</li>
-                        <li style="margin-bottom: 8px;"><strong>{% trans "Refund Process:" %}</strong> {% trans "If your payment has already been successfully captured, it will be automatically refunded to your original payment method. Please allow 3-5 business days for funds to reflect." %}</li>
-                        <li><strong>{% trans "Eligibility:" %}</strong> {% trans "Orders can only be cancelled while in 'Pending' or 'Processing' states. Shipped or dispatched artifacts cannot be intercepted." %}</li>
-                    </ul>
+            {% if can_cancel %}
+                <div class="luxury-section-card warning-card">
+                    <h3 class="luxury-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        {% trans "Important Notice" %}
+                    </h3>
+                    <div style="font-size: 14px; line-height: 1.6; color: var(--luxury-dark);">
+                        <p style="margin-top: 0;">{% trans "You are about to submit a permanent cancellation request for this order. Please note the following policies:" %}</p>
+                        <ul style="padding-left: 20px; margin-bottom: 0;">
+                            <li style="margin-bottom: 8px;"><strong>{% trans "Irreversible Action:" %}</strong> {% trans "Once an order is cancelled, the inventory is immediately released back to our artisans and cannot be reserved again without placing a new order." %}</li>
+                            <li style="margin-bottom: 8px;"><strong>{% trans "Refund Process:" %}</strong> {% trans "If your payment has already been successfully captured, it will be automatically refunded to your original payment method. Please allow 3-5 business days for funds to reflect." %}</li>
+                            <li><strong>{% trans "Eligibility:" %}</strong> {% trans "Orders can only be cancelled while in 'Pending' or 'Processing' states. Shipped or dispatched artifacts cannot be intercepted." %}</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            <div class="luxury-section-card">
-                <h3 class="luxury-section-title">{% trans "Cancellation Details" %}</h3>
-                
-                <form method="post" action="{% url 'orders:cancel_order' order.id %}" novalidate>
-                    {% csrf_token %}
+                <div class="luxury-section-card">
+                    <h3 class="luxury-section-title">{% trans "Cancellation Details" %}</h3>
                     
-                    {% for hidden in form.hidden_fields %}
-                        {{ hidden }}
-                    {% endfor %}
+                    <form method="post" action="{% url 'orders:cancel_order' order.id %}" novalidate>
+                        {% csrf_token %}
+                        
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
 
-                    <div class="luxury-form-group">
-                        <label for="{{ form.remarks.id_for_label }}" class="luxury-label">{{ form.remarks.label }}</label>
-                        {{ form.remarks }}
-                        
-                        {% if form.remarks.help_text %}
-                            <div class="field-help">{{ form.remarks.help_text }}</div>
-                        {% endif %}
-                        
-                        {% if form.remarks.errors %}
-                            <div class="field-error" role="alert">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                {{ form.remarks.errors.0 }}
+                        {% if form.remarks %}
+                            <div class="luxury-form-group">
+                                <label for="{{ form.remarks.id_for_label }}" class="luxury-label">
+                                    {{ form.remarks.label }}
+                                    {% if form.remarks.field.required %}<span class="required-indicator" aria-hidden="true">*</span>{% endif %}
+                                </label>
+                                <textarea
+                                    name="{{ form.remarks.name }}"
+                                    id="{{ form.remarks.id_for_label }}"
+                                    class="premium-textarea"
+                                    rows="4"
+                                    {% if form.remarks.field.required %}required{% endif %}
+                                    {% if form.remarks.field.disabled %}disabled{% endif %}
+                                    placeholder="{{ form.remarks.field.widget.attrs.placeholder|default:'' }}"
+                                    aria-describedby="{% if form.remarks.help_text %}{{ form.remarks.id_for_label }}-help{% endif %} {% if form.remarks.errors %}{{ form.remarks.id_for_label }}-error{% endif %}"
+                                >{{ form.remarks.value|default:'' }}</textarea>
+                                
+                                {% if form.remarks.help_text %}
+                                    <div class="field-help" id="{{ form.remarks.id_for_label }}-help">{{ form.remarks.help_text }}</div>
+                                {% endif %}
+                                
+                                {% if form.remarks.errors %}
+                                    <div class="field-error" id="{{ form.remarks.id_for_label }}-error" role="alert">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        {{ form.remarks.errors|join:" " }}
+                                    </div>
+                                {% endif %}
                             </div>
                         {% endif %}
-                    </div>
-                    
-                    <label class="luxury-checkbox">
-                        <input type="checkbox" id="cancellation-acknowledgement" required>
-                        <span>{% trans "I understand that cancelling this order is permanent and will release these exclusive handcrafted items." %}</span>
-                    </label>
 
-                    <div class="action-row">
-                        <a href="{% url 'orders:order_detail' order.id %}" class="btn-luxury-secondary">
-                            {% trans "Keep My Order" %}
-                        </a>
-                        <button type="submit" class="btn-luxury-danger" id="submit-cancel-btn" disabled>
-                            {% trans "Confirm Cancellation" %}
-                        </button>
+                        {% for field in form %}
+                            {% if field.name != 'remarks' and not field.is_hidden %}
+                                <div class="luxury-form-group">
+                                    <label for="{{ field.id_for_label }}" class="luxury-label">
+                                        {{ field.label }}
+                                        {% if field.field.required %}<span class="required-indicator" aria-hidden="true">*</span>{% endif %}
+                                    </label>
+                                    {{ field }}
+                                    
+                                    {% if field.help_text %}
+                                        <div class="field-help">{{ field.help_text }}</div>
+                                    {% endif %}
+                                    
+                                    {% if field.errors %}
+                                        <div class="field-error" role="alert">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                            {{ field.errors|join:" " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <label class="luxury-checkbox">
+                            <input type="checkbox" id="cancellation-acknowledgement" required aria-required="true">
+                            <span>{% trans "I understand that cancelling this order is permanent and will release these exclusive handcrafted items." %}</span>
+                        </label>
+
+                        <div class="action-row">
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn-luxury-secondary">
+                                {% trans "Keep My Order" %}
+                            </a>
+                            <button type="submit" class="btn-luxury-danger" id="submit-cancel-btn" disabled aria-disabled="true">
+                                {% trans "Confirm Cancellation" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            {% else %}
+                <div class="luxury-section-card">
+                    <h3 class="luxury-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        {% trans "Cancellation Unavailable" %}
+                    </h3>
+                    <div class="ineligible-notice">
+                        <p style="margin-top: 0;">
+                            <strong>{% trans "This order is no longer eligible for cancellation." %}</strong>
+                        </p>
+                        {% if ineligibility_reason %}
+                            <p style="margin-bottom: 0;">{{ ineligibility_reason }}</p>
+                        {% else %}
+                            <p style="margin-bottom: 0;">
+                                {% trans "Orders can typically only be cancelled while in 'Pending' or 'Processing' status. Once an order has been shipped or dispatched, cancellation through this page is not possible. If you still wish to return items, please submit a return request from your order details page or contact our artisan concierge for assistance." %}
+                            </p>
+                        {% endif %}
                     </div>
-                </form>
-            </div>
+                    <div class="action-row">
+                        <a href="{% url 'orders:order_detail' order.id %}" class="btn-luxury-primary">
+                            {% trans "Return to Order Details" %}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
             
         </div>
 
@@ -475,17 +614,27 @@
                 <div class="item-preview-list">
                     {% for item in order.items.all|slice:":3" %}
                         <div class="item-preview">
-                            {% if item.product.primary_image %}
-                                <img src="{{ item.product.primary_image.url }}" alt="{{ item.product.title }}" class="item-preview-img">
-                            {% elif item.product.image %}
-                                <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" class="item-preview-img">
+                            {% if item.product_image_snapshot_url %}
+                                <img src="{{ item.product_image_snapshot_url }}" alt="{{ item.product_name_snapshot|default:'Artisan Product' }}" class="item-preview-img">
+                            {% elif item.variant_image_snapshot_url %}
+                                <img src="{{ item.variant_image_snapshot_url }}" alt="{{ item.product_name_snapshot|default:'Artisan Product' }}" class="item-preview-img">
                             {% else %}
                                 <div class="item-preview-img" style="display:flex; align-items:center; justify-content:center; font-size:10px; color:#AAA;">IMG</div>
                             {% endif %}
                             
                             <div class="item-preview-info">
-                                <h5>{{ item.product.title|default:item.product_name|default:"Artisan Product" }}</h5>
-                                <p>{% trans "Qty:" %} {{ item.quantity }} &bull; {{ order.currency|default:"$" }}{{ item.price|floatformat:2 }}</p>
+                                <h5>
+                                    {{ item.product_name_snapshot|default:item.variant_name_snapshot|default:"Artisan Product" }}
+                                    {% if item.variant_name_snapshot and item.product_name_snapshot %}
+                                        <span style="color: var(--luxury-muted); font-weight: 400; font-size: 12px;">({{ item.variant_name_snapshot }})</span>
+                                    {% endif %}
+                                </h5>
+                                <p>
+                                    {% trans "Qty:" %} {{ item.quantity }}
+                                    {% if item.unit_price %}
+                                        &bull; {{ order.currency|default:"$" }}{{ item.unit_price|floatformat:2 }}
+                                    {% endif %}
+                                </p>
                             </div>
                         </div>
                     {% empty %}
@@ -501,43 +650,56 @@
 
                 <div class="financial-row">
                     <span>{% trans "Subtotal" %}</span>
-                    <span>{{ order.currency|default:"$" }}{{ order.subtotal|default:order.get_subtotal|floatformat:2 }}</span>
+                    <span>{{ order.currency|default:"$" }}{{ order.subtotal|floatformat:2 }}</span>
                 </div>
                 
-                {% if order.discount or order.discount_amount %}
+                {% if order.discount_total %}
                     <div class="financial-row" style="color: var(--luxury-success);">
-                        <span>{% trans "Discount" %}</span>
-                        <span>-{{ order.currency|default:"$" }}{{ order.discount|default:order.discount_amount|floatformat:2 }}</span>
+                        <span>{% trans "Discount" %}{% if order.coupon_code %} ({{ order.coupon_code }}){% endif %}</span>
+                        <span>-{{ order.currency|default:"$" }}{{ order.discount_total|floatformat:2 }}</span>
                     </div>
                 {% endif %}
                 
                 <div class="financial-row">
                     <span>{% trans "Shipping" %}</span>
                     <span>
-                        {% if order.shipping_cost == 0 or order.shipping_price == 0 %}
+                        {% if order.shipping_cost == 0 %}
                             {% trans "Complimentary" %}
                         {% else %}
-                            {{ order.currency|default:"$" }}{{ order.shipping_cost|default:order.shipping_price|floatformat:2 }}
+                            {{ order.currency|default:"$" }}{{ order.shipping_cost|floatformat:2 }}
                         {% endif %}
                     </span>
                 </div>
                 
-                {% if order.tax or order.tax_amount %}
+                {% if order.tax_total %}
                     <div class="financial-row">
                         <span>{% trans "Tax" %}</span>
-                        <span>{{ order.currency|default:"$" }}{{ order.tax|default:order.tax_amount|floatformat:2 }}</span>
+                        <span>{{ order.currency|default:"$" }}{{ order.tax_total|floatformat:2 }}</span>
                     </div>
                 {% endif %}
                 
                 <div class="financial-row grand-total">
                     <span>{% trans "Total to Refund" %}</span>
-                    <span>{{ order.currency|default:"$" }}{{ order.total_amount|default:order.total|floatformat:2 }}</span>
+                    <span>{{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}</span>
                 </div>
                 
                 {% if order.payment_status %}
                     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--luxury-border); font-size: 13px; color: var(--luxury-charcoal);">
                         <strong>{% trans "Payment Status:" %}</strong> 
-                        <span style="text-transform: uppercase; font-size: 12px; margin-left: 4px; padding: 2px 6px; background: {% if order.payment_status|lower == 'paid' %}#E8F5E9; color: var(--luxury-success);{% else %}var(--luxury-bg-light); border: 1px solid var(--luxury-border);{% endif %}">{{ order.get_payment_status_display|default:order.payment_status }}</span>
+                        <span class="status-pill is-{{ order.payment_status }}" style="margin-left: 6px;">{{ order.get_payment_status_display|default:order.payment_status }}</span>
+                    </div>
+                {% endif %}
+
+                {% if order.payment_method %}
+                    <div style="margin-top: 12px; font-size: 13px; color: var(--luxury-charcoal);">
+                        <strong>{% trans "Payment Method:" %}</strong> {{ order.payment_method }}
+                    </div>
+                {% endif %}
+
+                {% if order.tracking_number %}
+                    <div style="margin-top: 12px; font-size: 13px; color: var(--luxury-charcoal);">
+                        <strong>{% trans "Tracking:" %}</strong> {{ order.tracking_number }}
+                        {% if order.carrier %} ({{ order.carrier }}){% endif %}
                     </div>
                 {% endif %}
 
@@ -548,7 +710,7 @@
                 <p style="font-size:13px; line-height:1.5; color: var(--luxury-muted); margin-bottom:16px;">
                     {% trans "If you have questions regarding order modifications, address changes, or partial cancellations, our artisan concierge is available to assist." %}
                 </p>
-                <a href="{% url 'contact'|default:'/contact/' %}" class="btn-luxury-secondary" style="width: 100%; box-sizing: border-box; text-align: center; font-size: 12px; padding: 10px 0;">
+                <a href="{% url 'contact' %}" class="btn-luxury-secondary" style="width: 100%; box-sizing: border-box; text-align: center; font-size: 12px; padding: 10px 0;">
                     {% trans "Contact Concierge" %}
                 </a>
             </div>
@@ -556,7 +718,6 @@
         </div>
     </div>
 </div>
-{% endwith %}
 {% endblock %}
 
 {% block extra_js %}
@@ -569,14 +730,15 @@
         if (checkbox && submitBtn) {
             checkbox.addEventListener("change", function() {
                 submitBtn.disabled = !this.checked;
+                submitBtn.setAttribute("aria-disabled", String(!this.checked));
             });
         }
         
-        // Ensure textarea has the premium class
+        // Ensure textareas have the premium class
         const textareas = document.querySelectorAll("textarea");
         textareas.forEach(ta => {
-            if (!ta.classList.contains("premium-input")) {
-                ta.classList.add("premium-input");
+            if (!ta.classList.contains("premium-textarea")) {
+                ta.classList.add("premium-textarea");
             }
         });
     });

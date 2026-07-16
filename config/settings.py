@@ -76,8 +76,15 @@ INSTALLED_APPS = [
     "apps.homepage.apps.HomepageConfig",
     "apps.catalog.apps.CatalogConfig",
     "apps.customers.apps.CustomersConfig",  # Customer Accounts & Auth
-    "apps.orders",
+    "apps.orders.apps.OrdersConfig",
     "apps.cart",
+    "apps.payments",
+    "apps.inventory",
+    "apps.shipping.apps.ShippingConfig",
+    "apps.notifications.apps.NotificationsConfig",
+    "apps.audit.apps.AuditConfig",
+    "apps.tax.apps.TaxConfig",
+    "apps.coupons.apps.CouponsConfig",
 ]
 
 MIDDLEWARE = [

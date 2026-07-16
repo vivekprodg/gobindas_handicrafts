@@ -1,12 +1,3 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views.
-
-For more information please see:
-https://docs.djangoproject.com/en/5.1/topics/http/urls/
-"""
-
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -29,7 +20,6 @@ urlpatterns = [
     path("account/orders/", include("apps.orders.urls")),
 
     # Customers app (Authentication, Dashboard, Profiles, Addresses, Wishlist, Carts, Orders)
-    # Note: customer routes are internally prefixed with "account/" in their own urls.py
     path("", include("apps.customers.urls")),
 
     # Homepage app (CMS Driven Dynamic Homepage mapped to the root)
@@ -37,6 +27,9 @@ urlpatterns = [
 
     # Catalog app (Makers, categories, products)
     path("", include("apps.catalog.urls")),
+
+    # CART APP - NEW ENTERPRISE-GRADE INTEGRATION
+    path("cart/", include("apps.cart.urls")),
 
     # Foundation root-level general pages (Policies, care guides, etc.)
     path("", include("apps.foundation.urls_root")),

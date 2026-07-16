@@ -9,6 +9,8 @@
 <style>
     /* ==========================================================================
        Premium Luxury Tracking UI Variables & Resets
+       Synchronized with the finalized enterprise architecture.
+       Tracking URLs are obtained from the Shipment model only.
        ========================================================================== */
     :root {
         --track-gold: #C5A880;
@@ -110,14 +112,43 @@
         padding: 40px 32px;
     }
 
-    /* Visual Timeline Architecture */
+    /* Status pill (canonical) */
+    .status-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 20px;
+        border: 1px solid currentColor;
+    }
+    .status-pill.is-pending,
+    .status-pill.is-awaiting_payment,
+    .status-pill.is-on_hold { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-processing,
+    .status-pill.is-completed { background: #E8F5E9; color: #2E7D32; }
+    .status-pill.is-shipped { background: #E3F2FD; color: #0D47A1; }
+    .status-pill.is-delivered { background: #E0F2F1; color: #00695C; }
+    .status-pill.is-cancelled,
+    .status-pill.is-failed { background: #FFEBEE; color: #C62828; }
+    .status-pill.is-refunded,
+    .status-pill.is-partially_refunded { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-paid,
+    .status-pill.is-captured { background: #E8F5E9; color: #2E7D32; }
+    .status-pill.is-returned,
+    .status-pill.is-in_transit,
+    .status-pill.is-out_for_delivery,
+    .status-pill.is-picked_up { background: #E3F2FD; color: #0D47A1; }
+
+    /* Visual Timeline Architecture (driven by tracking_info.timeline) */
     .timeline-wrapper {
         position: relative;
         padding: 20px 0 40px;
         margin: 0 auto;
         max-width: 900px;
     }
-    
+
     .timeline-progress-bar {
         position: absolute;
         top: 40px;
@@ -127,7 +158,7 @@
         background-color: var(--track-border);
         z-index: 1;
     }
-    
+
     .timeline-progress-fill {
         position: absolute;
         top: 0;
@@ -174,7 +205,7 @@
         background-color: var(--track-gold);
         color: #FFFFFF;
     }
-    
+
     .timeline-step.active .step-icon-wrapper {
         border-color: var(--track-dark);
         background-color: var(--track-dark);
@@ -191,7 +222,7 @@
         color: var(--track-muted);
         margin-bottom: 4px;
     }
-    
+
     .timeline-step.completed .step-label,
     .timeline-step.active .step-label {
         color: var(--track-dark);
@@ -322,6 +353,9 @@
         border-radius: 4px;
         overflow: hidden;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     .product-thumb img {
         width: 100%;
@@ -389,6 +423,14 @@
         background-color: var(--track-bg-light);
     }
 
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+        color: var(--track-muted);
+        font-size: 14px;
+    }
+
     /* Responsive Timeline */
     @media (max-width: 991px) {
         .aux-grid { grid-template-columns: 1fr; }
@@ -417,58 +459,64 @@
 {% endblock %}
 
 {% block content %}
-<main class="luxury-track-container" aria-label="Order Tracking Page">
+<main class="luxury-track-container" aria-label="{% trans 'Order Tracking Page' %}">
 
     <nav class="track-breadcrumbs" aria-label="Breadcrumb">
-        <a href="{% url 'foundation:home'|default:'/' %}">{% trans "Home" %}</a>
+        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a>
         <span class="separator"></span>
-        <a href="{% url 'customers:dashboard'|default:'/account/' %}">{% trans "Dashboard" %}</a>
+        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a>
         <span class="separator"></span>
-        <a href="{% url 'orders:list'|default:'/orders/' %}">{% trans "Orders" %}</a>
+        <a href="{% url 'orders:order_list' %}">{% trans "Orders" %}</a>
         <span class="separator"></span>
         <span aria-current="page">{% trans "Track Shipment" %}</span>
     </nav>
 
     <header class="track-header">
         <h1>{% trans "Track Your Order" %}</h1>
-        <p>{% trans "Order Reference:" %} <strong>#{{ tracking_info.order_number|default:tracking_info.id }}</strong> &bull; {% trans "Placed on" %} {{ tracking_info.created_at|date:"F j, Y" }}</p>
+        <p>
+            {% trans "Order Reference:" %} <strong>#{{ tracking_info.order_number|default:tracking_info.id }}</strong>
+            &bull; {% trans "Placed on" %} {{ tracking_info.created_at|date:"F j, Y" }}
+        </p>
     </header>
 
     <div class="track-card">
         <div class="track-card-header">
             <h2>{% trans "Live Fulfillment Status" %}</h2>
-            <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: {% if tracking_info.status == 'cancelled' or tracking_info.status == 'refunded' %}var(--track-pending){% else %}var(--track-success){% endif %};">
-                {{ tracking_info.get_status_display|default:tracking_info.status|title }}
-            </div>
+            {% with order_status=tracking_info.status|default:tracking_info.order_status %}
+            <span class="status-pill is-{{ order_status }}">
+                {{ tracking_info.get_status_display|default:order_status|title }}
+            </span>
+            {% endwith %}
         </div>
 
         <div class="track-card-body">
+            {# Use the tracking_info normalized status from the selector. #}
             {% with status=tracking_info.status|lower %}
-            {% with is_cancelled=status == 'cancelled' or status == 'refunded' %}
-            
+            {% with is_cancelled=status == 'cancelled' or status == 'refunded' or status == 'failed' %}
+
             <div class="timeline-wrapper {% if is_cancelled %}cancelled{% endif %}">
                 <div class="timeline-progress-bar">
                     <div class="timeline-progress-fill" id="timeline-fill"></div>
                 </div>
 
                 <div class="timeline-steps">
-                    
-                    <div class="timeline-step {% if is_cancelled %}completed{% else %}completed{% endif %}">
+
+                    <div class="timeline-step completed">
                         <div class="step-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                         </div>
                         <div class="step-label">{% trans "Order Confirmed" %}</div>
                         <div class="step-meta">{{ tracking_info.created_at|date:"M j, Y" }}</div>
                     </div>
 
-                    <div class="timeline-step 
+                    <div class="timeline-step
                         {% if not is_cancelled %}
                             {% if status == 'processing' %}active
                             {% elif status == 'shipped' or status == 'delivered' or status == 'completed' %}completed
                             {% endif %}
                         {% endif %}">
                         <div class="step-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </div>
                         <div class="step-label">{% trans "Processing" %}</div>
                         <div class="step-meta">
@@ -480,14 +528,14 @@
                         </div>
                     </div>
 
-                    <div class="timeline-step 
+                    <div class="timeline-step
                         {% if not is_cancelled %}
                             {% if status == 'shipped' %}active
                             {% elif status == 'delivered' or status == 'completed' %}completed
                             {% endif %}
                         {% endif %}">
                         <div class="step-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                         </div>
                         <div class="step-label">{% trans "Shipped" %}</div>
                         <div class="step-meta">
@@ -501,12 +549,12 @@
                         </div>
                     </div>
 
-                    <div class="timeline-step 
+                    <div class="timeline-step
                         {% if not is_cancelled %}
                             {% if status == 'delivered' or status == 'completed' %}completed active{% endif %}
                         {% endif %}">
                         <div class="step-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                         </div>
                         <div class="step-label">{% trans "Delivered" %}</div>
                         <div class="step-meta">
@@ -522,23 +570,23 @@
 
                 <script>
                     document.addEventListener("DOMContentLoaded", function() {
-                        const status = "{{ status }}";
-                        const isMobile = window.innerWidth <= 768;
-                        let progress = "0%";
-                        
-                        if (status === 'cancelled' || status === 'refunded') {
+                        var status = "{{ status }}";
+                        var isMobile = window.innerWidth <= 768;
+                        var progress = "0%";
+
+                        if (status === 'cancelled' || status === 'refunded' || status === 'failed') {
                             progress = "100%";
-                        } else if (status === 'pending' || status === 'unpaid') {
+                        } else if (status === 'pending' || status === 'awaiting_payment' || status === 'on_hold') {
                             progress = "0%";
-                        } else if (status === 'processing') {
+                        } else if (status === 'processing' || status === 'partially_shipped') {
                             progress = "33%";
-                        } else if (status === 'shipped') {
+                        } else if (status === 'shipped' || status === 'in_transit' || status === 'out_for_delivery' || status === 'picked_up') {
                             progress = "66%";
                         } else if (status === 'delivered' || status === 'completed') {
                             progress = "100%";
                         }
 
-                        const fillEl = document.getElementById('timeline-fill');
+                        var fillEl = document.getElementById('timeline-fill');
                         if (fillEl) {
                             if (isMobile) {
                                 fillEl.style.width = "100%";
@@ -554,39 +602,51 @@
             {% endwith %}
             {% endwith %}
 
+            {# Shipment details (canonical source of tracking_number/tracking_url) #}
             {% if tracking_info.shipments.all %}
-                {% for shipment in tracking_info.shipments.all %}
-                    <div class="shipment-details-grid">
-                        <div class="shipment-detail-item">
-                            <span class="shipment-detail-label">{% trans "Logistics Partner" %}</span>
-                            <span class="shipment-detail-value">{{ shipment.carrier|default:tracking_info.carrier|default:"Premium Courier" }}</span>
-                        </div>
-                        
-                        <div class="shipment-detail-item">
-                            <span class="shipment-detail-label">{% trans "Tracking Airway Bill" %}</span>
-                            <span class="shipment-detail-value" style="font-family: monospace; letter-spacing: 0.05em;">{{ shipment.tracking_number|default:tracking_info.tracking_number|default:"N/A" }}</span>
-                        </div>
-
-                        <div class="shipment-detail-item">
-                            <span class="shipment-detail-label">{% trans "Shipment Status" %}</span>
-                            <span class="shipment-detail-value">{{ shipment.get_status_display|default:shipment.status|title }}</span>
-                        </div>
-
-                        <div class="shipment-detail-item">
-                            <span class="shipment-detail-label">{% trans "Dispatch Origin" %}</span>
-                            <span class="shipment-detail-value">{{ shipment.warehouse|default:"Artisan Workshop" }}</span>
-                        </div>
-
-                        {% if shipment.tracking_url or tracking_info.tracking_url %}
-                        <div class="shipment-detail-item" style="grid-column: 1 / -1;">
-                            <a href="{{ shipment.tracking_url|default:tracking_info.tracking_url }}" target="_blank" rel="noopener noreferrer" class="tracking-link-btn">
-                                {% trans "Track on Carrier Website" %}
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                            </a>
-                        </div>
-                        {% endif %}
+                {% with shipment=tracking_info.shipments.first %}
+                <div class="shipment-details-grid">
+                    {% if shipment.carrier or tracking_info.carrier %}
+                    <div class="shipment-detail-item">
+                        <span class="shipment-detail-label">{% trans "Logistics Partner" %}</span>
+                        <span class="shipment-detail-value">{{ shipment.carrier|default:tracking_info.carrier|default:"Premium Courier" }}</span>
                     </div>
-                {% endfor %}
+                    {% endif %}
+
+                    {% if shipment.tracking_number or tracking_info.tracking_number %}
+                    <div class="shipment-detail-item">
+                        <span class="shipment-detail-label">{% trans "Tracking Airway Bill" %}</span>
+                        <span class="shipment-detail-value" style="font-family: monospace; letter-spacing: 0.05em;">
+                            {{ shipment.tracking_number|default:tracking_info.tracking_number|default:"N/A" }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    {% if shipment.get_status_display %}
+                    <div class="shipment-detail-item">
+                        <span class="shipment-detail-label">{% trans "Shipment Status" %}</span>
+                        <span class="shipment-detail-value">{{ shipment.get_status_display }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if shipment.warehouse %}
+                    <div class="shipment-detail-item">
+                        <span class="shipment-detail-label">{% trans "Dispatch Origin" %}</span>
+                        <span class="shipment-detail-value">{{ shipment.warehouse }}</span>
+                    </div>
+                    {% endif %}
+
+                    {# Tracking URL is obtained from the Shipment model, not the Order. #}
+                    {% if shipment.tracking_url %}
+                    <div class="shipment-detail-item" style="grid-column: 1 / -1;">
+                        <a href="{{ shipment.tracking_url }}" target="_blank" rel="noopener noreferrer" class="tracking-link-btn">
+                            {% trans "Track on Carrier Website" %}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
             {% elif tracking_info.carrier or tracking_info.tracking_number %}
                 <div class="shipment-details-grid">
                     {% if tracking_info.carrier %}
@@ -595,20 +655,13 @@
                         <span class="shipment-detail-value">{{ tracking_info.carrier }}</span>
                     </div>
                     {% endif %}
-                    
+
                     {% if tracking_info.tracking_number %}
                     <div class="shipment-detail-item">
                         <span class="shipment-detail-label">{% trans "Tracking Airway Bill" %}</span>
-                        <span class="shipment-detail-value" style="font-family: monospace; letter-spacing: 0.05em;">{{ tracking_info.tracking_number }}</span>
-                    </div>
-                    {% endif %}
-
-                    {% if tracking_info.tracking_url %}
-                    <div class="shipment-detail-item" style="grid-column: 1 / -1;">
-                        <a href="{{ tracking_info.tracking_url }}" target="_blank" rel="noopener noreferrer" class="tracking-link-btn">
-                            {% trans "Track on Carrier Website" %}
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                        </a>
+                        <span class="shipment-detail-value" style="font-family: monospace; letter-spacing: 0.05em;">
+                            {{ tracking_info.tracking_number }}
+                        </span>
                     </div>
                     {% endif %}
                 </div>
@@ -617,62 +670,57 @@
     </div>
 
     <div class="aux-grid">
-        
+
         <section class="aux-card" aria-label="Destination Information">
             <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 {% trans "Destination Details" %}
             </h3>
             <div class="address-block">
                 {% if tracking_info.shipping_address %}
-                    <strong>{{ tracking_info.shipping_address.get_full_name|default:tracking_info.customer.get_full_name }}</strong>
+                    <strong>{{ tracking_info.shipping_address.full_name|default:tracking_info.customer.get_full_name }}</strong>
                     <p>
-                        {{ tracking_info.shipping_address.address_line1|default:tracking_info.shipping_address.line1|default:tracking_info.shipping_address }}<br>
+                        {{ tracking_info.shipping_address.address_line1|default:tracking_info.shipping_address.line1|default:tracking_info.shipping_address }}
                         {% if tracking_info.shipping_address.address_line2|default:tracking_info.shipping_address.line2 %}
-                            {{ tracking_info.shipping_address.address_line2|default:tracking_info.shipping_address.line2 }}<br>
+                            <br>{{ tracking_info.shipping_address.address_line2|default:tracking_info.shipping_address.line2 }}
                         {% endif %}
-                        {{ tracking_info.shipping_address.city }}, {{ tracking_info.shipping_address.state_or_province|default:tracking_info.shipping_address.state|default:"" }} {{ tracking_info.shipping_address.postal_code|default:tracking_info.shipping_address.zip_code }}<br>
+                        <br>
+                        {{ tracking_info.shipping_address.city }},
+                        {{ tracking_info.shipping_address.state_or_province|default:tracking_info.shipping_address.state|default:"" }}
+                        {{ tracking_info.shipping_address.postal_code|default:tracking_info.shipping_address.zip_code }}<br>
                         {{ tracking_info.shipping_address.country.name|default:tracking_info.shipping_address.country }}
                     </p>
                 {% else %}
-                    <p style="color: var(--track-muted); font-style: italic;">{% trans "Standard delivery address details are protected for your privacy." %}</p>
+                    <p class="empty-state">{% trans "Standard delivery address details are protected for your privacy." %}</p>
                 {% endif %}
             </div>
         </section>
 
         <section class="aux-card" aria-label="Package Contents">
             <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                 {% trans "Artifacts in Shipment" %}
             </h3>
             <div class="product-preview-list">
                 {% for item in tracking_info.items.all|slice:":3" %}
                     <div class="product-preview-item">
                         <div class="product-thumb">
-                            {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
-                            {% elif item.product.primary_image %}
-                                <img src="{{ item.product.primary_image.url }}" alt="{{ item.product.name }}">
-                            {% elif item.product.images.first %}
-                                <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}">
+                            {% if item.product_image_snapshot_url %}
+                                <img src="{{ item.product_image_snapshot_url }}" alt="{{ item.product_name_snapshot|default:'Artisan Product' }}">
+                            {% elif item.variant_image_snapshot_url %}
+                                <img src="{{ item.variant_image_snapshot_url }}" alt="{{ item.product_name_snapshot|default:'Artisan Product' }}">
                             {% else %}
                                 <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#EAEAEA; font-size:10px; color:#AAA;">IMG</div>
                             {% endif %}
                         </div>
                         <div class="product-info">
-                            <h4>{{ item.product.name|default:item.product_name|default:"Artisan Product" }}</h4>
-                            <p>{% trans "Qty:" %} {{ item.quantity }} &bull; {% trans "Variant:" %} {{ item.variant|default:item.variant_name|default:"Standard" }}</p>
+                            <h4>{{ item.product_name_snapshot|default:"Artisan Product" }}</h4>
+                            <p>{% trans "Qty:" %} {{ item.quantity }}</p>
                         </div>
                     </div>
                 {% empty %}
-                    <p style="color: var(--track-muted); font-style: italic;">{% trans "Securely packed artisan items." %}</p>
+                    <p class="empty-state">{% trans "Securely packed artisan items." %}</p>
                 {% endfor %}
-                
-                {% if tracking_info.items.count > 3 %}
-                    <div style="font-size: 13px; font-weight: 500; color: var(--track-gold-dark); margin-top: 8px;">
-                        + {{ tracking_info.items.count|add:"-3" }} {% trans "more items in this order." %}
-                    </div>
-                {% endif %}
             </div>
         </section>
 
@@ -682,7 +730,7 @@
         <a href="{% url 'orders:order_detail' tracking_info.id %}" class="btn-action-primary">
             {% trans "View Full Order Details" %}
         </a>
-        <a href="{% url 'contact'|default:'/contact/' %}" class="btn-action-secondary">
+        <a href="{% url 'contact' %}" class="btn-action-secondary">
             {% trans "Contact Concierge" %}
         </a>
     </div>

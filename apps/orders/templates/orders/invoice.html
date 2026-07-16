@@ -7,7 +7,7 @@
 
 {% block extra_css %}
 <style>
-    /* 
+    /*
      * Ultra-Premium Enterprise Invoice Styles
      * Optimized for both Browser Viewing and PDF Generation (WeasyPrint/wkhtmltopdf)
      */
@@ -18,6 +18,8 @@
         --invoice-light: #FBFBFA;
         --invoice-border: #EAEAEA;
         --invoice-gold: #C5A880;
+        --invoice-success: #2E7D32;
+        --invoice-pending: #C62828;
     }
 
     /* Print & PDF Page Setup */
@@ -51,17 +53,17 @@
         background-color: var(--invoice-dark);
         color: #ffffff;
     }
-    
+
     .btn-invoice-action:hover {
         background-color: var(--invoice-gold);
         border-color: var(--invoice-gold);
     }
-    
+
     .btn-invoice-secondary {
         background-color: transparent;
         color: var(--invoice-dark);
     }
-    
+
     .btn-invoice-secondary:hover {
         background-color: var(--invoice-light);
         border-color: var(--invoice-dark);
@@ -89,6 +91,8 @@
     .invoice-text-muted { color: var(--invoice-muted); }
     .invoice-text-bold { font-weight: 600; }
     .invoice-text-small { font-size: 12px; }
+    .invoice-text-success { color: var(--invoice-success); }
+    .invoice-text-danger { color: var(--invoice-pending); }
 
     /* Structural Tables for PDF Compatibility */
     .invoice-layout-table {
@@ -136,6 +140,31 @@
         padding-right: 16px !important;
         white-space: nowrap;
     }
+
+    /* Status pill (in-context, smaller than detail page) */
+    .status-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 20px;
+        border: 1px solid currentColor;
+    }
+    .status-pill.is-pending,
+    .status-pill.is-awaiting_payment,
+    .status-pill.is-on_hold { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-processing,
+    .status-pill.is-completed,
+    .status-pill.is-paid,
+    .status-pill.is-captured { background: #E8F5E9; color: #2E7D32; }
+    .status-pill.is-shipped { background: #E3F2FD; color: #0D47A1; }
+    .status-pill.is-delivered { background: #E0F2F1; color: #00695C; }
+    .status-pill.is-cancelled,
+    .status-pill.is-failed { background: #FFEBEE; color: #C62828; }
+    .status-pill.is-refunded,
+    .status-pill.is-partially_refunded { background: #FFF8E7; color: #9A7B54; }
 
     /* Address Section */
     .invoice-address-box {
@@ -185,8 +214,14 @@
         vertical-align: top;
         color: var(--invoice-charcoal);
     }
-    .invoice-items-table th:last-child,
-    .invoice-items-table td:last-child {
+    .invoice-items-table th:nth-child(2),
+    .invoice-items-table td:nth-child(2),
+    .invoice-items-table th:nth-child(3),
+    .invoice-items-table td:nth-child(3),
+    .invoice-items-table th:nth-child(4),
+    .invoice-items-table td:nth-child(4),
+    .invoice-items-table th:nth-child(5),
+    .invoice-items-table td:nth-child(5) {
         text-align: right;
     }
     .invoice-item-name {
@@ -231,13 +266,24 @@
         font-weight: 500;
         color: var(--invoice-dark);
     }
-    .invoice-total-row td {
+    .invoice-summary-table tr.invoice-discount-row td:last-child {
+        color: var(--invoice-success);
+    }
+    .invoice-summary-table tr.invoice-tax-row td {
+        border-top: 1px solid var(--invoice-border);
+        padding-top: 12px;
+    }
+    .invoice-summary-table tr.invoice-total-row td {
         border-top: 2px solid var(--invoice-dark);
         border-bottom: 2px solid var(--invoice-dark);
         padding: 16px 0;
         font-size: 16px;
         font-weight: 700;
         margin-top: 8px;
+    }
+    .invoice-summary-table tr.invoice-paid-row td,
+    .invoice-summary-table tr.invoice-balance-row td {
+        border: none;
     }
 
     /* Additional Info */
@@ -275,7 +321,6 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        /* Hide common layout elements outside the invoice */
         header, footer, nav, .navbar, .site-header, .site-footer, .breadcrumb, .invoice-action-bar, .messages, .alert {
             display: none !important;
         }
@@ -299,9 +344,9 @@
         .luxury-invoice-container {
             padding: 24px;
         }
-        .invoice-layout-table td, 
-        .invoice-summary-wrapper, 
-        .invoice-summary-left, 
+        .invoice-layout-table td,
+        .invoice-summary-wrapper,
+        .invoice-summary-left,
         .invoice-summary-right {
             display: block;
             width: 100%;
@@ -324,18 +369,18 @@
 {% block content %}
 <!-- Action Bar (Hidden in Print) -->
 <div class="invoice-action-bar">
-    <a href="javascript:history.back()" class="btn-invoice-action btn-invoice-secondary">
+    <a href="{% url 'orders:order_detail' order.id %}" class="btn-invoice-action btn-invoice-secondary">
         &larr; {% trans "Back to Order" %}
     </a>
     <button onclick="window.print()" class="btn-invoice-action">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
         {% trans "Print Invoice" %}
     </button>
 </div>
 
 <!-- Main Printable Document -->
-<div class="luxury-invoice-container">
-    
+<div class="luxury-invoice-container" role="document" aria-label="{% trans 'Order invoice' %}">
+
     <!-- Header Area -->
     <table class="invoice-layout-table">
         <tr>
@@ -359,21 +404,35 @@
                 <h2 class="invoice-title">{% trans "Invoice" %}</h2>
                 <table class="invoice-meta-table" style="width: auto; margin-left: auto;">
                     <tr>
-                        <td class="invoice-meta-label invoice-text-right">{% trans "Invoice Number" %}</td>
-                        <td class="invoice-text-bold invoice-text-left">INV-{{ order.order_number|default:order.id }}</td>
+                        <td class="invoice-meta-label">{% trans "Invoice Number" %}</td>
+                        <td class="invoice-text-bold">INV-{{ order.order_number|default:order.id }}</td>
                     </tr>
                     <tr>
-                        <td class="invoice-meta-label invoice-text-right">{% trans "Invoice Date" %}</td>
-                        <td class="invoice-text-left">{{ order.created_at|date:"F j, Y" }}</td>
+                        <td class="invoice-meta-label">{% trans "Invoice Date" %}</td>
+                        <td>{{ order.created_at|date:"F j, Y" }}</td>
                     </tr>
                     <tr>
-                        <td class="invoice-meta-label invoice-text-right">{% trans "Order Reference" %}</td>
-                        <td class="invoice-text-left">#{{ order.order_number|default:order.id }}</td>
+                        <td class="invoice-meta-label">{% trans "Order Reference" %}</td>
+                        <td>#{{ order.order_number|default:order.id }}</td>
                     </tr>
-                    {% if order.payment_status %}
+                    {% if order.get_payment_status_display %}
                     <tr>
-                        <td class="invoice-meta-label invoice-text-right">{% trans "Payment Status" %}</td>
-                        <td class="invoice-text-left invoice-uppercase">{{ order.get_payment_status_display|default:order.payment_status }}</td>
+                        <td class="invoice-meta-label">{% trans "Payment Status" %}</td>
+                        <td>
+                            <span class="status-pill is-{{ order.payment_status }}">
+                                {{ order.get_payment_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if order.get_status_display %}
+                    <tr>
+                        <td class="invoice-meta-label">{% trans "Order Status" %}</td>
+                        <td>
+                            <span class="status-pill is-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
                     </tr>
                     {% endif %}
                 </table>
@@ -389,18 +448,25 @@
                     <span class="invoice-address-title">{% trans "Billed To" %}</span>
                     <div class="invoice-address-content">
                         {% if order.billing_address %}
-                            <strong>{{ order.billing_address.get_full_name|default:order.customer_name|default:user.get_full_name }}</strong>
-                            {{ order.billing_address.address_line1|default:order.billing_address.line1|default:order.billing_address }}<br>
-                            {% if order.billing_address.address_line2|default:order.billing_address.line2 %}
-                                {{ order.billing_address.address_line2|default:order.billing_address.line2 }}<br>
+                            <strong>{{ order.billing_address.full_name|default:order.email }}</strong>
+                            {{ order.billing_address.address_line_1 }}
+                            {% if order.billing_address.address_line_2 %}
+                                <br>{{ order.billing_address.address_line_2 }}
                             {% endif %}
-                            {{ order.billing_address.city }}, {{ order.billing_address.state|default:"" }} {{ order.billing_address.postal_code|default:order.billing_address.zip_code }}<br>
-                            {{ order.billing_address.country.name|default:order.billing_address.country }}<br>
-                            {% if order.billing_address.phone|default:order.phone_number %}
-                                <span class="invoice-text-muted">T: {{ order.billing_address.phone|default:order.phone_number }}</span><br>
+                            <br>
+                            {{ order.billing_address.city }},
+                            {% if order.billing_address.state_or_province %}{{ order.billing_address.state_or_province }}{% endif %}
+                            {{ order.billing_address.postal_code }}
+                            <br>
+                            {{ order.billing_address.country }}
+                            {% if order.billing_address.country_code %}
+                                ({{ order.billing_address.country_code }})
+                            {% endif %}
+                            {% if order.billing_address.phone_number %}
+                                <br><span class="invoice-text-muted">{% trans "T" %}: {{ order.billing_address.phone_number }}</span>
                             {% endif %}
                             {% if order.email %}
-                                <span class="invoice-text-muted">E: {{ order.email }}</span>
+                                <br><span class="invoice-text-muted">{% trans "E" %}: {{ order.email }}</span>
                             {% endif %}
                         {% else %}
                             <span class="invoice-text-muted">{% trans "Billing information not provided." %}</span>
@@ -413,20 +479,28 @@
                     <span class="invoice-address-title">{% trans "Shipped To" %}</span>
                     <div class="invoice-address-content">
                         {% if order.shipping_address %}
-                            <strong>{{ order.shipping_address.get_full_name|default:order.customer_name|default:user.get_full_name }}</strong>
-                            {{ order.shipping_address.address_line1|default:order.shipping_address.line1|default:order.shipping_address }}<br>
-                            {% if order.shipping_address.address_line2|default:order.shipping_address.line2 %}
-                                {{ order.shipping_address.address_line2|default:order.shipping_address.line2 }}<br>
+                            <strong>{{ order.shipping_address.full_name|default:order.email }}</strong>
+                            {{ order.shipping_address.address_line_1 }}
+                            {% if order.shipping_address.address_line_2 %}
+                                <br>{{ order.shipping_address.address_line_2 }}
                             {% endif %}
-                            {{ order.shipping_address.city }}, {{ order.shipping_address.state|default:"" }} {{ order.shipping_address.postal_code|default:order.shipping_address.zip_code }}<br>
-                            {{ order.shipping_address.country.name|default:order.shipping_address.country }}<br>
-                            {% if order.shipping_address.phone|default:order.phone_number %}
-                                <span class="invoice-text-muted">T: {{ order.shipping_address.phone|default:order.phone_number }}</span>
+                            <br>
+                            {{ order.shipping_address.city }},
+                            {% if order.shipping_address.state_or_province %}{{ order.shipping_address.state_or_province }}{% endif %}
+                            {{ order.shipping_address.postal_code }}
+                            <br>
+                            {{ order.shipping_address.country }}
+                            {% if order.shipping_address.country_code %}
+                                ({{ order.shipping_address.country_code }})
                             {% endif %}
-                        {% elif order.shipping_required == False %}
-                            <span class="invoice-text-muted">{% trans "Digital Delivery / No Shipping Required" %}</span>
+                            {% if order.shipping_address.phone_number %}
+                                <br><span class="invoice-text-muted">{% trans "T" %}: {{ order.shipping_address.phone_number }}</span>
+                            {% endif %}
+                            {% if order.shipping_address.delivery_notes %}
+                                <br><span class="invoice-text-muted invoice-text-small" style="font-style: italic;">{% trans "Notes" %}: {{ order.shipping_address.delivery_notes }}</span>
+                            {% endif %}
                         {% else %}
-                            <span class="invoice-text-muted">{% trans "Same as Billing Address" %}</span>
+                            <span class="invoice-text-muted">{% trans "Billing address used as shipping address." %}</span>
                         {% endif %}
                     </div>
                 </div>
@@ -438,31 +512,34 @@
     <table class="invoice-items-table">
         <thead>
             <tr>
-                <th style="width: 45%;">{% trans "Description" %}</th>
-                <th class="invoice-text-center" style="width: 15%;">{% trans "Quantity" %}</th>
-                <th class="invoice-text-center" style="width: 20%;">{% trans "Unit Price" %}</th>
-                <th class="invoice-text-right" style="width: 20%;">{% trans "Total" %}</th>
+                <th style="width: 40%;">{% trans "Description" %}</th>
+                <th style="width: 10%;">{% trans "SKU" %}</th>
+                <th style="width: 10%;">{% trans "Quantity" %}</th>
+                <th style="width: 20%;">{% trans "Unit Price" %}</th>
+                <th style="width: 20%;">{% trans "Total" %}</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in order.items.all|default:order.orderitem_set.all %}
+            {% for item in items %}
             <tr>
                 <td>
-                    <span class="invoice-item-name">{{ item.product.name }}</span>
-                    {% if item.product.sku %}
-                        <span class="invoice-item-meta">{% trans "SKU" %}: {{ item.product.sku }}</span>
-                    {% endif %}
-                    {% if item.variant %}
-                        <span class="invoice-item-meta">{% trans "Variant" %}: {{ item.variant }}</span>
+                    <span class="invoice-item-name">
+                        {{ item.product_name_snapshot|default:item.variant_name_snapshot|default:"Artisan Product" }}
+                    </span>
+                    {% if item.variant_name_snapshot and item.product_name_snapshot and item.variant_name_snapshot != item.product_name_snapshot %}
+                        <span class="invoice-item-meta">{% trans "Variant" %}: {{ item.variant_name_snapshot }}</span>
                     {% endif %}
                 </td>
-                <td class="invoice-text-center">{{ item.quantity }}</td>
-                <td class="invoice-text-center">{{ order.currency|default:"$" }}{{ item.price|floatformat:2 }}</td>
-                <td class="invoice-text-right">{{ order.currency|default:"$" }}{{ item.get_total_price|default:item.total|floatformat:2 }}</td>
+                <td>
+                    {{ item.variant_sku_snapshot|default:item.product_sku_snapshot|default:"-" }}
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ order.currency|default:"$" }}{{ item.unit_price|floatformat:2 }}</td>
+                <td>{{ order.currency|default:"$" }}{{ item.line_total|floatformat:2 }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" class="invoice-text-center invoice-text-muted">{% trans "No items found in this order." %}</td>
+                <td colspan="5" class="invoice-text-center invoice-text-muted" style="padding: 32px 8px;">{% trans "No items found in this order." %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -472,17 +549,21 @@
     <div class="invoice-summary-wrapper">
         <!-- Left: Logistics & Payment Specs -->
         <div class="invoice-summary-left">
-            {% if order.payment_method %}
+            {% if order.payment_method or order.transaction_id %}
             <div class="invoice-info-block">
-                <div class="invoice-info-title">{% trans "Payment Method" %}</div>
-                <div class="invoice-info-value">{{ order.payment_method }}</div>
-                {% if order.transaction_id %}
-                    <div class="invoice-text-small invoice-text-muted" style="margin-top: 2px;">{% trans "Transaction" %}: {{ order.transaction_id }}</div>
-                {% endif %}
+                <div class="invoice-info-title">{% trans "Payment Details" %}</div>
+                <div class="invoice-info-value">
+                    {% if order.payment_method %}
+                        {{ order.payment_method }}
+                    {% endif %}
+                    {% if order.transaction_id %}
+                        <div class="invoice-text-small invoice-text-muted" style="margin-top: 2px;">{% trans "Transaction" %}: {{ order.transaction_id }}</div>
+                    {% endif %}
+                </div>
             </div>
             {% endif %}
 
-            {% if order.carrier or order.tracking_number %}
+            {% if order.carrier or order.tracking_number or shipments %}
             <div class="invoice-info-block">
                 <div class="invoice-info-title">{% trans "Shipping Details" %}</div>
                 <div class="invoice-info-value">
@@ -491,14 +572,29 @@
                         <span class="invoice-text-small invoice-text-muted">{% trans "Tracking" %}: {{ order.tracking_number }}</span>
                     {% endif %}
                 </div>
+                {% if shipments %}
+                    <div class="invoice-text-small" style="margin-top: 8px;">
+                        {% for shipment in shipments %}
+                            <div>
+                                {{ shipment.shipment_number|default:shipment.id }} &middot;
+                                <span class="status-pill is-{{ shipment.status }}" style="font-size: 10px; padding: 2px 8px;">
+                                    {{ shipment.get_status_display|default:shipment.status }}
+                                </span>
+                                {% if shipment.tracking_url %}
+                                    &middot; <a href="{{ shipment.tracking_url }}" target="_blank" rel="noopener noreferrer">{% trans "Track" %}</a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
             {% endif %}
-            
-            {% if order.notes %}
+
+            {% if order.customer_note %}
             <div class="invoice-info-block" style="margin-top: 24px;">
-                <div class="invoice-info-title">{% trans "Order Notes" %}</div>
-                <div class="invoice-text-small invoice-text-muted" style="line-height: 1.5; font-style: italic;">
-                    {{ order.notes }}
+                <div class="invoice-info-title">{% trans "Customer Note" %}</div>
+                <div class="invoice-text-small invoice-text-muted" style="line-height: 1.5; font-style: italic; white-space: pre-wrap;">
+                    {{ order.customer_note }}
                 </div>
             </div>
             {% endif %}
@@ -509,52 +605,59 @@
             <table class="invoice-summary-table">
                 <tr>
                     <td>{% trans "Subtotal" %}</td>
-                    <td>{{ order.currency|default:"$" }}{{ order.subtotal|default:order.get_subtotal|floatformat:2 }}</td>
+                    <td>{{ order.currency|default:"$" }}{{ order.subtotal|floatformat:2 }}</td>
                 </tr>
-                
-                {% if order.discount or order.discount_amount %}
-                <tr>
-                    <td>{% trans "Discount" %}</td>
-                    <td style="color: #d32f2f;">-{{ order.currency|default:"$" }}{{ order.discount|default:order.discount_amount|floatformat:2 }}</td>
+
+                {% if order.discount_total %}
+                <tr class="invoice-discount-row">
+                    <td>
+                        {% trans "Discount" %}
+                        {% if order.coupon_code %}
+                            ({{ order.coupon_code }})
+                        {% endif %}
+                    </td>
+                    <td>-{{ order.currency|default:"$" }}{{ order.discount_total|floatformat:2 }}</td>
                 </tr>
                 {% endif %}
-                
-                {% if order.shipping_cost or order.shipping_price or order.shipping_cost == 0 %}
+
                 <tr>
                     <td>{% trans "Shipping & Handling" %}</td>
                     <td>
-                        {% if order.shipping_cost == 0 or order.shipping_price == 0 %}
+                        {% if order.shipping_cost == 0 %}
                             {% trans "Complimentary" %}
                         {% else %}
-                            {{ order.currency|default:"$" }}{{ order.shipping_cost|default:order.shipping_price|floatformat:2 }}
+                            {{ order.currency|default:"$" }}{{ order.shipping_cost|floatformat:2 }}
                         {% endif %}
                     </td>
                 </tr>
-                {% endif %}
-                
-                {% if order.tax or order.tax_amount %}
-                <tr>
+
+                {% if order.tax_total %}
+                <tr class="invoice-tax-row">
                     <td>{% trans "Tax" %}</td>
-                    <td>{{ order.currency|default:"$" }}{{ order.tax|default:order.tax_amount|floatformat:2 }}</td>
+                    <td>{{ order.currency|default:"$" }}{{ order.tax_total|floatformat:2 }}</td>
                 </tr>
                 {% endif %}
-                
+
                 <tr class="invoice-total-row">
                     <td>{% trans "Grand Total" %}</td>
-                    <td>{{ order.currency|default:"$" }}{{ order.total_amount|default:order.total|floatformat:2 }}</td>
+                    <td>{{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}</td>
                 </tr>
-                
-                {% if order.amount_paid %}
-                <tr>
+
+                {% if order.amount_paid or order.is_paid %}
+                <tr class="invoice-paid-row">
                     <td class="invoice-text-muted">{% trans "Amount Paid" %}</td>
-                    <td class="invoice-text-muted">{{ order.currency|default:"$" }}{{ order.amount_paid|floatformat:2 }}</td>
+                    <td class="invoice-text-muted invoice-text-success">
+                        -{{ order.currency|default:"$" }}{{ order.amount_paid|default:order.grand_total|floatformat:2 }}
+                    </td>
                 </tr>
                 {% endif %}
-                
+
                 {% if order.balance_due %}
-                <tr>
+                <tr class="invoice-balance-row">
                     <td class="invoice-text-bold">{% trans "Balance Due" %}</td>
-                    <td class="invoice-text-bold">{{ order.currency|default:"$" }}{{ order.balance_due|floatformat:2 }}</td>
+                    <td class="invoice-text-bold invoice-text-danger">
+                        {{ order.currency|default:"$" }}{{ order.balance_due|floatformat:2 }}
+                    </td>
                 </tr>
                 {% endif %}
             </table>
@@ -567,6 +670,6 @@
         <p>{% trans "All luxury handcrafted artifacts are certified authentic. Returns are accepted within 14 days in original packaging and condition." %}<br>
         {% trans "For maintenance guidelines, authenticity certificates, or inquiries, please contact our concierge services." %}</p>
     </div>
-    
+
 </div>
 {% endblock %}
