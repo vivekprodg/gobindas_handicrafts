@@ -11,3 +11,7 @@ staticfiles/
 .vscode/
 db.sqlite3
 .continue/
+backup_before_orders_migration.dump
+before_orders_0002_backup.sql
+orders_backup.json
+tables.txt
