@@ -2,73 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'foundation/css/foundation-pages.css' %}">
-    <style>
-        .placeholder-page {
-            max-width: 800px;
-            margin: 6rem auto;
-            padding: 5rem 3rem;
-            text-align: center;
-            background: #ffffff;
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            box-shadow: 0 10px 40px rgba(184, 138, 68, 0.06);
-            font-family: var(--font-ui);
-            position: relative;
-            overflow: hidden;
-        }
-        .placeholder-page::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--brand-gold), var(--brand-gold-hover), var(--brand-gold));
-        }
-        .placeholder-icon {
-            color: var(--brand-gold);
-            margin-bottom: 2rem;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--brand-gold-light);
-            padding: 1.5rem;
-            border-radius: 50%;
-        }
-        .placeholder-title {
-            font-family: var(--font-brand);
-            color: var(--brand-gold-dark);
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .placeholder-description {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: var(--brand-dark);
-            max-width: 600px;
-            margin: 0 auto 2.5rem auto;
-        }
-        .back-home-btn {
-            display: inline-block;
-            padding: 1rem 2.5rem;
-            background-color: var(--brand-gold);
-            color: #ffffff;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            text-decoration: none;
-            transition: var(--transition-smooth);
-        }
-        .back-home-btn:hover {
-            background-color: var(--brand-gold-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(184, 138, 68, 0.2);
-        }
-    </style>
+<link rel="stylesheet" href="{% static 'foundation/css/foundation-pages.css' %}">
 {% endblock %}
 
 {% block content %}

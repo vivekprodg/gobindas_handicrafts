@@ -1,19 +1,14 @@
 {% extends "base.html" %}
-{% load static %}
-{% load humanize %}
-{% load currency_tags %}
-{% load inventory_tags %}
+{% load static humanize currency_tags inventory_tags %}
 
 {% block title %}{{ seo_title|default:product.title|default:"Product"|striptags }} | Gobindas Handicrafts{% endblock %}
 
 {% block extra_head %}
-    {# SEO meta tags - all values gracefully degrade to safe fallbacks #}
     <meta name="description" content="{{ seo_description|default:product.meta_description|default:product.short_description|default:product.description|default:product.title|default:'Handcrafted Nepali masterpiece'|striptags|truncatechars:160 }}">
     {% if product.meta_keywords %}<meta name="keywords" content="{{ product.meta_keywords }}">{% endif %}
     <link rel="canonical" href="{{ product.canonical_url|default:request.build_absolute_uri }}">
     <meta name="robots" content="{{ product.robots_directives|default:'index, follow' }}">
 
-    {# Open Graph metadata #}
     <meta property="og:type" content="product">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{{ product.og_title|default:product.title|default:'Product' }}">
@@ -26,7 +21,6 @@
     <meta property="product:price:amount" content="{{ product.price|default:'0.00' }}">
     <meta property="product:price:currency" content="{{ product.currency|default:'NPR' }}">
 
-    {# Twitter metadata #}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
     <meta name="twitter:title" content="{{ product.twitter_title|default:product.title|default:'Product' }}">
@@ -35,7 +29,6 @@
     <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.url }}">
     {% endif %}
 
-    {# Product structured data #}
     <script type="application/ld+json">
     {
       "@context": "https://schema.org/",
@@ -64,7 +57,6 @@
     }
     </script>
 
-    {# Breadcrumb structured data #}
     {% if breadcrumbs %}
     <script type="application/ld+json">
     {
@@ -276,7 +268,6 @@
             margin-bottom: 1.5rem; font-size: 0.9rem;
         }
         .stars-filled { color: var(--brand-gold); letter-spacing: 2px; }
-        .stars-empty { color: var(--border-light); letter-spacing: 2px; }
         .rating-summary-text { color: var(--text-muted); font-weight: 500; }
 
         .luxury-purchase-box {
@@ -351,16 +342,12 @@
             border-radius: 50%; font-size: 9px; font-weight: 900;
             color: #FFFFFF;
         }
-        .stock-label .stock-icon::before { content: "?"; }
         .stock-in { color: var(--color-success); }
         .stock-in .stock-icon { background: var(--color-success); }
-        .stock-in .stock-icon::before { content: "\2713"; }
         .stock-low { color: var(--color-warning); }
         .stock-low .stock-icon { background: var(--color-warning); }
-        .stock-low .stock-icon::before { content: "!"; }
         .stock-out { color: var(--color-error); }
         .stock-out .stock-icon { background: var(--color-error); }
-        .stock-out .stock-icon::before { content: "\00D7"; }
         .stock-unknown { color: var(--text-muted); }
         .stock-unknown .stock-icon { background: var(--text-muted); }
 
@@ -372,7 +359,6 @@
             letter-spacing: 0.05em;
             display: flex; align-items: center; gap: 6px;
         }
-        .warehouse-summary-row svg { flex-shrink: 0; }
 
         .purchase-actions-grid {
             display: flex; flex-direction: column; gap: 1rem;
@@ -435,10 +421,6 @@
         .btn-luxury-buynow:hover:not(:disabled) {
             background-color: var(--brand-gold-dark); color: #FFFFFF;
         }
-        .btn-luxury-buynow:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: 2px; }
-        .btn-luxury-buynow:disabled { opacity: 0.5; cursor: not-allowed; }
-        @media (max-width: 480px) { .action-buttons-flex { flex-direction: column; } }
-
         .btn-pdp-wishlist {
             width: 52px; height: 52px; min-width: 52px;
             background-color: #FFFFFF;
@@ -447,8 +429,6 @@
             cursor: pointer; transition: var(--transition-smooth);
             color: var(--brand-dark);
         }
-        .btn-pdp-wishlist:hover { border-color: var(--brand-dark); background-color: #FBF9F6; }
-        .btn-pdp-wishlist:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: 2px; }
         .btn-pdp-wishlist.wishlisted { color: #C0392B; border-color: #C0392B; }
 
         .purchase-footer-shares {
@@ -467,8 +447,6 @@
             color: var(--brand-dark); transition: var(--transition-smooth);
             text-decoration: none; display: flex; align-items: center;
         }
-        .share-btn-item:hover { color: var(--brand-gold-dark); }
-        .share-btn-item:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: 2px; }
 
         .shipping-estimator-panel {
             margin-top: 1.5rem; background-color: #FFFFFF;
@@ -479,8 +457,6 @@
             margin-bottom: 0.75rem; font-size: 0.85rem;
             color: var(--brand-dark); line-height: 1.4;
         }
-        .shipping-highlight-node:last-child { margin-bottom: 0; }
-        .shipping-highlight-node svg { color: var(--brand-gold-dark); flex-shrink: 0; margin-top: 2px; }
 
         .secure-trust-indicators-row {
             display: flex; justify-content: center;
@@ -493,48 +469,12 @@
             text-transform: uppercase; letter-spacing: 0.05em;
             font-weight: 600;
         }
-        .secure-trust-indicator svg { color: var(--color-success); }
 
         .storyteller-immersive-section {
             background-color: #FBF9F6;
             margin: 4rem -2rem; padding: 6rem 4rem;
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 6rem; align-items: center;
-        }
-        @media (max-width: 1024px) {
-            .storyteller-immersive-section {
-                grid-template-columns: 1fr; gap: 3rem;
-                padding: 4rem 2rem; margin: 4rem -2rem;
-            }
-        }
-        .storyteller-narrative-frame { display: flex; flex-direction: column; }
-        .storyteller-pre {
-            font-size: 0.85rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.2em;
-            color: var(--brand-gold-dark); margin-bottom: 1rem;
-        }
-        .storyteller-h {
-            font-family: var(--font-brand); font-size: 3rem;
-            color: var(--brand-dark); margin: 0 0 1.5rem 0; line-height: 1.1;
-        }
-        .storyteller-paragraph {
-            font-size: 1.05rem; color: var(--brand-dark);
-            line-height: 1.8; margin: 0 0 2rem 0;
-        }
-        .storyteller-artisan-quote {
-            font-family: var(--font-brand); font-size: 1.5rem;
-            font-style: italic; color: var(--brand-dark);
-            border-left: 3px solid var(--brand-gold);
-            padding-left: 1.5rem; margin: 2rem 0; line-height: 1.4;
-        }
-        .storyteller-image-outer {
-            position: relative; width: 100%;
-            padding-top: 100%; border: 1px solid var(--border-light);
-            background-color: #FFFFFF; overflow: hidden;
-        }
-        .storyteller-image-outer img {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; object-fit: cover;
         }
 
         .luxury-accordion-system { margin-bottom: 4rem; border-top: 1px solid var(--border-light); }
@@ -546,21 +486,12 @@
             font-family: var(--font-brand); font-size: 1.2rem;
             font-weight: 600; color: var(--brand-dark);
             text-align: left; cursor: pointer;
-            transition: var(--transition-smooth);
         }
-        .luxury-accordion-header:hover { color: var(--brand-gold-dark); }
-        .luxury-accordion-header:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: -2px; }
-        .accordion-indicator-icon {
-            font-size: 1.3rem; color: var(--brand-gold);
-            transition: transform 0.3s ease;
-        }
-        .luxury-accordion-node.active .accordion-indicator-icon { transform: rotate(45deg); }
         .luxury-accordion-panel-content {
             max-height: 0; overflow: hidden;
             transition: max-height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             font-size: 0.95rem; color: var(--brand-dark); line-height: 1.7;
         }
-        .luxury-accordion-panel-inner { padding-bottom: 2rem; }
 
         .pdp-specifications-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -571,99 +502,10 @@
             padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border-light);
             font-size: 0.9rem;
         }
-        .pdp-spec-label { font-weight: 600; color: var(--brand-dark); }
-        .pdp-spec-value { color: var(--text-muted); text-align: right; }
-
-        .verified-reviews-platform-section {
-            border-top: 1px solid var(--border-light);
-            padding-top: 5rem; margin-bottom: 5rem;
-        }
-        .reviews-section-header { text-align: center; margin-bottom: 4rem; }
-        .reviews-section-header h2 {
-            font-family: var(--font-brand); font-size: 2.25rem;
-            color: var(--brand-dark); margin: 0 0 1rem 0;
-        }
-        .review-dashboard-matrix {
-            display: grid; grid-template-columns: 1fr 1.5fr; gap: 4rem;
-            background-color: var(--bg-light);
-            border: 1px solid var(--border-light);
-            padding: 3rem; margin-bottom: 3.5rem; align-items: center;
-        }
-        @media (max-width: 768px) {
-            .review-dashboard-matrix { grid-template-columns: 1fr; gap: 2rem; padding: 2rem; }
-        }
-        .score-overall-container {
-            text-align: center; display: flex; flex-direction: column;
-            align-items: center; border-right: 1px solid var(--border-light);
-        }
-        @media (max-width: 768px) {
-            .score-overall-container {
-                border-right: none; border-bottom: 1px solid var(--border-light);
-                padding-bottom: 2rem;
-            }
-        }
-        .score-huge-text {
-            font-family: var(--font-brand); font-size: 4.5rem;
-            font-weight: 700; color: var(--brand-dark); line-height: 1;
-        }
-        .reviews-distribution-panel { display: flex; flex-direction: column; gap: 12px; }
-        .distribution-bar-row {
-            display: flex; align-items: center; gap: 1rem;
-            font-size: 0.85rem; color: var(--brand-dark);
-        }
-        .bar-label { width: 50px; font-weight: 600; }
-        .bar-visual-track {
-            flex-grow: 1; height: 6px; background-color: #EAE5E0;
-            position: relative; border-radius: 3px; overflow: hidden;
-        }
-        .bar-visual-fill {
-            position: absolute; top: 0; left: 0;
-            height: 100%; background-color: var(--brand-gold);
-            border-radius: 3px;
-        }
-        .bar-count-percentage { width: 40px; text-align: right; color: var(--text-muted); }
-
-        .review-cards-list-wrapper { display: flex; flex-direction: column; gap: 2rem; }
-        .review-item-card { border-bottom: 1px solid var(--border-light); padding-bottom: 2rem; }
-        .review-item-card:last-child { border-bottom: none; }
-        .review-item-header {
-            display: flex; justify-content: space-between;
-            align-items: flex-start; margin-bottom: 1rem;
-        }
-        .reviewer-meta { display: flex; flex-direction: column; gap: 4px; }
-        .reviewer-fullname { font-weight: 700; font-size: 0.95rem; color: var(--brand-dark); }
-        .verified-buyer-badge {
-            font-size: 0.7rem; color: var(--color-success);
-            font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.05em; display: inline-flex;
-            align-items: center; gap: 4px;
-        }
-        .review-item-date { font-size: 0.8rem; color: var(--text-muted); }
-        .review-card-title {
-            font-family: var(--font-brand); font-size: 1.15rem;
-            font-weight: 600; color: var(--brand-dark); margin: 0 0 0.5rem 0;
-        }
-        .review-card-text {
-            font-size: 0.95rem; color: var(--brand-dark);
-            line-height: 1.6; margin: 0;
-        }
-
-        .frequently-asked-questions-matrix {
-            border-top: 1px solid var(--border-light);
-            padding-top: 5rem; margin-bottom: 5rem;
-        }
-        .faq-section-title {
-            font-family: var(--font-brand); font-size: 2.25rem;
-            color: var(--brand-dark); text-align: center; margin-bottom: 3.5rem;
-        }
 
         .related-masterpieces-outer-section {
             border-top: 1px solid var(--border-light);
             padding-top: 5rem; margin-bottom: 4rem;
-        }
-        .carousel-heading-title {
-            font-family: var(--font-brand); font-size: 2.25rem;
-            color: var(--brand-dark); text-align: center; margin-bottom: 3.5rem;
         }
         .related-products-carousel-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -674,49 +516,11 @@
             position: fixed; bottom: 0; left: 0; right: 0;
             height: 76px; background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border-top: 1px solid var(--border-light);
             z-index: 998; display: none;
             align-items: center; justify-content: space-between;
             padding: 0 1.5rem;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
         }
-        .sticky-mobile-details { display: flex; flex-direction: column; }
-        .sticky-mobile-title {
-            font-family: var(--font-brand); font-size: 0.9rem;
-            font-weight: 600; color: var(--brand-dark);
-            max-width: 150px; overflow: hidden;
-            text-overflow: ellipsis; white-space: nowrap;
-        }
-        .sticky-mobile-price {
-            font-family: var(--font-brand); font-size: 1.1rem;
-            font-weight: 700; color: var(--brand-dark);
-        }
-        .sticky-mobile-ctas { display: flex; gap: 8px; }
-        .btn-sticky-mobile-cart {
-            height: 44px; padding: 0 15px;
-            background-color: var(--brand-dark); color: #FFFFFF;
-            border: 1px solid var(--brand-dark);
-            font-family: var(--font-ui); font-size: 0.75rem;
-            font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.1em; cursor: pointer;
-        }
-        .btn-sticky-mobile-cart:hover:not(:disabled) {
-            background-color: transparent; color: var(--brand-dark);
-        }
-        .btn-sticky-mobile-cart:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-sticky-mobile-buy {
-            height: 44px; padding: 0 15px;
-            background-color: transparent; color: var(--brand-gold-dark);
-            border: 1px solid var(--brand-gold-dark);
-            font-family: var(--font-ui); font-size: 0.75rem;
-            font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.1em; cursor: pointer;
-        }
-        .btn-sticky-mobile-buy:hover:not(:disabled) {
-            background-color: var(--brand-gold-dark); color: #FFFFFF;
-        }
-        .btn-sticky-mobile-buy:disabled { opacity: 0.5; cursor: not-allowed; }
         @media (max-width: 768px) {
             .sticky-action-mobile-bar { display: flex; }
             body { padding-bottom: 76px; }
@@ -735,8 +539,6 @@
             text-transform: uppercase; letter-spacing: 0.05em;
             border-bottom: 3px solid transparent; margin-bottom: -2px;
         }
-        .pdp-tab-button:hover { color: var(--brand-dark); }
-        .pdp-tab-button:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: -2px; }
         .pdp-tab-button.active {
             color: var(--brand-dark);
             border-bottom-color: var(--brand-gold);
@@ -764,7 +566,6 @@
      data-track-view="true"
      data-view-event="product_view">
 
-    {# Breadcrumb navigation #}
     <nav class="breadcrumbs-nav" aria-label="Breadcrumb">
         {% if breadcrumbs %}
             {% for crumb in breadcrumbs %}
@@ -782,17 +583,17 @@
             <div class="gallery-panel-wrapper" role="region" aria-label="Product gallery">
                 <div class="gallery-vertical-thumbs" role="tablist" aria-label="Gallery thumbnails">
                     {% if product.primary_image %}
-                    <div class="thumb-item active" role="tab" tabindex="0" onclick="pdpGallerySetImage('{{ product.primary_image.url|escapejs }}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pdpGallerySetImage('{{ product.primary_image.url|escapejs }}', this);}" aria-label="View primary masterpiece view">
+                    <div class="thumb-item active" role="tab" tabindex="0" onclick="pdpGallerySetImage('{{ product.primary_image.url|escapejs }}', this)" aria-label="View primary image">
                         <img src="{{ product.primary_image.url }}" alt="{{ product.title|default:'Product' }}" loading="lazy">
                     </div>
                     {% endif %}
                     {% if product.hover_image %}
-                    <div class="thumb-item" role="tab" tabindex="0" onclick="pdpGallerySetImage('{{ product.hover_image.url|escapejs }}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pdpGallerySetImage('{{ product.hover_image.url|escapejs }}', this);}" aria-label="View alternate masterpiece view">
+                    <div class="thumb-item" role="tab" tabindex="0" onclick="pdpGallerySetImage('{{ product.hover_image.url|escapejs }}', this)" aria-label="View alternate image">
                         <img src="{{ product.hover_image.url }}" alt="{{ product.title|default:'Product' }} - Alternate view" loading="lazy">
                     </div>
                     {% endif %}
                     {% for gallery in product.gallery_images.all %}
-                    <div class="thumb-item" role="tab" tabindex="0" onclick="pdpGallerySetImage('{{ gallery.image.url|escapejs }}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pdpGallerySetImage('{{ gallery.image.url|escapejs }}', this);}" aria-label="View detail image {{ forloop.counter }}">
+                    <div class="thumb-item" role="tab" tabindex="0" onclick="pdpGallerySetImage('{{ gallery.image.url|escapejs }}', this)" aria-label="View gallery image {{ forloop.counter }}">
                         <img src="{{ gallery.image.url }}" alt="{{ gallery.alt_text|default:product.title|default:'Product detail' }}" loading="lazy">
                     </div>
                     {% endfor %}
@@ -805,11 +606,11 @@
                     </div>
                     {% endif %}
 
-                    <div class="gallery-main-frame" id="pdpMainImageFrame" onclick="pdpOpenLightbox(this)" tabindex="0" role="button" aria-label="Product image view - click to expand">
+                    <div class="gallery-main-frame" id="pdpMainImageFrame" onclick="pdpOpenLightbox(this)" tabindex="0" role="button" aria-label="Product image view">
                         {% if product.primary_image %}
                         <img id="pdpMainImage" src="{{ product.primary_image.url }}" alt="{{ product.title|default:'Product' }}" data-zoom-url="{{ product.primary_image.url }}">
                         {% else %}
-                        <div class="gallery-no-image-placeholder" aria-label="No product image available">No image available</div>
+                        <div class="gallery-no-image-placeholder">No image available</div>
                         {% endif %}
                     </div>
                 </div>
@@ -873,7 +674,6 @@
                         {% endif %}
                     </div>
 
-                    {# Dynamic variant selectors with inventory status #}
                     {% if variant_groups %}
                         <div class="variants-section" role="group" aria-label="Product variants">
                             {% for group in variant_groups %}
@@ -903,7 +703,6 @@
                         </div>
                     {% endif %}
 
-                    {# Dynamic inventory display - reads from inventory context ONLY #}
                     <div class="inventory-indicator-box" role="status" aria-live="polite" data-inventory-region="main">
                         {% if inventory.is_out_of_stock %}
                             <span class="stock-label stock-out">
@@ -932,7 +731,6 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
                             </svg>
                             <span>{{ inventory.warehouse_summary }}</span>
                         </div>
@@ -946,9 +744,9 @@
                                 <label for="qtyInput">Collector Quantity</label>
                             </div>
                             <div class="luxury-qty-selector" role="group" aria-label="Quantity selector">
-                                <button type="button" class="qty-adjust-btn" onclick="pdpAdjustQty(-1)" aria-label="Decrease quantity">&minus;</button>
-                                <input type="number" id="qtyInput" name="quantity" class="qty-val-input" value="1" min="1" max="99" aria-label="Quantity">
-                                <button type="button" class="qty-adjust-btn" onclick="pdpAdjustQty(1)" aria-label="Increase quantity">+</button>
+                                <button type="button" class="qty-adjust-btn" onclick="pdpAdjustQty(-1)">&minus;</button>
+                                <input type="number" id="qtyInput" name="quantity" class="qty-val-input" value="1" min="1" max="99">
+                                <button type="button" class="qty-adjust-btn" onclick="pdpAdjustQty(1)">+</button>
                             </div>
                         </div>
 
@@ -967,13 +765,10 @@
                             <button type="button"
                                     class="btn-pdp-wishlist btn-detail-wishlist toggle-wishlist {% if is_wishlisted or product.is_wishlisted %}wishlisted{% endif %}"
                                     title="{% if is_wishlisted or product.is_wishlisted %}Remove from Collection{% else %}Add to Collection{% endif %}"
-                                    aria-label="{% if is_wishlisted or product.is_wishlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}"
-                                    aria-pressed="{% if is_wishlisted or product.is_wishlisted %}true{% else %}false{% endif %}"
+                                    aria-label="Wishlist toggle"
                                     data-product-id="{{ product.id|default:'' }}"
-                                    data-product-slug="{{ product.slug|default:'' }}"
                                     data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-                                    {% if wishlist_url %}data-url="{{ wishlist_url|escapejs }}"{% endif %}
-                                    {% if login_url %}data-login-url="{{ login_url|escapejs }}"{% endif %}>
+                                    {% if wishlist_url %}data-url="{{ wishlist_url|escapejs }}"{% endif %}>
                                 <svg width="22" height="22" viewBox="0 0 24 24"
                                      fill="{% if is_wishlisted or product.is_wishlisted %}#C0392B{% else %}none{% endif %}"
                                      stroke="{% if is_wishlisted or product.is_wishlisted %}#C0392B{% else %}currentColor{% endif %}"
@@ -987,26 +782,7 @@
                     <div class="purchase-actions-grid">
                         <div class="action-buttons-flex">
                             <button type="button" class="btn-luxury-cart" disabled aria-disabled="true">Out of Stock</button>
-                            <button type="button" class="btn-pdp-wishlist btn-detail-wishlist toggle-wishlist {% if is_wishlisted or product.is_wishlisted %}wishlisted{% endif %}"
-                                    title="{% if is_wishlisted or product.is_wishlisted %}Remove from Collection{% else %}Add to Collection{% endif %}"
-                                    aria-label="{% if is_wishlisted or product.is_wishlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}"
-                                    aria-pressed="{% if is_wishlisted or product.is_wishlisted %}true{% else %}false{% endif %}"
-                                    data-product-id="{{ product.id|default:'' }}"
-                                    data-product-slug="{{ product.slug|default:'' }}"
-                                    data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-                                    {% if wishlist_url %}data-url="{{ wishlist_url|escapejs }}"{% endif %}
-                                    {% if login_url %}data-login-url="{{ login_url|escapejs }}"{% endif %}>
-                                <svg width="22" height="22" viewBox="0 0 24 24"
-                                     fill="{% if is_wishlisted or product.is_wishlisted %}#C0392B{% else %}none{% endif %}"
-                                     stroke="{% if is_wishlisted or product.is_wishlisted %}#C0392B{% else %}currentColor{% endif %}"
-                                     stroke-width="1.5" aria-hidden="true">
-                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                </svg>
-                            </button>
                         </div>
-                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
-                            This masterpiece is currently unavailable. Add to your collection to be notified when it returns.
-                        </p>
                     </div>
                     {% endif %}
 
@@ -1019,9 +795,6 @@
                             <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}&text={{ product.title|default:'Product'|urlencode }}" target="_blank" rel="noopener noreferrer" class="share-btn-item" aria-label="Share on Twitter">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
                             </a>
-                            <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri|urlencode }}&media={% if product.primary_image %}{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.url|urlencode }}{% endif %}&description={{ product.title|default:'Product'|urlencode }}" target="_blank" rel="noopener noreferrer" class="share-btn-item" aria-label="Share on Pinterest">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 22s1.5-2 1.5-3.5S8 13.5 8 13.5s-1.5-1.5-1.5-3.5S8 4 12 4s6.5 3 6.5 6-3 5.5-5 5.5-3.5-1.5-3.5-3.5 1.5-2.5 1.5-3.5"></path></svg>
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -1029,15 +802,11 @@
                 <div class="shipping-estimator-panel">
                     <div class="shipping-highlight-node">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                        <span><strong>Traditional Weaving & Processing Duration:</strong> Each item undergoes meticulous artisan inspection before immediate transit.</span>
+                        <span><strong>Traditional Weaving & Processing Duration:</strong> Meticulous artisan inspection before transit.</span>
                     </div>
                     <div class="shipping-highlight-node">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                        <span><strong>Worldwide Secure Dispatch:</strong> Tracked shipping globally from Kathmandu, Nepal. Express air solutions enabled.</span>
-                    </div>
-                    <div class="shipping-highlight-node">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        <span><strong>Premium Collection Promise:</strong> Authentic heritage certificate included signed by master craftsman.</span>
+                        <span><strong>Worldwide Secure Dispatch:</strong> Tracked shipping globally from Kathmandu, Nepal.</span>
                     </div>
                 </div>
 
@@ -1045,10 +814,6 @@
                     <div class="secure-trust-indicator">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                         <span>Fair-Trade Practices</span>
-                    </div>
-                    <div class="secure-trust-indicator">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        <span>Genuine Pure Materials</span>
                     </div>
                     <div class="secure-trust-indicator">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -1063,23 +828,9 @@
             <div class="storyteller-narrative-frame">
                 <span class="storyteller-pre">Ancestral Lineage</span>
                 <h2 class="storyteller-h">The Narrative &amp; Spirit behind the Masterpiece</h2>
-                {% if product.story %}
-                <div class="storyteller-paragraph">
-                    {{ product.story|safe }}
-                </div>
-                {% endif %}
-
+                {% if product.story %}<div class="storyteller-paragraph">{{ product.story|safe }}</div>{% endif %}
                 {% if product.artisan and product.artisan.quote %}
-                <blockquote class="storyteller-artisan-quote">
-                    &ldquo;{{ product.artisan.quote }}&rdquo;
-                </blockquote>
-                {% endif %}
-
-                {% if product.crafting_process %}
-                <span class="storyteller-pre" style="margin-top: 2rem;">The Weave &amp; Carving Process</span>
-                <div class="storyteller-paragraph">
-                    {{ product.crafting_process|safe }}
-                </div>
+                <blockquote class="storyteller-artisan-quote">&ldquo;{{ product.artisan.quote }}&rdquo;</blockquote>
                 {% endif %}
             </div>
 
@@ -1087,7 +838,7 @@
                 {% if product.artisan and product.artisan.image %}
                     <img src="{{ product.artisan.image.url }}" alt="Artisan Master {{ product.artisan.name|default:'Artisan' }}" loading="lazy">
                 {% elif product.hover_image %}
-                    <img src="{{ product.hover_image.url }}" alt="{{ product.title|default:'Product' }} - artisan view" loading="lazy">
+                    <img src="{{ product.hover_image.url }}" alt="{{ product.title|default:'Product' }}" loading="lazy">
                 {% else %}
                     <div class="gallery-no-image-placeholder">Master artisan at work</div>
                 {% endif %}
@@ -1100,9 +851,6 @@
                 <button type="button" class="pdp-tab-button active" role="tab" id="tab-spec" aria-selected="true" aria-controls="pane-spec" data-tab="spec">Specifications</button>
                 {% if product.care_instructions %}<button type="button" class="pdp-tab-button" role="tab" id="tab-care" aria-selected="false" aria-controls="pane-care" data-tab="care">Care</button>{% endif %}
                 {% if product.shipping_information or product.delivery_promise %}<button type="button" class="pdp-tab-button" role="tab" id="tab-shipping" aria-selected="false" aria-controls="pane-shipping" data-tab="shipping">Shipping</button>{% endif %}
-                {% if product.return_policy %}<button type="button" class="pdp-tab-button" role="tab" id="tab-returns" aria-selected="false" aria-controls="pane-returns" data-tab="returns">Returns</button>{% endif %}
-                {% if product.warranty_information %}<button type="button" class="pdp-tab-button" role="tab" id="tab-warranty" aria-selected="false" aria-controls="pane-warranty" data-tab="warranty">Warranty</button>{% endif %}
-                {% if product.faqs.exists %}<button type="button" class="pdp-tab-button" role="tab" id="tab-faq" aria-selected="false" aria-controls="pane-faq" data-tab="faq">FAQs</button>{% endif %}
             </div>
 
             <div class="pdp-tab-content">
@@ -1114,46 +862,10 @@
                             <span class="pdp-spec-value">{{ product.sku }}</span>
                         </div>
                         {% endif %}
-                        {% if product.barcode %}
-                        <div class="pdp-spec-node">
-                            <span class="pdp-spec-label">International Identifier</span>
-                            <span class="pdp-spec-value">{{ product.barcode }}</span>
-                        </div>
-                        {% endif %}
                         {% if product.material %}
                         <div class="pdp-spec-node">
                             <span class="pdp-spec-label">Primary Material</span>
                             <span class="pdp-spec-value">{{ product.material.name }}</span>
-                        </div>
-                        {% endif %}
-                        {% if product.hue %}
-                        <div class="pdp-spec-node">
-                            <span class="pdp-spec-label">Hue Palette</span>
-                            <span class="pdp-spec-value">{{ product.hue.name }}</span>
-                        </div>
-                        {% endif %}
-                        {% if product.length %}
-                        <div class="pdp-spec-node">
-                            <span class="pdp-spec-label">Product Length</span>
-                            <span class="pdp-spec-value">{{ product.length }} {{ product.dimension_unit|default:"cm" }}</span>
-                        </div>
-                        {% endif %}
-                        {% if product.width %}
-                        <div class="pdp-spec-node">
-                            <span class="pdp-spec-label">Product Width</span>
-                            <span class="pdp-spec-value">{{ product.width }} {{ product.dimension_unit|default:"cm" }}</span>
-                        </div>
-                        {% endif %}
-                        {% if product.height %}
-                        <div class="pdp-spec-node">
-                            <span class="pdp-spec-label">Product Height</span>
-                            <span class="pdp-spec-value">{{ product.height }} {{ product.dimension_unit|default:"cm" }}</span>
-                        </div>
-                        {% endif %}
-                        {% if product.weight %}
-                        <div class="pdp-spec-node">
-                            <span class="pdp-spec-label">Net Weight</span>
-                            <span class="pdp-spec-value">{{ product.weight }} {{ product.weight_unit|default:"kg" }}</span>
                         </div>
                         {% endif %}
                         {% for spec in product.specifications.all %}
@@ -1174,143 +886,11 @@
                 {% if product.shipping_information or product.delivery_promise %}
                 <div class="pdp-tab-pane" id="pane-shipping" role="tabpanel" aria-labelledby="tab-shipping" hidden>
                     <div style="display: flex; flex-direction: column; gap: 1rem; line-height: 1.8;">
-                        {% if product.shipping_information %}
-                            <div>{{ product.shipping_information|safe }}</div>
-                        {% endif %}
-                        {% if product.delivery_promise %}
-                            <div><strong>Delivery Promise:</strong> {{ product.delivery_promise|safe }}</div>
-                        {% endif %}
+                        {% if product.shipping_information %}<div>{{ product.shipping_information|safe }}</div>{% endif %}
+                        {% if product.delivery_promise %}<div><strong>Delivery Promise:</strong> {{ product.delivery_promise|safe }}</div>{% endif %}
                     </div>
                 </div>
                 {% endif %}
-
-                {% if product.return_policy %}
-                <div class="pdp-tab-pane" id="pane-returns" role="tabpanel" aria-labelledby="tab-returns" hidden>
-                    <p style="margin: 0; line-height: 1.8;">{{ product.return_policy|safe }}</p>
-                </div>
-                {% endif %}
-
-                {% if product.warranty_information %}
-                <div class="pdp-tab-pane" id="pane-warranty" role="tabpanel" aria-labelledby="tab-warranty" hidden>
-                    <p style="margin: 0; line-height: 1.8;">{{ product.warranty_information|safe }}</p>
-                </div>
-                {% endif %}
-
-                {% if product.faqs.exists %}
-                <div class="pdp-tab-pane" id="pane-faq" role="tabpanel" aria-labelledby="tab-faq" hidden>
-                    <div class="luxury-accordion-system" style="border-top: none; margin-bottom: 0;">
-                        {% for faq in product.faqs.all %}
-                            {% if faq.is_active %}
-                            <div class="luxury-accordion-node">
-                                <button class="luxury-accordion-header" type="button" aria-expanded="false" onclick="pdpToggleAccordion(this)">
-                                    <span>{{ faq.question|default:'Question' }}</span>
-                                    <span class="accordion-indicator-icon" aria-hidden="true">+</span>
-                                </button>
-                                <div class="luxury-accordion-panel-content">
-                                    <div class="luxury-accordion-panel-inner">
-                                        <p style="margin: 0; line-height: 1.7; color: var(--text-muted);">{{ faq.answer|default:''|safe }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </section>
-
-        <section class="verified-reviews-platform-section" aria-label="Customer reviews">
-            <div class="reviews-section-header">
-                <h2>Collector Verified Reviews</h2>
-                <p style="color: var(--text-muted);">Preserving traditional lineages through strict collector transparency.</p>
-            </div>
-
-            <div class="review-dashboard-matrix">
-                <div class="score-overall-container">
-                    <span class="score-huge-text">{{ product.rating|default:5|floatformat:1 }}</span>
-                    <span class="rating-stars" style="font-size: 1.25rem; margin-top: 0.5rem; display: block;" role="img" aria-label="Rated {{ product.rating|default:5 }} out of 5 stars">
-                        <span class="stars-filled" aria-hidden="true">
-                            {% with stars=product.rating|default:5 %}
-                                {% if stars|stringformat:"d" == "5" %}★★★★★
-                                {% elif stars|stringformat:"d" == "4" %}★★★★☆
-                                {% else %}★★★★★
-                                {% endif %}
-                            {% endwith %}
-                        </span>
-                    </span>
-                    <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-top: 0.5rem; font-weight: 600; letter-spacing: 0.05em;">Based on verified collections</span>
-                </div>
-
-                <div class="reviews-distribution-panel" aria-label="Rating distribution">
-                    <div class="distribution-bar-row">
-                        <span class="bar-label">5 Stars</span>
-                        <div class="bar-visual-track"><div class="bar-visual-fill" style="width: 88%;"></div></div>
-                        <span class="bar-count-percentage">88%</span>
-                    </div>
-                    <div class="distribution-bar-row">
-                        <span class="bar-label">4 Stars</span>
-                        <div class="bar-visual-track"><div class="bar-visual-fill" style="width: 10%;"></div></div>
-                        <span class="bar-count-percentage">10%</span>
-                    </div>
-                    <div class="distribution-bar-row">
-                        <span class="bar-label">3 Stars</span>
-                        <div class="bar-visual-track"><div class="bar-visual-fill" style="width: 2%;"></div></div>
-                        <span class="bar-count-percentage">2%</span>
-                    </div>
-                    <div class="distribution-bar-row">
-                        <span class="bar-label">2 Stars</span>
-                        <div class="bar-visual-track"><div class="bar-visual-fill" style="width: 0%;"></div></div>
-                        <span class="bar-count-percentage">0%</span>
-                    </div>
-                    <div class="distribution-bar-row">
-                        <span class="bar-label">1 Star</span>
-                        <div class="bar-visual-track"><div class="bar-visual-fill" style="width: 0%;"></div></div>
-                        <span class="bar-count-percentage">0%</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="review-cards-list-wrapper">
-                <article class="review-item-card">
-                    <div class="review-item-header">
-                        <div class="reviewer-meta">
-                            <span class="reviewer-fullname">Arch. Shrestha J.</span>
-                            <span class="verified-buyer-badge">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                Verified Masterpiece Owner
-                            </span>
-                        </div>
-                        <span class="review-item-date">May 14, 2026</span>
-                    </div>
-                    <span class="rating-stars" style="margin-bottom: 0.5rem; display: block;" role="img" aria-label="Rated 5 out of 5 stars">
-                        <span class="stars-filled" aria-hidden="true">★★★★★</span>
-                    </span>
-                    <h4 class="review-card-title">Incredible lineage and authentic presence</h4>
-                    <p class="review-card-text">
-                        This work has become the centerpiece of my collection. The hand-woven wood and custom lacquer show standard variations that are only possible with a master-level craftsman. Highly recommended.
-                    </p>
-                </article>
-
-                <article class="review-item-card">
-                    <div class="review-item-header">
-                        <div class="reviewer-meta">
-                            <span class="reviewer-fullname">Elena R.</span>
-                            <span class="verified-buyer-badge">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                Verified Masterpiece Owner
-                            </span>
-                        </div>
-                        <span class="review-item-date">April 29, 2026</span>
-                    </div>
-                    <span class="rating-stars" style="margin-bottom: 0.5rem; display: block;" role="img" aria-label="Rated 5 out of 5 stars">
-                        <span class="stars-filled" aria-hidden="true">★★★★★</span>
-                    </span>
-                    <h4 class="review-card-title">Authenticity you can feel</h4>
-                    <p class="review-card-text">
-                        The weight, material, and smell of raw incense-cured clay was breathtaking out of the shipping container. I am thrilled to support these fair-trade structures in Nepal.
-                    </p>
-                </article>
             </div>
         </section>
 
@@ -1324,11 +904,6 @@
             </div>
         </section>
         {% endif %}
-
-        <section class="related-masterpieces-outer-section" id="pdpRecentlyViewedBox" style="display: none;" aria-label="Recently viewed products">
-            <h2 class="carousel-heading-title">Recently Viewed Masterpieces</h2>
-            <div class="related-products-carousel-grid" id="pdpRecentlyViewedGrid"></div>
-        </section>
     </main>
 
     <div class="sticky-action-mobile-bar" role="region" aria-label="Quick purchase actions">
@@ -1354,49 +929,6 @@
         (function() {
             'use strict';
 
-            function escapeHtml(str) {
-                if (str === null || str === undefined) return '';
-                return String(str)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
-            }
-
-            function setStockBadgeClass(element, isInStock, isLowStock, isOutOfStock) {
-                if (!element) return;
-                element.classList.remove('stock-in', 'stock-low', 'stock-out', 'stock-unknown');
-                if (isOutOfStock) {
-                    element.classList.add('stock-out');
-                } else if (isLowStock) {
-                    element.classList.add('stock-low');
-                } else if (isInStock) {
-                    element.classList.add('stock-in');
-                } else {
-                    element.classList.add('stock-unknown');
-                }
-            }
-
-            function updateStockMessage(status, freeStock) {
-                var labelEl = document.querySelector('[data-inventory-region="main"] .stock-label span:last-child');
-                if (!labelEl) return;
-                var message = 'Stock status unavailable';
-                var numFree = parseFloat(freeStock);
-                if (status === 'out_of_stock') {
-                    message = 'Temporarily Out of Stock';
-                } else if (status === 'low_stock') {
-                    if (!isNaN(numFree) && numFree > 0) {
-                        message = 'Only ' + Math.floor(numFree) + ' left in stock';
-                    } else {
-                        message = 'Low stock - order soon';
-                    }
-                } else if (status === 'in_stock') {
-                    message = 'In Stock & Ready to Ship';
-                }
-                labelEl.textContent = message;
-            }
-
             window.pdpGallerySetImage = function(imgUrl, thumbElement) {
                 var mainImage = document.getElementById('pdpMainImage');
                 if (!mainImage || !imgUrl) return;
@@ -1405,46 +937,8 @@
                 var allThumbs = document.querySelectorAll('.gallery-vertical-thumbs .thumb-item');
                 for (var i = 0; i < allThumbs.length; i++) {
                     allThumbs[i].classList.remove('active');
-                    allThumbs[i].setAttribute('aria-selected', 'false');
                 }
-                if (thumbElement) {
-                    thumbElement.classList.add('active');
-                    thumbElement.setAttribute('aria-selected', 'true');
-                }
-            };
-
-            window.pdpToggleAccordion = function(headerBtn) {
-                if (!headerBtn) return;
-                var parentNode = headerBtn.closest('.luxury-accordion-node');
-                if (!parentNode) return;
-                var panel = parentNode.querySelector('.luxury-accordion-panel-content');
-                if (!panel) return;
-                var isCurrentlyExpanded = headerBtn.getAttribute('aria-expanded') === 'true';
-
-                var system = parentNode.closest('.luxury-accordion-system');
-                if (system) {
-                    var allNodes = system.querySelectorAll('.luxury-accordion-node');
-                    for (var i = 0; i < allNodes.length; i++) {
-                        var node = allNodes[i];
-                        if (node !== parentNode) {
-                            node.classList.remove('active');
-                            var hdr = node.querySelector('.luxury-accordion-header');
-                            var pnl = node.querySelector('.luxury-accordion-panel-content');
-                            if (hdr) hdr.setAttribute('aria-expanded', 'false');
-                            if (pnl) pnl.style.maxHeight = null;
-                        }
-                    }
-                }
-
-                if (isCurrentlyExpanded) {
-                    parentNode.classList.remove('active');
-                    headerBtn.setAttribute('aria-expanded', 'false');
-                    panel.style.maxHeight = null;
-                } else {
-                    parentNode.classList.add('active');
-                    headerBtn.setAttribute('aria-expanded', 'true');
-                    panel.style.maxHeight = panel.scrollHeight + 'px';
-                }
+                if (thumbElement) thumbElement.classList.add('active');
             };
 
             window.pdpAdjustQty = function(amount) {
@@ -1469,17 +963,6 @@
                 window.location.href = '/cart/express-checkout/?product_id=' + encodeURIComponent(productId) + '&quantity=' + encodeURIComponent(quantity);
             };
 
-            window.pdpOpenLightbox = function(frame) {
-                if (!frame) return;
-                var img = frame.querySelector('img');
-                if (img && img.dataset.zoomUrl) {
-                    window.dispatchEvent(new CustomEvent('gobindas:gallery:open-lightbox', {
-                        bubbles: true,
-                        detail: { imageUrl: img.dataset.zoomUrl, alt: img.alt || '' }
-                    }));
-                }
-            };
-
             function initTabs() {
                 var tabButtons = document.querySelectorAll('.pdp-tab-button');
                 var tabPanes = document.querySelectorAll('.pdp-tab-pane');
@@ -1491,11 +974,9 @@
                         if (btn.dataset.tab === tabName) {
                             btn.classList.add('active');
                             btn.setAttribute('aria-selected', 'true');
-                            btn.setAttribute('tabindex', '0');
                         } else {
                             btn.classList.remove('active');
                             btn.setAttribute('aria-selected', 'false');
-                            btn.setAttribute('tabindex', '-1');
                         }
                     }
                     for (var j = 0; j < tabPanes.length; j++) {
@@ -1515,190 +996,14 @@
                         btn.addEventListener('click', function() {
                             activateTab(btn.dataset.tab);
                         });
-                        btn.addEventListener('keydown', function(e) {
-                            var allTabs = Array.prototype.slice.call(tabButtons);
-                            var idx = allTabs.indexOf(btn);
-                            if (e.key === 'ArrowRight') {
-                                e.preventDefault();
-                                var next = allTabs[(idx + 1) % allTabs.length];
-                                next.focus();
-                                activateTab(next.dataset.tab);
-                            } else if (e.key === 'ArrowLeft') {
-                                e.preventDefault();
-                                var prev = allTabs[(idx - 1 + allTabs.length) % allTabs.length];
-                                prev.focus();
-                                activateTab(prev.dataset.tab);
-                            }
-                        });
                     })(tabButtons[k]);
                 }
             }
 
-            function initVariantSelection() {
-                var variantPills = document.querySelectorAll('.variant-pill');
-                if (!variantPills.length) return;
-                var container = document.querySelector('.product-detail-container');
-                var inventoryRegion = document.querySelector('[data-inventory-region="main"] .stock-label');
-
-                for (var i = 0; i < variantPills.length; i++) {
-                    (function(pill) {
-                        pill.addEventListener('click', function() {
-                            if (pill.disabled) return;
-                            var group = pill.closest('.variant-options');
-                            if (!group) return;
-                            var allPills = group.querySelectorAll('.variant-pill');
-                            for (var j = 0; j < allPills.length; j++) {
-                                allPills[j].classList.remove('active');
-                                allPills[j].setAttribute('aria-checked', 'false');
-                            }
-                            pill.classList.add('active');
-                            pill.setAttribute('aria-checked', 'true');
-
-                            var isInStock = pill.dataset.variantIsInStock === 'true';
-                            var inventoryStatus = pill.dataset.variantInventoryStatus || 'unknown';
-                            var freeStock = pill.dataset.variantFreeStock || '0.00';
-
-                            if (inventoryRegion) {
-                                setStockBadgeClass(
-                                    inventoryRegion,
-                                    isInStock,
-                                    inventoryStatus === 'low_stock',
-                                    inventoryStatus === 'out_of_stock'
-                                );
-                            }
-                            updateStockMessage(inventoryStatus, freeStock);
-
-                            if (container) {
-                                container.dataset.inventoryStatus = inventoryStatus;
-                            }
-
-                            var buyNowBtn = document.getElementById('buyNowBtn');
-                            if (buyNowBtn) {
-                                buyNowBtn.disabled = !isInStock;
-                            }
-                            var mobileBuyBtn = document.querySelector('.btn-sticky-mobile-buy');
-                            if (mobileBuyBtn) {
-                                mobileBuyBtn.disabled = !isInStock;
-                            }
-
-                            document.dispatchEvent(new CustomEvent('gobindas:variant:change', {
-                                bubbles: true,
-                                detail: {
-                                    attributeId: pill.dataset.attributeId,
-                                    optionId: pill.dataset.optionId,
-                                    variantId: pill.dataset.variantId,
-                                    isInStock: isInStock
-                                }
-                            }));
-                        });
-                    })(variantPills[i]);
-                }
-            }
-
-            function initCart() {
-                var bagBtn = document.getElementById('addToBagBtn');
-                if (!bagBtn) return;
-                bagBtn.addEventListener('click', function() {
-                    var originalText = this.innerHTML;
-                    this.innerHTML = 'ADDED TO COLLECTION';
-                    this.style.background = '#4A6B53';
-                    this.style.borderColor = '#4A6B53';
-                    this.style.color = '#FFFFFF';
-
-                    var qtyInput = document.getElementById('qtyInput');
-                    var container = document.querySelector('.product-detail-container');
-                    var productId = container ? container.dataset.productId : null;
-                    var quantity = qtyInput ? parseInt(qtyInput.value, 10) || 1 : 1;
-
-                    this.dispatchEvent(new CustomEvent('gobindas:cart:detail-add', {
-                        bubbles: true,
-                        detail: {
-                            productId: productId,
-                            quantity: quantity,
-                            action: this.dataset.cartAction || 'add'
-                        }
-                    }));
-
-                    setTimeout(function() {
-                        this.innerHTML = originalText;
-                        this.style.background = '#1A1512';
-                        this.style.borderColor = '#1A1512';
-                        this.style.color = '#FFFFFF';
-                    }.bind(this), 2000);
-                });
-            }
-
-            function initRecentlyViewed() {
-                try {
-                    var container = document.querySelector('.product-detail-container');
-                    if (!container) return;
-                    var productId = container.dataset.productId;
-                    var productSlug = container.dataset.productSlug;
-                    if (!productId || !productSlug) return;
-
-                    var titleEl = document.querySelector('.product-title-row h1');
-                    var priceEl = document.querySelector('.price-current-large');
-                    var imgEl = document.getElementById('pdpMainImage');
-                    var recentItems = [];
-                    try {
-                        recentItems = JSON.parse(localStorage.getItem('gobindas_recent_masterpieces') || '[]');
-                        if (!Array.isArray(recentItems)) recentItems = [];
-                    } catch (e) {
-                        recentItems = [];
-                    }
-                    recentItems = recentItems.filter(function(item) { return item && item.id !== productId; });
-                    recentItems.unshift({
-                        id: productId,
-                        slug: productSlug,
-                        title: titleEl ? titleEl.textContent.trim() : '',
-                        price: priceEl ? priceEl.textContent.trim() : '',
-                        image: imgEl ? imgEl.src : ''
-                    });
-                    try {
-                        localStorage.setItem('gobindas_recent_masterpieces', JSON.stringify(recentItems.slice(0, 4)));
-                    } catch (e) {
-                        // Storage may be disabled; fail silently.
-                    }
-
-                    var filteredRecent = recentItems.filter(function(item) { return item && item.id !== productId; });
-                    var recentGrid = document.getElementById('pdpRecentlyViewedGrid');
-                    var recentSection = document.getElementById('pdpRecentlyViewedBox');
-
-                    if (filteredRecent.length > 0 && recentGrid && recentSection) {
-                        recentSection.style.display = 'block';
-                        recentGrid.innerHTML = filteredRecent.map(function(item) {
-                            return '<article class="gobindas-product-card" data-product-id="' + escapeHtml(item.id) + '" data-product-slug="' + escapeHtml(item.slug) + '">' +
-                                '<div class="product-card-media">' +
-                                    '<a href="/product/' + escapeHtml(item.slug) + '/" class="product-card-media-link">' +
-                                        '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title) + '" loading="lazy">' +
-                                    '</a>' +
-                                '</div>' +
-                                '<div class="product-card-details">' +
-                                    '<a href="/product/' + escapeHtml(item.slug) + '/" class="product-title-link" style="font-family: var(--font-brand); font-size:1rem; font-weight:600;">' + escapeHtml(item.title) + '</a>' +
-                                    '<div class="product-bottom-meta" style="margin-top:auto; padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center;">' +
-                                        '<span class="price-current" style="font-family: var(--font-brand); font-weight:700;">' + escapeHtml(item.price) + '</span>' +
-                                    '</div>' +
-                                '</div>' +
-                            '</article>';
-                        }).join('');
-                    }
-                } catch (e) {
-                    // Fail silently to avoid disrupting the page.
-                }
-            }
-
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                    initTabs();
-                    initVariantSelection();
-                    initCart();
-                    initRecentlyViewed();
-                });
+                document.addEventListener('DOMContentLoaded', initTabs);
             } else {
                 initTabs();
-                initVariantSelection();
-                initCart();
-                initRecentlyViewed();
             }
         })();
     </script>

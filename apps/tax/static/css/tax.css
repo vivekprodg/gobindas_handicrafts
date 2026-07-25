@@ -1,0 +1,28 @@
+/* Dynamic Tax Breakdown Styling */
+.tax-breakdown-card {
+    background: #FDFCFB;
+    border: 1px solid #EAE5E0;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+}
+
+.tax-line-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #7A726A;
+    padding: 0.35rem 0;
+}
+
+.tax-line-item.exempt-badge {
+    color: #2E7D32;
+    font-weight: 600;
+}
+
+.tax-mode-note {
+    font-size: 0.75rem;
+    color: #9A7B54;
+    font-style: italic;
+    margin-top: 0.5rem;
+}

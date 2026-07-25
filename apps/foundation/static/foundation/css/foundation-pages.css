@@ -1,22 +1,50 @@
-/* Card Container layouts */
-.auth-container, .locator-container, .track-container {
+/* ==========================================================================
+   CARD & CONTAINER LAYOUTS (AUTH, LOCATOR, TRACKING, PLACEHOLDER)
+   ========================================================================== */
+.auth-container, 
+.locator-container, 
+.track-container, 
+.placeholder-page {
     max-width: 500px;
     margin: 4rem auto;
     padding: 3rem;
     background: #ffffff;
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     box-shadow: 0 10px 30px rgba(184, 138, 68, 0.08);
     border-radius: 8px;
-    font-family: var(--font-ui);
+    font-family: var(--font-ui, 'Inter', sans-serif);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-container::before, 
+.locator-container::before, 
+.track-container::before, 
+.placeholder-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--brand-gold, #B88A44), var(--brand-gold-hover, #D4A963), var(--brand-gold, #B88A44));
 }
 
 .locator-container {
     max-width: 900px;
 }
 
-.page-title {
-    font-family: var(--font-brand);
-    color: var(--brand-gold-dark);
+.placeholder-page {
+    max-width: 800px;
+    margin: 6rem auto;
+    padding: 5rem 3rem;
+    text-align: center;
+}
+
+.page-title, 
+.placeholder-title {
+    font-family: var(--font-brand, 'Cinzel', serif);
+    color: var(--brand-gold-dark, #91682B);
     font-size: 2rem;
     font-weight: 700;
     text-align: center;
@@ -25,7 +53,33 @@
     text-transform: uppercase;
 }
 
-/* Form Styles */
+.placeholder-title {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.placeholder-icon {
+    color: var(--brand-gold, #B88A44);
+    margin-bottom: 2rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--brand-gold-light, #F8F3E9);
+    padding: 1.5rem;
+    border-radius: 50%;
+}
+
+.placeholder-description {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--brand-dark, #2A2621);
+    max-width: 600px;
+    margin: 0 auto 2.5rem auto;
+}
+
+/* ==========================================================================
+   GLOBAL FORM STYLES
+   ========================================================================== */
 .form-group {
     margin-bottom: 1.5rem;
     display: flex;
@@ -37,33 +91,52 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--brand-dark);
+    color: var(--brand-dark, #2A2621);
     margin-bottom: 0.5rem;
 }
 
-.form-input {
+.form-input, 
+.form-textarea {
     width: 100%;
     padding: 0.8rem 1rem;
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     border-radius: 4px;
     font-size: 0.95rem;
-    color: var(--brand-dark);
-    transition: var(--transition-smooth);
+    color: var(--brand-dark, #2A2621);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
     background: #fafafa;
+    font-family: var(--font-ui, 'Inter', sans-serif);
+    box-sizing: border-box;
 }
 
-.form-input:focus {
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-input:focus, 
+.form-textarea:focus {
     outline: none;
-    border-color: var(--brand-gold);
+    border-color: var(--brand-gold, #B88A44);
     background: #ffffff;
     box-shadow: 0 0 0 3px rgba(184, 138, 68, 0.15);
 }
 
-/* Primary Button */
-.btn-primary {
+.form-error-text {
+    color: #d9534f;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   PRIMARY & ACTION BUTTONS
+   ========================================================================== */
+.btn-primary, 
+.back-home-btn {
     width: 100%;
     padding: 1rem;
-    background-color: var(--brand-gold);
+    background-color: var(--brand-gold, #B88A44);
     color: #ffffff;
     border: none;
     border-radius: 4px;
@@ -72,15 +145,23 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     cursor: pointer;
-    transition: var(--transition-smooth);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
     margin-top: 1rem;
-    display: flex;
+    display: inline-flex;
     justify-content: center;
     align-items: center;
+    text-decoration: none;
+    box-sizing: border-box;
 }
 
-.btn-primary:hover {
-    background-color: var(--brand-gold-hover);
+.back-home-btn {
+    width: auto;
+    padding: 1rem 2.5rem;
+}
+
+.btn-primary:hover, 
+.back-home-btn:hover {
+    background-color: var(--brand-gold-hover, #D4A963);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(184, 138, 68, 0.2);
 }
@@ -93,27 +174,24 @@
 }
 
 .auth-links a {
-    color: var(--brand-gold-dark);
-    transition: var(--transition-smooth);
+    color: var(--brand-gold-dark, #91682B);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
     margin: 0 0.5rem;
+    text-decoration: none;
 }
 
 .auth-links a:hover {
-    color: var(--brand-gold-hover);
+    color: var(--brand-gold-hover, #D4A963);
     text-decoration: underline;
 }
 
-/* Store Locator styles */
+/* ==========================================================================
+   STORE LOCATOR SPECIFIC STYLES
+   ========================================================================== */
 .store-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
-}
-
-@media (max-width: 768px) {
-    .store-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .store-list {
@@ -124,40 +202,40 @@
 
 .store-card {
     padding: 1.5rem;
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     border-radius: 6px;
     margin-bottom: 1rem;
     cursor: pointer;
-    transition: var(--transition-smooth);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
 }
 
-.store-card:hover {
-    border-color: var(--brand-gold);
-    background-color: var(--brand-gold-light);
+.store-card:hover, 
+.store-card.active {
+    border-color: var(--brand-gold, #B88A44);
+    background-color: var(--brand-gold-light, #F8F3E9);
     box-shadow: 0 4px 12px rgba(184, 138, 68, 0.05);
 }
 
 .store-card.active {
-    border-color: var(--brand-gold-dark);
-    background-color: var(--brand-gold-light);
+    border-color: var(--brand-gold-dark, #91682B);
 }
 
 .store-card h3 {
-    font-family: var(--font-brand);
-    color: var(--brand-gold-dark);
+    font-family: var(--font-brand, 'Cinzel', serif);
+    color: var(--brand-gold-dark, #91682B);
     margin-bottom: 0.5rem;
 }
 
 .store-card p {
     font-size: 0.9rem;
-    color: #666;
+    color: #666666;
     margin-bottom: 0.25rem;
 }
 
 .store-map {
     height: 450px;
     background-color: #f0f0f0;
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     border-radius: 6px;
     display: flex;
     justify-content: center;
@@ -166,12 +244,14 @@
     overflow: hidden;
 }
 
-/* Tracking results styling */
+/* ==========================================================================
+   ORDER TRACKING TIMELINE STYLES
+   ========================================================================== */
 .tracking-results-card {
     margin-top: 2rem;
     padding: 2rem;
-    background: var(--brand-gold-light);
-    border: 1px solid var(--border-light);
+    background: var(--brand-gold-light, #F8F3E9);
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     border-radius: 6px;
 }
 
@@ -179,7 +259,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     padding-bottom: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -187,13 +267,13 @@
 .tracking-title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--brand-gold-dark);
+    color: var(--brand-gold-dark, #91682B);
 }
 
 .tracking-status-badge {
     padding: 0.4rem 0.8rem;
-    background: var(--brand-gold);
-    color: #fff;
+    background: var(--brand-gold, #B88A44);
+    color: #ffffff;
     font-weight: 600;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -212,7 +292,7 @@
     bottom: 0;
     left: 7px;
     width: 2px;
-    background: var(--border-light);
+    background: var(--border-light, rgba(184, 138, 68, 0.2));
 }
 
 .timeline-step {
@@ -228,21 +308,34 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #fff;
-    border: 3px solid var(--brand-gold);
+    background: #ffffff;
+    border: 3px solid var(--brand-gold, #B88A44);
 }
 
 .timeline-step.completed::before {
-    background: var(--brand-gold);
+    background: var(--brand-gold, #B88A44);
 }
 
 .step-date {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
 }
 
 .step-title {
     font-weight: 600;
-    color: var(--brand-dark);
+    color: var(--brand-dark, #2A2621);
     font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .store-grid {
+        grid-template-columns: 1fr;
+    }
+    .auth-container, 
+    .locator-container, 
+    .track-container, 
+    .placeholder-page {
+        margin: 2rem 1rem;
+        padding: 2rem 1.5rem;
+    }
 }

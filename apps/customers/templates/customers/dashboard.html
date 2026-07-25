@@ -1,73 +1,35 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}My Account Dashboard | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* ==========================================================================
-       Premium Dashboard Architecture - Gobindas Handicrafts
-       Design Language: Luxury, Elegant, Spacious, High-Contrast
-       ========================================================================== */
     :root {
         --dash-surface: #FFFFFF;
         --dash-bg: #FCFAF8;
         --dash-border: #EAE5E0;
-        --dash-border-hover: #D5CEC8;
         --dash-text-main: #1A1512;
         --dash-text-muted: #7A726A;
         --dash-gold: #C5A880;
         --dash-gold-dark: #9A7B54;
-        
-        /* Premium Layout Variables */
         --dash-radius-lg: 16px;
         --dash-radius-md: 12px;
-        --dash-radius-sm: 8px;
         --dash-radius-pill: 999px;
-        
-        /* Cinematic Shadows */
-        --dash-shadow-subtle: 0 4px 12px rgba(26, 21, 18, 0.03);
         --dash-shadow-float: 0 20px 48px rgba(26, 21, 18, 0.06);
-        --dash-shadow-inset: inset 0 0 0 1px rgba(197, 168, 128, 0.3);
-        --dash-shadow-nav: 0 2px 10px rgba(26, 21, 18, 0.04);
-        
-        /* Apple-esque Easing */
-        --dash-ease: cubic-bezier(0.16, 1, 0.3, 1);
-        --dash-transition: all 0.5s var(--dash-ease);
-        --dash-transition-fast: all 0.25s var(--dash-ease);
     }
 
     body {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--dash-bg);
     }
 
-    /* ==========================================================================
-       Layout Architecture
-       ========================================================================== */
     .dashboard-wrapper {
-        background-color: var(--dash-bg);
         max-width: 1440px;
         margin: 0 auto;
         padding: 3rem 2rem 5rem;
         display: flex;
         flex-direction: column;
         gap: 3.5rem;
-        animation: dashboardFadeIn 0.8s var(--dash-ease) forwards;
-    }
-
-    @keyframes dashboardFadeIn {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ==========================================================================
-       Horizontal Account Navigation (Premium Pill Style)
-       ========================================================================== */
-    .account-nav-wrapper {
-        width: 100%;
-        position: relative;
-        z-index: 10;
     }
 
     .account-nav-list {
@@ -75,61 +37,32 @@
         align-items: center;
         gap: 1rem;
         overflow-x: auto;
-        padding: 0.5rem 0.5rem 1rem 0.5rem;
-        margin: 0;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
+        padding-bottom: 0.5rem;
+        scrollbar-width: none;
     }
 
-    .account-nav-list::-webkit-scrollbar {
-        display: none; /* Safari and Chrome */
-    }
+    .account-nav-list::-webkit-scrollbar { display: none; }
 
     .account-nav-link {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
         gap: 0.75rem;
         padding: 0.85rem 1.75rem;
         border-radius: var(--dash-radius-pill);
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
         color: var(--dash-text-muted);
-        font-family: var(--font-ui, 'Inter', sans-serif);
         font-size: 0.9rem;
         font-weight: 500;
-        letter-spacing: 0.02em;
         text-decoration: none;
         white-space: nowrap;
-        transition: var(--dash-transition-fast);
-        box-shadow: var(--dash-shadow-nav);
+        transition: all 0.3s ease;
     }
 
-    .account-nav-link svg {
-        flex-shrink: 0;
-        color: inherit;
-        stroke-width: 1.5px;
-        transition: var(--dash-transition-fast);
-    }
-
-    .account-nav-link:hover, .account-nav-link:focus-visible {
-        border-color: var(--dash-gold);
-        color: var(--dash-text-main);
-        box-shadow: 0 8px 24px rgba(197, 168, 128, 0.12);
-        transform: translateY(-2px);
-        outline: none;
-    }
-
-    .account-nav-link.active {
+    .account-nav-link:hover, .account-nav-link.active {
         background: var(--dash-text-main);
         color: #FFFFFF;
         border-color: var(--dash-text-main);
-        box-shadow: 0 8px 24px rgba(26, 21, 18, 0.15);
-        font-weight: 600;
-    }
-
-    .account-nav-link.active svg {
-        color: var(--dash-gold);
     }
 
     .account-nav-link.logout-link {
@@ -137,150 +70,65 @@
         border-color: #FEE2E2;
         background: #FEF2F2;
     }
-    
-    .account-nav-link.logout-link:hover, .account-nav-link.logout-link:focus-visible {
-        background: #A93226;
-        color: #FFFFFF;
-        border-color: #A93226;
-        box-shadow: 0 8px 24px rgba(169, 50, 38, 0.15);
-    }
 
-    /* ==========================================================================
-       Main Content Area
-       ========================================================================== */
-    .dashboard-main {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-        width: 100%;
-    }
-
-    /* Django Messages / Alerts */
-    .dash-alerts {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .dash-alert {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1.25rem 1.5rem;
-        border-radius: var(--dash-radius-md);
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.9rem;
-        font-weight: 500;
-        letter-spacing: 0.02em;
-        animation: slideDown 0.5s var(--dash-ease);
-    }
-
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .dash-alert.success { background: #F0FDF4; color: #166534; border: 1px solid #DCFCE7; }
-    .dash-alert.error { background: #FEF2F2; color: #991B1B; border: 1px solid #FEE2E2; }
-    .dash-alert.info { background: #F8FAFC; color: #0F172A; border: 1px solid #E2E8F0; }
-
-    /* Premium Hero Member Card */
     .dashboard-hero {
         background: #1A1512;
         border-radius: var(--dash-radius-lg);
-        padding: 4rem 3.5rem;
+        padding: 3.5rem;
         display: flex;
         align-items: center;
-        gap: 3.5rem;
-        position: relative;
-        overflow: hidden;
+        gap: 3rem;
         color: #FFFFFF;
-        box-shadow: 0 32px 64px rgba(26, 21, 18, 0.12);
-    }
-
-    /* Subtle Luxury Texture */
-    .dashboard-hero::before {
-        content: '';
-        position: absolute;
-        top: 0; right: 0; bottom: 0; left: 0;
-        background-image: 
-            radial-gradient(circle at 100% 0%, rgba(197, 168, 128, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 0% 100%, rgba(197, 168, 128, 0.05) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: 1;
-    }
-
-    .hero-avatar-wrapper {
-        position: relative;
-        z-index: 2;
-        flex-shrink: 0;
+        box-shadow: var(--dash-shadow-float);
     }
 
     .hero-avatar {
-        width: 130px;
-        height: 130px;
+        width: 110px;
+        height: 110px;
         border-radius: 50%;
         background: var(--dash-surface);
-        border: 1px solid rgba(197, 168, 128, 0.3);
+        border: 2px solid var(--dash-gold);
         display: flex;
         align-items: center;
         justify-content: center;
         font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 3.25rem;
+        font-size: 3rem;
         color: var(--dash-gold);
         object-fit: cover;
-        box-shadow: 0 16px 40px rgba(0,0,0,0.4);
-        padding: 6px; /* Creates inner ring effect */
-        background-clip: content-box;
-    }
-
-    .hero-content {
-        position: relative;
-        z-index: 2;
-    }
-
-    .hero-welcome {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.25em;
-        color: var(--dash-gold);
-        margin-bottom: 0.75rem;
-        font-weight: 600;
     }
 
     .hero-name {
         font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 3.25rem;
-        line-height: 1.1;
-        margin: 0 0 1.25rem 0;
-        color: #FFFFFF;
-        font-weight: 500;
-        letter-spacing: 0.02em;
+        font-size: 2.75rem;
+        margin: 0 0 0.5rem 0;
     }
 
-    .hero-meta {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.7);
-        display: flex;
-        align-items: center;
-        gap: 2.5rem;
+    .badge-account-type {
+        display: inline-block;
+        padding: 0.3rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
     }
 
-    .hero-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        letter-spacing: 0.02em;
-    }
-    
-    .hero-meta-item svg {
-        stroke-width: 1.5px;
-        color: var(--dash-gold-dark);
+    .badge-individual { background: rgba(255, 255, 255, 0.15); color: #FFFFFF; }
+    .badge-wholesale { background: #E8F5E9; color: #1B5E20; }
+    .badge-organization { background: #E3F2FD; color: #0D47A1; }
+
+    .b2b-summary-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius-lg);
+        padding: 2rem;
+        margin-top: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
     }
 
-    /* Metric Cards Grid */
     .metrics-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -291,631 +139,143 @@
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
         border-radius: var(--dash-radius-lg);
-        padding: 2.5rem;
+        padding: 2rem;
         display: flex;
         flex-direction: column;
-        gap: 1.75rem;
-        transition: var(--dash-transition);
+        gap: 1.5rem;
         text-decoration: none;
         color: inherit;
-        position: relative;
-        overflow: hidden;
+        transition: all 0.3s ease;
     }
 
-    .metric-card::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: var(--dash-radius-lg);
-        box-shadow: var(--dash-shadow-inset);
-        opacity: 0;
-        transition: var(--dash-transition);
-    }
-
-    .metric-card:hover, .metric-card:focus-visible {
-        transform: translateY(-6px);
-        box-shadow: var(--dash-shadow-float);
-        border-color: transparent;
-        outline: none;
-    }
-
-    .metric-card:hover::after, .metric-card:focus-visible::after {
-        opacity: 1;
-    }
-
-    .metric-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .metric-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        background: var(--dash-bg);
-        color: var(--dash-gold-dark);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--dash-transition);
-        border: 1px solid var(--dash-border);
-    }
-    
-    .metric-icon svg {
-        stroke-width: 1.5px;
-    }
-
-    .metric-card:hover .metric-icon {
-        background: var(--dash-gold);
-        color: #FFFFFF;
+    .metric-card:hover {
+        transform: translateY(-4px);
         border-color: var(--dash-gold);
+        box-shadow: var(--dash-shadow-float);
     }
 
     .metric-value {
         font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 2.75rem;
-        font-weight: 500;
+        font-size: 2.5rem;
+        font-weight: 600;
         color: var(--dash-text-main);
-        line-height: 1;
     }
 
     .metric-label {
-        font-family: var(--font-ui, 'Inter', sans-serif);
         font-size: 0.85rem;
         color: var(--dash-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.1em;
         font-weight: 600;
-        margin-top: auto;
-    }
-
-    /* Section Headers */
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 2.5rem;
-        padding-bottom: 1.25rem;
-        border-bottom: 1px solid var(--dash-border);
-    }
-
-    .section-header h3 {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.75rem;
-        color: var(--dash-text-main);
-        margin: 0;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-    }
-
-    .section-link {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.8rem;
-        color: var(--dash-gold-dark);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: 600;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: var(--dash-transition-fast);
-    }
-
-    .section-link svg {
-        stroke-width: 2px;
-        transition: transform 0.3s var(--dash-ease);
-    }
-
-    .section-link:hover, .section-link:focus-visible {
-        color: var(--dash-text-main);
-        outline: none;
-    }
-
-    .section-link:hover svg {
-        transform: translateX(4px);
-    }
-
-    /* Orders List */
-    .order-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .order-card {
-        background: var(--dash-surface);
-        border: 1px solid var(--dash-border);
-        border-radius: var(--dash-radius-md);
-        padding: 2rem 2.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: var(--dash-transition);
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .order-card:hover, .order-card:focus-visible {
-        border-color: var(--dash-gold);
-        box-shadow: var(--dash-shadow-subtle);
-        transform: scale(1.005);
-        outline: none;
-    }
-
-    .order-info {
-        display: flex;
-        align-items: center;
-        gap: 4rem;
-    }
-
-    .order-primary {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .order-number {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-weight: 600;
-        color: var(--dash-text-main);
-        font-size: 1.2rem;
-        letter-spacing: 0.02em;
-    }
-
-    .order-date {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.9rem;
-        color: var(--dash-text-muted);
-    }
-
-    .order-status-badge {
-        padding: 0.5rem 1.25rem;
-        border-radius: 20px;
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        border: 1px solid currentColor;
-    }
-
-    /* Refined Luxury Status Colors */
-    .status-pending { background: #FAFAFA; color: #9A7B54; border-color: rgba(154, 123, 84, 0.3); }
-    .status-processing { background: #FAFAFA; color: #334155; border-color: rgba(51, 65, 85, 0.3); }
-    .status-shipped { background: #FAFAFA; color: #166534; border-color: rgba(22, 101, 52, 0.3); }
-    .status-delivered { background: #FAFAFA; color: #1A1512; border-color: rgba(26, 21, 18, 0.3); }
-    .status-cancelled { background: #FAFAFA; color: #991B1B; border-color: rgba(153, 27, 27, 0.3); }
-
-    .order-action-area {
-        display: flex;
-        align-items: center;
-        gap: 3rem;
-    }
-
-    .order-total {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.35rem;
-        font-weight: 600;
-        color: var(--dash-text-main);
-    }
-
-    .order-detail-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: var(--dash-bg);
-        border: 1px solid var(--dash-border);
-        color: var(--dash-text-main);
-        transition: var(--dash-transition);
-    }
-
-    .order-card:hover .order-detail-btn {
-        background: var(--dash-text-main);
-        color: #FFFFFF;
-        border-color: var(--dash-text-main);
-    }
-    
-    .order-detail-btn svg {
-        stroke-width: 1.5px;
-    }
-
-    /* Quick Actions Grid */
-    .quick-actions-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 2rem;
-    }
-
-    .action-card {
-        background: var(--dash-surface);
-        border: 1px solid var(--dash-border);
-        border-radius: var(--dash-radius-md);
-        padding: 3rem 2.5rem;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-        transition: var(--dash-transition);
-        text-decoration: none;
-        color: var(--dash-text-main);
-    }
-
-    .action-card:hover, .action-card:focus-visible {
-        border-color: var(--dash-gold);
-        box-shadow: var(--dash-shadow-float);
-        transform: translateY(-4px);
-        outline: none;
-    }
-
-    .action-card svg {
-        width: 40px;
-        height: 40px;
-        color: var(--dash-text-main);
-        stroke-width: 1.2px;
-        transition: var(--dash-transition);
-    }
-
-    .action-card:hover svg {
-        color: var(--dash-gold);
-        transform: scale(1.1);
-    }
-
-    .action-title {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-weight: 600;
-        font-size: 1.25rem;
-        margin: 0;
-        letter-spacing: 0.02em;
-    }
-
-    .action-desc {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.95rem;
-        color: var(--dash-text-muted);
-        line-height: 1.6;
-        margin: 0;
-    }
-
-    /* Empty States */
-    .empty-state {
-        background: var(--dash-surface);
-        border: 1px dashed var(--dash-border-hover);
-        border-radius: var(--dash-radius-lg);
-        padding: 6rem 2rem;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.75rem;
-    }
-
-    .empty-state svg {
-        color: var(--dash-border-hover);
-        stroke-width: 1px;
-    }
-
-    .empty-state p {
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        color: var(--dash-text-muted);
-        font-size: 1.05rem;
-        margin: 0;
-        max-width: 440px;
-        line-height: 1.6;
-    }
-
-    .btn-solid {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1.1rem 2.5rem;
-        background: var(--dash-text-main);
-        border: 1px solid var(--dash-text-main);
-        border-radius: var(--dash-radius-pill);
-        color: #FFFFFF;
-        font-family: var(--font-ui, 'Inter', sans-serif);
-        font-size: 0.85rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        text-decoration: none;
-        transition: var(--dash-transition-fast);
-    }
-
-    .btn-solid:hover, .btn-solid:focus-visible {
-        background: #000000;
-        color: var(--dash-gold);
-        border-color: #000000;
-        box-shadow: 0 8px 24px rgba(26, 21, 18, 0.2);
-        outline: none;
-    }
-
-    /* ==========================================================================
-       Responsive Engineering
-       ========================================================================== */
-    @media (max-width: 1200px) {
-        .dashboard-wrapper {
-            padding: 3rem 1.5rem;
-        }
     }
 
     @media (max-width: 991px) {
-        .metrics-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .dashboard-hero {
-            padding: 3rem 2.5rem;
-            gap: 2.5rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .dashboard-hero {
-            flex-direction: column;
-            text-align: center;
-            padding: 2.5rem 1.5rem;
-            gap: 2rem;
-        }
-
-        .hero-meta {
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
-        }
-
-        .hero-meta-item {
-            justify-content: center;
-        }
-        
-        .metrics-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .order-card {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1.5rem;
-            padding: 1.5rem;
-        }
-
-        .order-info {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1.25rem;
-            width: 100%;
-        }
-        
-        .order-status-badge {
-            align-self: flex-start;
-        }
-
-        .order-action-area {
-            width: 100%;
-            justify-content: space-between;
-            border-top: 1px solid var(--dash-border);
-            padding-top: 1.5rem;
-        }
-        
-        .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-    }
-    
-    @media (prefers-reduced-motion: reduce) {
-        * {
-            animation-duration: 0.01ms !important;
-            transition-duration: 0.01ms !important;
-        }
+        .metrics-grid { grid-template-columns: 1fr; }
+        .dashboard-hero { flex-direction: column; text-align: center; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-wrapper">
-    
     <nav class="account-nav-wrapper" role="navigation" aria-label="Account Menu">
         <div class="account-nav-list">
-            <a href="{% url 'customers:dashboard' %}" class="account-nav-link active" aria-current="page">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
-                Dashboard
-            </a>
-            <a href="{% url 'customers:order_history' %}" class="account-nav-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                Order History
-            </a>
-            <a href="{% url 'customers:wishlist' %}" class="account-nav-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                My Wishlist
-            </a>
-            <a href="{% url 'customers:saved_cart_list' %}" class="account-nav-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                Saved Carts
-            </a>
-            <a href="{% url 'customers:address_list' %}" class="account-nav-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                Saved Addresses
-            </a>
-            <a href="{% url 'customers:profile' %}" class="account-nav-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                Profile Details
-            </a>
-            <a href="{% url 'customers:logout' %}" class="account-nav-link logout-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Sign Out
-            </a>
+            <a href="{% url 'customers:dashboard' %}" class="account-nav-link active">Dashboard</a>
+            <a href="{% url 'customers:order_history' %}" class="account-nav-link">Order History</a>
+            <a href="{% url 'customers:wishlist' %}" class="account-nav-link">My Wishlist</a>
+            <a href="{% url 'customers:saved_cart_list' %}" class="account-nav-link">Saved Carts</a>
+            <a href="{% url 'customers:address_list' %}" class="account-nav-link">Saved Addresses</a>
+            <a href="{% url 'customers:profile' %}" class="account-nav-link">Profile Details</a>
+            <form method="post" action="{% url 'customers:logout' %}" style="display: inline-block; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="account-nav-link logout-link" style="background: none; font: inherit; cursor: pointer;">Sign Out</button>
+            </form>
         </div>
     </nav>
 
-    <div class="dashboard-main" role="main">
-
+    <div class="dashboard-main">
         {% if messages %}
-            <div class="dash-alerts" role="alert" aria-live="polite">
-                {% for message in messages %}
-                    <div class="dash-alert {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
-                        {% if message.tags == 'error' %}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        {% elif message.tags == 'success' %}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        {% else %}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                        {% endif %}
-                        <span>{{ message }}</span>
-                    </div>
-                {% endfor %}
-            </div>
+            {% for message in messages %}
+                <div style="padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem; background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0;">
+                    {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
 
-        <section class="dashboard-hero" aria-label="Welcome Profile">
-            <div class="hero-avatar-wrapper">
-                {% if profile and profile.avatar %}
-                    <img src="{{ profile.avatar.url }}" alt="{{ user.first_name|default:user.username }}'s Profile Image" class="hero-avatar">
-                {% else %}
-                    <div class="hero-avatar" aria-hidden="true">
-                        {{ user.first_name|default:user.username|slice:":1"|upper }}
-                    </div>
-                {% endif %}
-            </div>
+        <section class="dashboard-hero">
+            {% if profile and profile.avatar %}
+                <img src="{{ profile.avatar.url }}" alt="{{ user.username }}" class="hero-avatar">
+            {% else %}
+                <div class="hero-avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</div>
+            {% endif %}
             
-            <div class="hero-content">
-                <div class="hero-welcome">Welcome Back</div>
-                <h1 class="hero-name">{{ user.first_name|default:user.username }}</h1>
-                <div class="hero-meta">
-                    <div class="hero-meta-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        Member since {{ user.date_joined|date:"F Y" }}
-                    </div>
-                    <div class="hero-meta-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        {{ user.email }}
-                    </div>
+            <div>
+                <div>
+                    {% if profile.account_type == 'WHOLESALE' %}
+                        <span class="badge-account-type badge-wholesale">Wholesale Buyer</span>
+                    {% elif profile.account_type == 'ORGANIZATION' %}
+                        <span class="badge-account-type badge-organization">Corporate / Organization</span>
+                    {% else %}
+                        <span class="badge-account-type badge-individual">Individual Account</span>
+                    {% endif %}
+                </div>
+                
+                <h1 class="hero-name">
+                    {% if profile.is_business_account and profile.company_name %}
+                        {{ profile.company_name }}
+                    {% else %}
+                        {{ user.first_name|default:user.username }} {{ user.last_name }}
+                    {% endif %}
+                </h1>
+                
+                <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
+                    Contact: {{ user.first_name }} {{ user.last_name }} &bull; {{ user.email }} &bull; {{ profile.phone_number|default:"No Phone" }}
                 </div>
             </div>
         </section>
 
-        <section aria-label="Account Metrics Overview">
+        <!-- Organization Metadata Summary Block for Wholesalers -->
+        {% if profile.is_business_account %}
+        <section class="b2b-summary-card">
+            <div>
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--dash-text-muted); display: block;">Company Name</span>
+                <strong>{{ profile.company_name|default:"—" }}</strong>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--dash-text-muted); display: block;">Tax ID / PAN Number</span>
+                <strong>{{ profile.tax_id_number|default:"—" }}</strong>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--dash-text-muted); display: block;">Incorporation Country</span>
+                <strong>{{ profile.country_of_incorporation|default:"Nepal" }}</strong>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--dash-text-muted); display: block;">B2B Status</span>
+                {% if profile.is_approved_b2b %}
+                    <span style="color: #2E7D32; font-weight: 700;">Verified Wholesaler</span>
+                {% else %}
+                    <span style="color: #C0392B; font-weight: 700;">Pending Approval</span>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        <section aria-label="Account Summary" style="margin-top: 2.5rem;">
             <div class="metrics-grid">
                 <a href="{% url 'customers:wishlist' %}" class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                        </div>
-                        <span class="metric-value">{{ wishlist_count|default:0 }}</span>
-                    </div>
+                    <span class="metric-value">{{ wishlist_count|default:0 }}</span>
                     <span class="metric-label">Wishlist Items</span>
                 </a>
-
                 <a href="{% url 'customers:saved_cart_list' %}" class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                        </div>
-                        <span class="metric-value">{{ saved_cart_count|default:0 }}</span>
-                    </div>
+                    <span class="metric-value">{{ saved_cart_count|default:0 }}</span>
                     <span class="metric-label">Saved Carts</span>
                 </a>
-
                 <a href="{% url 'customers:address_list' %}" class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        </div>
-                        <span class="metric-value">{{ address_count|default:0 }}</span>
-                    </div>
+                    <span class="metric-value">{{ address_count|default:0 }}</span>
                     <span class="metric-label">Saved Addresses</span>
                 </a>
             </div>
         </section>
-
-        <section aria-label="Recent Orders">
-            <header class="section-header">
-                <h3>Recent Orders</h3>
-                <a href="{% url 'customers:order_history' %}" class="section-link">
-                    View All History
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
-            </header>
-
-            {% if recent_orders %}
-                <div class="order-list">
-                    {% for order in recent_orders %}
-                        <a href="{% url 'customers:order_detail' order.id %}" class="order-card" aria-label="View Order {{ order.order_number }}">
-                            <div class="order-info">
-                                <div class="order-primary">
-                                    <span class="order-number">Order #{{ order.order_number }}</span>
-                                    <span class="order-date">{{ order.created_at|date:"F j, Y" }}</span>
-                                </div>
-                                <span class="order-status-badge 
-                                    {% if order.status == 'pending' %}status-pending
-                                    {% elif order.status == 'processing' %}status-processing
-                                    {% elif order.status == 'shipped' %}status-shipped
-                                    {% elif order.status == 'delivered' %}status-delivered
-                                    {% elif order.status == 'cancelled' or order.status == 'refunded' %}status-cancelled
-                                    {% endif %}">
-                                    {{ order.get_status_display }}
-                                </span>
-                            </div>
-                            
-                            <div class="order-action-area">
-                                <span class="order-total">NPR {{ order.total|floatformat:2 }}</span>
-                                <div class="order-detail-btn" aria-hidden="true">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"></path></svg>
-                                </div>
-                            </div>
-                        </a>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                    <p>You haven't placed any orders yet. Discover our latest masterpiece artisan creations curated exclusively for you.</p>
-                    <a href="{% url 'foundation:home' %}" class="btn-solid">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        Start Exploring
-                    </a>
-                </div>
-            {% endif %}
-        </section>
-
-        <section aria-label="Quick Account Settings">
-            <header class="section-header">
-                <h3>Quick Actions</h3>
-            </header>
-            <div class="quick-actions-grid">
-                <a href="{% url 'customers:profile' %}" class="action-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <div>
-                        <h4 class="action-title">Personal Details</h4>
-                        <p class="action-desc">Update your name, contact information, and newsletter preferences.</p>
-                    </div>
-                </a>
-                
-                <a href="{% url 'customers:address_list' %}" class="action-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    <div>
-                        <h4 class="action-title">Delivery Addresses</h4>
-                        <p class="action-desc">Manage your shipping and billing destinations for seamless checkout.</p>
-                    </div>
-                </a>
-
-                <a href="{% url 'customers:password_change' %}" class="action-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <div>
-                        <h4 class="action-title">Account Security</h4>
-                        <p class="action-desc">Change your password and ensure your account remains secure.</p>
-                    </div>
-                </a>
-            </div>
-        </section>
-
     </div>
 </div>
 {% endblock %}

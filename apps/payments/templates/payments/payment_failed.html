@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Failed | Gobindas Handicrafts{% endblock %}
+
+{% block content %}
+<div class="payment-status-wrapper" style="border-color: #C0392B;">
+    <div style="color: #C0392B; font-size: 3rem; margin-bottom: 1rem;">&#10008;</div>
+    <h1 style="font-family: 'Cinzel', serif; color: #C0392B; margin-bottom: 0.5rem;">Payment Unsuccessful</h1>
+    <p style="color: #7A726A; margin-bottom: 2rem;">Transaction #{{ transaction.transaction_id }} could not be completed. No funds were debited.</p>
+
+    <a href="{% url 'payments:checkout' order_id=order.id %}" class="btn-primary">Retry Payment</a>
+</div>
+{% endblock %}

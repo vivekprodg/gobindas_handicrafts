@@ -1,24 +1,28 @@
 /**
- * Gobindas Handicrafts - Advanced Product Discovery & Discovery Filtering Engine
- * Powers real-time product discovery, progressive AJAX filtering, deep URL state mapping, 
- * accessible accordions, and responsive catalog layouts.
+ * Gobindas Handicrafts - Advanced Product Discovery & Filtering Engine
+ * Powers real-time product discovery, multi-value array parameter serialization,
+ * progressive AJAX filtering, URL state mapping, accessible accordions, and active chip management.
+ * 
+ * @module GobindasPLPEngine
+ * @version 3.1.0
  */
 
 (function () {
     'use strict';
 
-    // Core Discovery Configurations
     const CONFIG = {
         selectors: {
             form: '#catalog-filter-form',
-            priceSlider: '#priceRangeInput',
-            priceLabel: '#maxPriceLabel',
+            priceMinInput: '#minPriceInput, #searchMinPrice',
+            priceMaxInput: '#maxPriceInput, #searchMaxPrice',
             accordionTrigger: '.filter-node-trigger',
             accordionNode: '.filter-accordion-node',
             productGallery: '#main-product-gallery, .product-showcase-matrix',
             paginationNav: '.catalog-pagination-nav',
             metricsCount: '.product-metrics-count',
-            sortSelect: '#catalog-sort-select'
+            sortSelect: '#catalog-sort-select',
+            activeChipsWorkspace: '.active-filters-workspace',
+            chipRemoveBtn: '.chip-remove-btn'
         },
         classes: {
             active: 'active',
@@ -32,9 +36,7 @@
     class ProductDiscoveryEngine {
         constructor() {
             this.form = document.querySelector(CONFIG.selectors.form);
-            this.slider = document.getElementById('priceRangeInput');
-            this.label = document.getElementById('maxPriceLabel');
-            this.ajaxEnabled = true; // Progressive enhancement flag
+            this.ajaxEnabled = true;
             this.isFetching = false;
 
             this.init();
@@ -42,15 +44,12 @@
 
         init() {
             this.initializeAccordions();
-            this.initializePriceSlider();
             this.initializeFormInterception();
             this.initializeHistoryMapping();
+            this.initializeChipHandlers();
             this.initializeAccessibilityAttributes();
         }
 
-        /**
-         * Dynamic state management for accessible UI filters accordions
-         */
         initializeAccordions() {
             document.addEventListener('click', (e) => {
                 const trigger = e.target.closest(CONFIG.selectors.accordionTrigger);
@@ -61,7 +60,7 @@
                 if (!parentNode) return;
 
                 const isCurrentlyActive = parentNode.classList.contains(CONFIG.classes.active);
-                
+
                 if (isCurrentlyActive) {
                     parentNode.classList.remove(CONFIG.classes.active);
                     trigger.setAttribute('aria-expanded', 'false');
@@ -72,29 +71,24 @@
             });
         }
 
-        /**
-         * Realtime interactive formatting for local pricing range vectors
-         */
-        initializePriceSlider() {
-            if (!this.slider || !this.label) return;
+        initializeChipHandlers() {
+            document.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest(CONFIG.selectors.chipRemoveBtn);
+                if (!removeBtn) return;
 
-            this.slider.addEventListener('input', (e) => {
-                const liveValue = Number(e.target.value);
-                const formattedVal = liveValue.toLocaleString(CONFIG.locale);
-                this.label.innerText = `Max: ${CONFIG.currencySymbol} ${formattedVal}`;
+                e.preventDefault();
+                const targetUrl = removeBtn.getAttribute('href');
+                if (targetUrl && targetUrl !== '#' && this.ajaxEnabled) {
+                    this.applyFiltersAjax(targetUrl);
+                }
             });
         }
 
-        /**
-         * Intercepts standard and programmatic form actions to inject AJAX state streaming
-         */
         initializeFormInterception() {
             if (!this.form) return;
 
-            // Cache natural native browser submission behavior for runtime failover execution
             this.form._nativeSubmit = this.form.submit;
 
-            // Override programmatic form.submit() invocations to leverage progressive enhancement pipeline
             this.form.submit = () => {
                 if (this.ajaxEnabled) {
                     this.applyFiltersAjax();
@@ -103,7 +97,6 @@
                 }
             };
 
-            // Capture structural native form submit event vectors
             this.form.addEventListener('submit', (e) => {
                 if (this.ajaxEnabled) {
                     e.preventDefault();
@@ -111,7 +104,6 @@
                 }
             });
 
-            // Handle AJAX updates when sort options change
             const sortSelect = document.querySelector(CONFIG.selectors.sortSelect);
             if (sortSelect) {
                 sortSelect.addEventListener('change', () => {
@@ -121,7 +113,6 @@
                 });
             }
 
-            // Capture asynchronous pagination click actions via delegate layout patterns
             document.addEventListener('click', (e) => {
                 const paginationLink = e.target.closest(`${CONFIG.selectors.paginationNav} a:not(.${CONFIG.classes.disabled})`);
                 if (!paginationLink) return;
@@ -134,9 +125,6 @@
             });
         }
 
-        /**
-         * Synchronization mechanism for native push-state browser history events
-         */
         initializeHistoryMapping() {
             window.addEventListener('popstate', () => {
                 if (this.ajaxEnabled) {
@@ -145,9 +133,6 @@
             });
         }
 
-        /**
-         * Auto-injects rich WAI-ARIA tokens to improve accessibility compliance parameters
-         */
         initializeAccessibilityAttributes() {
             document.querySelectorAll(CONFIG.selectors.accordionNode).forEach(node => {
                 const trigger = node.querySelector(CONFIG.selectors.accordionTrigger);
@@ -159,57 +144,37 @@
             });
         }
 
-        /**
-         * Synchronizes URL query payload states safely without full-page reloads
-         */
         generateTargetUrl() {
             if (!this.form) return window.location.href;
 
             const formData = new FormData(this.form);
             const params = new URLSearchParams();
 
-            // Retain search query elements from window location contexts
+            // Preserve search query if present
             const currentUrlParams = new URLSearchParams(window.location.search);
-            const searchTerms = ['search', 'q', 'category'];
-            searchTerms.forEach(term => {
-                if (currentUrlParams.has(term)) {
-                    params.set(term, currentUrlParams.get(term));
-                }
-            });
+            if (currentUrlParams.has('q')) {
+                params.set('q', currentUrlParams.get('q'));
+            }
 
-            // Map checkbox multi-values and radio items safely onto parameter arrays
             for (const [key, value] of formData.entries()) {
-                if (!value) continue;
-                
-                // Do not duplicate search terms mapped from parent context
-                if (searchTerms.includes(key) && params.has(key)) continue;
+                if (!value || value === '') continue;
 
-                // Append multi-select parameters elegantly
+                // Handle multi-value fields cleanly
                 if (params.has(key)) {
-                    const existingVal = params.get(key);
-                    // Prevent pushing duplicate scalar parameters
-                    if (!existingVal.split(',').includes(value)) {
-                        params.set(key, `${existingVal},${value}`);
-                    }
+                    params.append(key, value);
                 } else {
                     params.set(key, value);
                 }
             }
 
-            // Sync sort logic inside custom select wrappers if decoupled from form hierarchy
             const sortSelect = document.querySelector(CONFIG.selectors.sortSelect);
-            if (sortSelect && !params.has('sort')) {
+            if (sortSelect && sortSelect.value && !params.has('sort')) {
                 params.set('sort', sortSelect.value);
             }
 
             return `${window.location.pathname}?${params.toString()}`;
         }
 
-        /**
-         * Primary Asynchronous Processing Module for dynamic layout segment swapping
-         * @param {string} specificUrl - Explicit override destination target URL string
-         * @param {boolean} pushState - Instructs ecosystem whether to record history vectors
-         */
         async applyFiltersAjax(specificUrl = null, pushState = true) {
             if (this.isFetching) return;
 
@@ -234,12 +199,10 @@
                     history.pushState({ url: targetUrl }, '', targetUrl);
                 }
 
-                // Announce pagination state mutation for assistive technologies
                 this.announceStateChange('Discovery collection view refreshed successfully.');
 
             } catch (error) {
-                console.error('Asynchronous discovery pipeline failure, invoking safe browser fallback:', error);
-                // Graceful complete failover mitigation logic
+                console.error('Asynchronous discovery pipeline failure:', error);
                 if (!specificUrl && this.form && typeof this.form._nativeSubmit === 'function') {
                     this.form._nativeSubmit();
                 } else {
@@ -250,9 +213,6 @@
             }
         }
 
-        /**
-         * Sets visual processing parameters across operational view surfaces
-         */
         setLoadingState(isLoading) {
             this.isFetching = isLoading;
             const gallery = document.querySelector(CONFIG.selectors.productGallery);
@@ -276,9 +236,6 @@
             }
         }
 
-        /**
-         * Sanitizes and parses raw HTML text payloads to safely mutate targeted DOM nodes
-         */
         renderDynamicPayload(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
@@ -286,7 +243,9 @@
             const targets = [
                 CONFIG.selectors.productGallery,
                 CONFIG.selectors.paginationNav,
-                CONFIG.selectors.metricsCount
+                CONFIG.selectors.metricsCount,
+                CONFIG.selectors.activeChipsWorkspace,
+                CONFIG.selectors.form
             ];
 
             targets.forEach(selector => {
@@ -295,32 +254,27 @@
 
                 if (sourceElement && localElement) {
                     localElement.innerHTML = sourceElement.innerHTML;
-                    
-                    // Retain primary CSS container classes for downstream script alignment
                     if (sourceElement.className) {
                         localElement.className = sourceElement.className;
                     }
                 } else if (localElement) {
-                    // Safe empty state representation rendering fallback
                     localElement.innerHTML = '';
                 }
             });
 
-            // Broadcast structural layout adjustments to dependent downstream scripts (e.g. Card Engines)
+            // Re-bind form pointer if form was replaced
+            this.form = document.querySelector(CONFIG.selectors.form);
+
             if (window.GobindasProductCardEngine && typeof window.GobindasProductCardEngine.refreshAllCards === 'function') {
                 window.GobindasProductCardEngine.refreshAllCards();
             }
 
-            // Scroll catalog view up to minimize orientation fragmentation for end consumers
             const galleryNode = document.querySelector(CONFIG.selectors.productGallery);
             if (galleryNode) {
                 galleryNode.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
 
-        /**
-         * Injects operational accessibility logging frames to update screen readers on dynamic state mutations
-         */
         announceStateChange(message) {
             let liveRegion = document.getElementById('plp-accessibility-announcer');
             if (!liveRegion) {
@@ -339,7 +293,6 @@
         }
     }
 
-    // Launch discovery execution workflows
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             window.GobindasPLPEngine = new ProductDiscoveryEngine();
@@ -347,5 +300,4 @@
     } else {
         window.GobindasPLPEngine = new ProductDiscoveryEngine();
     }
-
 })();

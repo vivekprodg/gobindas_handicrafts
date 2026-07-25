@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Shipment Tracking | Gobindas Handicrafts{% endblock %}
+
+{% block content %}
+<div class="tracking-timeline-wrapper">
+    <h1 style="font-family: 'Cinzel', serif; text-align: center; margin-bottom: 1.5rem;">Track Your Masterpiece</h1>
+
+    <form method="post" action="{% url 'shipping:tracking' %}" style="display: flex; gap: 0.5rem; margin-bottom: 2rem;">
+        {% csrf_token %}
+        <input type="text" name="tracking_number" value="{{ tracking_number|default:'' }}" placeholder="Enter Tracking Number (e.g. NP123456)" class="form-input" style="flex: 1;" required>
+        <button type="submit" class="btn-primary" style="width: auto; padding: 0.8rem 2rem;">Track</button>
+    </form>
+
+    {% if tracking_record %}
+        <div style="background: #FCFAF8; border: 1px solid #EAE5E0; border-radius: 8px; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EAE5E0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="margin: 0; font-family: 'Cinzel', serif;">Tracking #{{ tracking_record.tracking_number }}</h3>
+                    <small style="color: #7A726A;">Carrier: {{ tracking_record.get_carrier_display }}</small>
+                </div>
+                <span style="background: #2E7D32; color: #FFF; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">
+                    {{ tracking_record.current_status }}
+                </span>
+            </div>
+
+            <p style="color: #2C2520; line-height: 1.6;">{{ tracking_record.status_description|default:'In transit to destination.' }}</p>
+
+            {% if tracking_record.estimated_delivery %}
+                <p style="font-size: 0.9rem; color: #9A7B54;"><strong>Estimated Delivery:</strong> {{ tracking_record.estimated_delivery|date:"F j, Y" }}</p>
+            {% endif %}
+        </div>
+    {% elif tracking_number %}
+        <div style="text-align: center; padding: 2rem; color: #C0392B;">
+            <p>No shipment records found for tracking number <strong>{{ tracking_number }}</strong>.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,32 +1,19 @@
 """
 Enterprise-grade Django Admin configuration for the Catalog application.
-
-This module provides CMS-driven product management with strict separation
-from inventory concerns. All inventory-related fields, actions, and filters
-have been removed to maintain the architectural boundary between Catalog
-(product descriptions) and Inventory (stock management).
-
-Key features:
-    * Inventory-agnostic product management
-    * Read-only inventory summary display
-    * Navigation links to inventory records
-    * Future-proof extensible design
-    * Enterprise-grade performance optimization
-    * OWASP-compliant security practices
+Exposes rating, stock status, product tags, craft collections, and merchandising controls.
 """
 
 from __future__ import annotations
 
 import logging
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional
 
 from django.contrib import admin
-from django.db.models import QuerySet
+from django.db.models import Count, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from apps.catalog.models import (
@@ -57,19 +44,8 @@ from apps.foundation.admin import CMSBaseModelAdmin
 
 logger = logging.getLogger(__name__)
 
-# ==============================================================================
-# INVENTORY INTEGRATION HELPERS
-# ==============================================================================
 def _get_inventory_summary(product_id: int) -> Dict[str, Any]:
-    """
-    Fetch read-only inventory summary from Inventory service.
-    
-    This is a placeholder implementation. In production, this would call
-    the inventory service layer to fetch current stock information.
-    """
     try:
-        # This would normally import from inventory selectors
-        # For now, we return mock data to demonstrate the pattern
         return {
             "available_quantity": Decimal("0"),
             "reserved_quantity": Decimal("0"),
@@ -88,19 +64,12 @@ def _get_inventory_summary(product_id: int) -> Dict[str, Any]:
         }
 
 def _inventory_admin_url(product_id: int) -> str:
-    """
-    Generate URL to inventory admin for a product.
-    """
     try:
         return reverse("admin:inventory_inventory_changelist") + f"?product__id__exact={product_id}"
     except Exception:
         return "#"
 
-# ==============================================================================
-# INLINE CLASSES
-# ==============================================================================
 class ProductImageInline(admin.TabularInline):
-    """Manage product gallery images."""
     model = ProductImage
     extra = 1
     fields = (
@@ -118,13 +87,12 @@ class ProductImageInline(admin.TabularInline):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 50px; border-radius: 4px; border: 1px solid #eae5e0;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Preview")
 
 class ProductGalleryImageInline(admin.TabularInline):
-    """Manage additional product gallery images."""
     model = ProductGalleryImage
     extra = 1
     fields = (
@@ -140,27 +108,24 @@ class ProductGalleryImageInline(admin.TabularInline):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 50px; border-radius: 4px;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Preview")
 
 class ProductSpecificationInline(admin.TabularInline):
-    """Manage product specifications."""
     model = ProductSpecification
     extra = 1
     fields = ("label", "value", "group", "display_order", "is_active")
     ordering = ("display_order", "id")
 
 class ProductFAQInline(admin.TabularInline):
-    """Manage product FAQs."""
     model = ProductFAQ
     extra = 1
     fields = ("question", "answer", "display_order", "is_active")
     ordering = ("display_order", "id")
 
 class ProductVideoInline(admin.TabularInline):
-    """Manage product videos."""
     model = ProductVideo
     extra = 1
     fields = (
@@ -178,17 +143,13 @@ class ProductVideoInline(admin.TabularInline):
         if obj.thumbnail:
             return format_html(
                 '<img src="{}" style="max-height: 50px; border-radius: 4px;" />',
-                obj.thumbnail.url
+                obj.thumbnail.url,
             )
         return "-"
     thumbnail_preview.short_description = _("Thumbnail")
 
-# ==============================================================================
-# MODEL ADMINS
-# ==============================================================================
 @admin.register(Category)
 class CategoryAdmin(CMSBaseModelAdmin):
-    """Manage product categories."""
     list_display = (
         "name",
         "parent",
@@ -209,7 +170,7 @@ class CategoryAdmin(CMSBaseModelAdmin):
         }),
         (_("SEO Meta Tags"), {
             "fields": ("seo_title", "seo_description"),
-            "classes": ("collapse",)
+            "classes": ("collapse",),
         }),
     )
 
@@ -217,14 +178,13 @@ class CategoryAdmin(CMSBaseModelAdmin):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 40px; border-radius: 4px;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Image Preview")
 
 @admin.register(Artisan)
 class ArtisanAdmin(CMSBaseModelAdmin):
-    """Manage artisans (brands/craftsmen)."""
     list_display = (
         "name",
         "region",
@@ -241,20 +201,18 @@ class ArtisanAdmin(CMSBaseModelAdmin):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 40px; border-radius: 4px;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Profile Preview")
 
 @admin.register(Material)
 class MaterialAdmin(CMSBaseModelAdmin):
-    """Manage product materials."""
     list_display = ("name",)
     search_fields = ("name",)
 
 @admin.register(Hue)
 class HueAdmin(CMSBaseModelAdmin):
-    """Manage product hues (colors)."""
     list_display = ("name", "color_code", "color_swatch")
     search_fields = ("name", "color_code")
 
@@ -262,21 +220,19 @@ class HueAdmin(CMSBaseModelAdmin):
         if obj.color_code:
             return format_html(
                 '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: {}; border: 1px solid #ccc;"></div>',
-                obj.color_code
+                obj.color_code,
             )
         return "-"
     color_swatch.short_description = _("Swatch")
 
 @admin.register(EthicalStandard)
 class EthicalStandardAdmin(CMSBaseModelAdmin):
-    """Manage ethical standards."""
     list_display = ("name", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name",)
 
 @admin.register(ProductHighlight)
 class ProductHighlightAdmin(CMSBaseModelAdmin):
-    """Manage product highlights."""
     list_display = ("name", "icon_class", "display_order", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name",)
@@ -284,7 +240,6 @@ class ProductHighlightAdmin(CMSBaseModelAdmin):
 
 @admin.register(TrustBadge)
 class TrustBadgeAdmin(CMSBaseModelAdmin):
-    """Manage trust badges."""
     list_display = ("name", "display_order", "image_preview", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name",)
@@ -294,14 +249,13 @@ class TrustBadgeAdmin(CMSBaseModelAdmin):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 40px; border-radius: 4px;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Badge Preview")
 
 @admin.register(ProductLabel)
 class ProductLabelAdmin(CMSBaseModelAdmin):
-    """Manage product labels."""
     list_display = (
         "name",
         "slug",
@@ -321,13 +275,12 @@ class ProductLabelAdmin(CMSBaseModelAdmin):
             '<div style="background-color: {}; color: {}; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: bold; border: 1px solid #ddd;">{}</div>',
             obj.bg_color or "#FFFFFF",
             obj.text_color or "#000000",
-            obj.name
+            obj.name,
         )
     color_preview.short_description = _("Visual Preview")
 
 @admin.register(ProductIcon)
 class ProductIconAdmin(CMSBaseModelAdmin):
-    """Manage product icons."""
     list_display = (
         "name",
         "icon_class",
@@ -343,21 +296,20 @@ class ProductIconAdmin(CMSBaseModelAdmin):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 40px; border-radius: 4px;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Icon Preview")
 
 @admin.register(Product)
 class ProductAdmin(CMSBaseModelAdmin):
-    """Manage products with inventory-agnostic approach."""
     list_display = (
         "title",
         "sku",
         "category",
         "artisan",
         "price",
-        "original_price",
+        "rating_badge",
         "is_active",
         "is_featured",
         "primary_image_preview",
@@ -367,14 +319,15 @@ class ProductAdmin(CMSBaseModelAdmin):
         "is_active",
         "is_featured",
         "status",
+        "rating",
         "category",
         "artisan",
         "material",
         "hue",
         "ethical_standards",
+        "tags",
+        "in_collections",
         "labels",
-        "trust_badges",
-        "icons",
     )
     search_fields = (
         "title",
@@ -424,14 +377,14 @@ class ProductAdmin(CMSBaseModelAdmin):
         }),
         (_("Artisan Story & Lineage"), {
             "classes": ("collapse",),
-            "fields": ("story", "crafting_process", "care_instructions")
+            "fields": ("story", "crafting_process", "care_instructions"),
         }),
         (_("Pricing & Inventory"), {
             "fields": ("price", "original_price")
         }),
         (_("Shipping & Fulfillment"), {
             "classes": ("collapse",),
-            "fields": ("shipping_information", "delivery_promise", "return_policy")
+            "fields": ("shipping_information", "delivery_promise", "return_policy"),
         }),
         (_("Media & Presentation"), {
             "fields": ("primary_image", "hover_image", "video_url")
@@ -458,7 +411,7 @@ class ProductAdmin(CMSBaseModelAdmin):
         }),
         (_("Product Recommendations"), {
             "classes": ("collapse",),
-            "fields": ("related_products", "upsell_products", "cross_sell_products")
+            "fields": ("related_products", "upsell_products", "cross_sell_products"),
         }),
         (_("Status & Visibility"), {
             "fields": (
@@ -473,12 +426,12 @@ class ProductAdmin(CMSBaseModelAdmin):
         }),
         (_("Metrics & Analytics"), {
             "classes": ("collapse",),
-            "fields": ("rating", "reviews_count", "view_count", "wishlist_count")
+            "fields": ("rating", "reviews_count", "view_count", "wishlist_count"),
         }),
         (_("Inventory Summary"), {
             "fields": ("inventory_summary", "inventory_link"),
             "classes": ("collapse",),
-            "description": _("Read-only inventory information from the Inventory application.")
+            "description": _("Read-only inventory information from the Inventory application."),
         }),
         (_("SEO Configuration"), {
             "classes": ("collapse",),
@@ -491,7 +444,7 @@ class ProductAdmin(CMSBaseModelAdmin):
                 "meta_keywords",
                 "canonical_url",
                 "robots_directives",
-            )
+            ),
         }),
         (_("Social Graph Metadata"), {
             "classes": ("collapse",),
@@ -502,11 +455,11 @@ class ProductAdmin(CMSBaseModelAdmin):
                 "twitter_title",
                 "twitter_description",
                 "twitter_image",
-            )
+            ),
         }),
         (_("Structured Schema Metadata"), {
             "classes": ("collapse",),
-            "fields": ("structured_data",)
+            "fields": ("structured_data",),
         }),
     )
 
@@ -521,7 +474,6 @@ class ProductAdmin(CMSBaseModelAdmin):
     ]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Optimize queryset with related objects."""
         return super().get_queryset(request).select_related(
             "category",
             "artisan",
@@ -533,40 +485,44 @@ class ProductAdmin(CMSBaseModelAdmin):
             "trust_badges",
             "labels",
             "icons",
-            "related_products",
+            "tags",
+            "in_collections",
         )
+
+    @admin.display(description=_("Rating"), ordering="rating")
+    def rating_badge(self, obj: Product) -> str:
+        r = obj.rating or 5
+        stars = "★" * r + "☆" * (5 - r)
+        return format_html('<span style="color: #C5A880; font-weight: bold;">{}</span>', stars)
 
     def primary_image_preview(self, obj: Product) -> str:
         if obj.primary_image:
             return format_html(
                 '<img src="{}" style="max-height: 40px; border-radius: 4px;" />',
-                obj.primary_image.url
+                obj.primary_image.url,
             )
         return "-"
     primary_image_preview.short_description = _("Primary Image")
 
     def inventory_summary(self, obj: Product) -> str:
-        """Display read-only inventory summary."""
         if not obj.pk:
             return "-"
         
         summary = _get_inventory_summary(obj.pk)
         
         if summary["status"] == "error":
-            return format_html(
-                '<span style="color: #999;">Inventory unavailable</span>'
-            )
+            return format_html('<span style="color: #999;">Inventory unavailable</span>')
         
         available = summary["available_quantity"]
         reserved = summary["reserved_quantity"]
         warehouses = summary["warehouse_count"]
         low_stock = summary["low_stock"]
         
-        status_color = "#2E7D32"  # Green
+        status_color = "#2E7D32"
         if low_stock:
-            status_color = "#C62828"  # Red
+            status_color = "#C62828"
         elif available <= 0:
-            status_color = "#9E9E9E"  # Gray
+            status_color = "#9E9E9E"
             
         return format_html(
             '<div style="font-size: 12px;">'
@@ -582,181 +538,103 @@ class ProductAdmin(CMSBaseModelAdmin):
     inventory_summary.short_description = _("Inventory")
 
     def inventory_link(self, obj: Product) -> str:
-        """Provide link to inventory records."""
         if not obj.pk:
             return "-"
         
         url = _inventory_admin_url(obj.pk)
         return format_html(
             '<a href="{}" target="_blank" class="button">View Inventory Records</a>',
-            url
+            url,
         )
     inventory_link.short_description = _("Inventory Management")
 
     @admin.action(description=_("Mark selected products as Active"))
     def mark_as_active(self, request: HttpRequest, queryset: QuerySet) -> None:
         updated = queryset.update(is_active=True)
-        self.message_user(
-            request,
-            _("Successfully activated %d product(s).") % updated
-        )
+        self.message_user(request, _("Successfully activated %d product(s).") % updated)
 
     @admin.action(description=_("Mark selected products as Inactive"))
     def mark_as_inactive(self, request: HttpRequest, queryset: QuerySet) -> None:
         updated = queryset.update(is_active=False)
-        self.message_user(
-            request,
-            _("Successfully deactivated %d product(s).") % updated
-        )
+        self.message_user(request, _("Successfully deactivated %d product(s).") % updated)
 
     @admin.action(description=_("Mark selected products as Featured"))
     def mark_as_featured(self, request: HttpRequest, queryset: QuerySet) -> None:
         updated = queryset.update(is_featured=True)
-        self.message_user(
-            request,
-            _("Successfully marked %d product(s) as featured.") % updated
-        )
+        self.message_user(request, _("Successfully marked %d product(s) as featured.") % updated)
 
     @admin.action(description=_("Remove Featured status from selected products"))
     def remove_featured_status(self, request: HttpRequest, queryset: QuerySet) -> None:
         updated = queryset.update(is_featured=False)
-        self.message_user(
-            request,
-            _("Successfully removed featured status from %d product(s).") % updated
-        )
+        self.message_user(request, _("Successfully removed featured status from %d product(s).") % updated)
 
     @admin.action(description=_("Publish selected products"))
     def mark_as_published(self, request: HttpRequest, queryset: QuerySet) -> None:
         updated = queryset.update(
             status=Product.ProductStatus.PUBLISHED,
-            is_active=True
+            is_active=True,
         )
-        self.message_user(
-            request,
-            _("Successfully published %d product(s).") % updated
-        )
+        self.message_user(request, _("Successfully published %d product(s).") % updated)
 
     @admin.action(description=_("Archive selected products"))
     def mark_as_archived(self, request: HttpRequest, queryset: QuerySet) -> None:
         updated = queryset.update(
             status=Product.ProductStatus.ARCHIVED,
-            is_active=False
+            is_active=False,
         )
-        self.message_user(
-            request,
-            _("Successfully archived %d product(s).") % updated
-        )
-
-    @admin.action(description=_("Duplicate selected products"))
-    def duplicate_product(self, request: HttpRequest, queryset: QuerySet) -> None:
-        count = 0
-        for obj in queryset:
-            # Clone related objects
-            original_specs = list(obj.specifications.all())
-            original_faqs = list(obj.faqs.all())
-            original_videos = list(obj.videos.all())
-            original_images = list(obj.gallery_images.all())
-            original_galleries = list(obj.additional_galleries.all())
-
-            # Reset primary key to create new instance
-            obj.pk = None
-            obj.id = None
-            obj.title = f"{obj.title} (Copy)"
-            
-            # Generate unique slug
-            base_slug = f"{obj.slug or 'product'}-copy"
-            counter = 1
-            new_slug = base_slug
-            while Product.objects.filter(slug=new_slug).exists():
-                new_slug = f"{base_slug}-{counter}"
-                counter += 1
-            obj.slug = new_slug
-
-            # Clear inventory-related fields
-            obj.sku = None
-            obj.barcode = None
-            obj.status = Product.ProductStatus.DRAFT
-            obj.is_active = False
-            obj.save()
-
-            # Clone specifications
-            for spec in original_specs:
-                spec.pk = None
-                spec.id = None
-                spec.product = obj
-                spec.save()
-
-            # Clone FAQs
-            for faq in original_faqs:
-                faq.pk = None
-                faq.id = None
-                faq.product = obj
-                faq.save()
-
-            # Clone videos
-            for video in original_videos:
-                video.pk = None
-                video.id = None
-                video.product = obj
-                video.save()
-
-            # Clone gallery images
-            for image in original_images:
-                image.pk = None
-                image.id = None
-                image.product = obj
-                image.save()
-
-            # Clone additional galleries
-            for gallery in original_galleries:
-                gallery.pk = None
-                gallery.id = None
-                gallery.product = obj
-                gallery.save()
-
-            count += 1
-
-        self.message_user(
-            request,
-            _("Successfully duplicated %d product(s).") % count
-        )
+        self.message_user(request, _("Successfully archived %d product(s).") % updated)
 
 @admin.register(ProductTag)
 class ProductTagAdmin(CMSBaseModelAdmin):
-    """Manage product tags."""
-    list_display = ("name", "slug", "is_active")
+    list_display = ("name", "slug", "product_count", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name", "description")
     prepopulated_fields = {"slug": ("name",)}
     filter_horizontal = ("products",)
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).annotate(
+            _product_count=Count("products", distinct=True)
+        )
+
+    @admin.display(description=_("Tagged Products"), ordering="_product_count")
+    def product_count(self, obj: ProductTag) -> int:
+        return getattr(obj, "_product_count", 0)
+
 @admin.register(ProductCollection)
 class ProductCollectionAdmin(CMSBaseModelAdmin):
-    """Manage product collections."""
-    list_display = ("name", "slug", "is_active", "image_preview")
-    list_filter = ("is_active",)
+    list_display = ("name", "slug", "product_count", "is_active", "is_featured", "image_preview")
+    list_filter = ("is_active", "is_featured")
     search_fields = ("name", "description")
     prepopulated_fields = {"slug": ("name",)}
+    filter_horizontal = ("products",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).annotate(
+            _product_count=Count("products", distinct=True)
+        )
+
+    @admin.display(description=_("Collection Items"), ordering="_product_count")
+    def product_count(self, obj: ProductCollection) -> int:
+        return getattr(obj, "_product_count", 0)
 
     def image_preview(self, obj: ProductCollection) -> str:
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 40px; border-radius: 4px;" />',
-                obj.image.url
+                obj.image.url,
             )
         return "-"
     image_preview.short_description = _("Collection Image")
 
 @admin.register(ProductSEO)
 class ProductSEOAdmin(CMSBaseModelAdmin):
-    """Manage product SEO configurations."""
     list_display = ("product", "meta_title")
     search_fields = ("product__title", "meta_title")
     raw_id_fields = ("product",)
 
 @admin.register(ProductSchema)
 class ProductSchemaAdmin(CMSBaseModelAdmin):
-    """Manage product schema configurations."""
     list_display = ("product", "schema_type", "is_active")
     list_filter = ("is_active", "schema_type")
     search_fields = ("product__title", "schema_type")
@@ -764,7 +642,6 @@ class ProductSchemaAdmin(CMSBaseModelAdmin):
 
 @admin.register(RecentlyViewedProduct)
 class RecentlyViewedProductAdmin(CMSBaseModelAdmin):
-    """Manage recently viewed products."""
     list_display = ("product", "user_id", "session_key", "viewed_at")
     list_filter = ("viewed_at",)
     search_fields = ("session_key", "product__title")
@@ -772,7 +649,6 @@ class RecentlyViewedProductAdmin(CMSBaseModelAdmin):
 
 @admin.register(CatalogSettings)
 class CatalogSettingsAdmin(CMSBaseModelAdmin):
-    """Manage catalog-wide settings."""
     list_display = (
         "__str__",
         "default_items_per_page",
@@ -787,6 +663,6 @@ class CatalogSettingsAdmin(CMSBaseModelAdmin):
     def has_delete_permission(
         self,
         request: HttpRequest,
-        obj: Optional[CatalogSettings] = None
+        obj: Optional[CatalogSettings] = None,
     ) -> bool:
         return False

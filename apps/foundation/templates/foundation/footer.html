@@ -4,19 +4,17 @@
     <div class="footer-container">
         
         <div class="footer-top">
-            
             <div class="footer-brand-trust">
                 <div class="footer-logo">
                     {% if footer_logo %}
-                        <img src="{{ footer_logo }}" alt="{{ footer_data.brand.brand_name|default:'Brand Logo' }}">
+                        <img src="{{ footer_logo }}" alt="{{ footer_data.brand.brand_name|default:'Brand Logo' }}" loading="lazy" decoding="async">
                     {% else %}
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1" />
                             <path d="M7 14c2-4 6-4 10 0 M12 6v10 M9 16h6" />
                         </svg>
+                        <span>{{ footer_data.brand.brand_name|default:"Gobindas Handicrafts"|upper }}</span>
                     {% endif %}
-                    
-                    <span>{{ footer_data.brand.brand_name|default:"Gobindas Handicrafts"|upper }}</span>
                 </div>
                 
                 <p class="trust-statement">{{ footer_data.brand.fair_trade_statement|default:"Dedicated to preserving artisanal lineages. Every piece is ethically sourced, supporting master craftsmen across the globe." }}</p>
@@ -29,6 +27,8 @@
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                 {% elif badge.icon_key == 'climate-neutral' %}
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                {% else %}
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                 {% endif %}
                                 {% if badge.badge_name %}
                                     <span>{{ badge.badge_name }}</span>
@@ -52,7 +52,7 @@
                 <h3>{{ footer_data.newsletter.newsletter_heading|default:"Join the Artisan Club" }}</h3>
                 <p>{{ footer_data.newsletter.newsletter_subtext|default:"Receive curated stories of heritage crafts and exclusive access to limited kiln runs." }}</p>
                 
-                <form class="newsletter-form" action="{{ footer_data.newsletter.newsletter_endpoint|default:'https://api.gobindas.com/v1/newsletter/subscribe' }}" method="POST">
+                <form class="newsletter-form" action="{{ footer_data.newsletter.newsletter_endpoint|default:'#' }}" method="POST">
                     {% csrf_token %}
                     <input type="email" 
                            placeholder="{{ footer_data.newsletter.newsletter_placeholder|default:'Enter your email address' }}" 
@@ -66,7 +66,6 @@
                     </button>
                 </form>
             </div>
-            
         </div>
 
         {% if footer_data.sections %}
@@ -110,24 +109,16 @@
                             </h4>
                             <ul>
                                 {% if contact.primary_contact_person %}
-                                    <li>
-                                        <span>{{ contact.primary_contact_person }}</span>
-                                    </li>
+                                    <li><span>{{ contact.primary_contact_person }}</span></li>
                                 {% endif %}
                                 {% if contact.primary_address %}
-                                    <li>
-                                        <span>{{ contact.primary_address|linebreaksbr }}</span>
-                                    </li>
+                                    <li><span>{{ contact.primary_address|linebreaksbr }}</span></li>
                                 {% endif %}
                                 {% if contact.primary_phone %}
-                                    <li>
-                                        <a href="tel:{{ contact.primary_phone }}">{{ contact.primary_phone }}</a>
-                                    </li>
+                                    <li><a href="tel:{{ contact.primary_phone }}">{{ contact.primary_phone }}</a></li>
                                 {% endif %}
                                 {% if contact.primary_email %}
-                                    <li>
-                                        <a href="mailto:{{ contact.primary_email }}">{{ contact.primary_email }}</a>
-                                    </li>
+                                    <li><a href="mailto:{{ contact.primary_email }}">{{ contact.primary_email }}</a></li>
                                 {% endif %}
                             </ul>
                         </div>
@@ -140,9 +131,7 @@
                     <h4 id="h-section-shop_categories">
                         Shop Craft
                         <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle Shop Craft">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M6 9l6 6 6-6"/>
-                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                         </button>
                     </h4>
                     <ul>
@@ -156,15 +145,12 @@
                     <h4 id="h-section-trust_hub">
                         Care & Heritage
                         <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle Care & Heritage">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M6 9l6 6 6-6"/>
-                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                         </button>
                     </h4>
                     <ul>
                         <li><a href="/care-guides">Material Care Guides</a></li>
                         <li><a href="/artisans">Meet the Artisans</a></li>
-                        <li><a href="https://bcorporation.net" target="_blank" rel="noopener noreferrer">Sustainability Impact</a></li>
                         <li><a href="/traceability">Traceability Reports</a></li>
                     </ul>
                 </div>
@@ -172,62 +158,21 @@
                     <h4 id="h-section-support_desk">
                         Client Care
                         <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle Client Care">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M6 9l6 6 6-6"/>
-                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                         </button>
                     </h4>
                     <ul>
                         <li><a href="/policies/shipping">Shipping & Origins</a></li>
-                        <li><a href="#" onclick="event.preventDefault(); document.dispatchEvent(new CustomEvent('footerAction', {detail: 'open_return_modal'}));">Returns & Exchanges</a></li>
                         <li><a href="/custom-orders">Bespoke Orders</a></li>
                         <li><a href="/contact">Contact Us</a></li>
                     </ul>
                 </div>
-
-                {% with contact=contact_page_data|default:footer_data.contact_info %}
-                    {% if contact.primary_phone or contact.primary_email or contact.primary_address or contact.primary_contact_person %}
-                        <div class="footer-column" role="region" aria-labelledby="h-section-contact">
-                            <h4 id="h-section-contact">
-                                {{ contact.address_heading|default:"Contact Us" }}
-                                <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle Contact Info">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M6 9l6 6 6-6"/>
-                                    </svg>
-                                </button>
-                            </h4>
-                            <ul>
-                                {% if contact.primary_contact_person %}
-                                    <li>
-                                        <span>{{ contact.primary_contact_person }}</span>
-                                    </li>
-                                {% endif %}
-                                {% if contact.primary_address %}
-                                    <li>
-                                        <span>{{ contact.primary_address|linebreaksbr }}</span>
-                                    </li>
-                                {% endif %}
-                                {% if contact.primary_phone %}
-                                    <li>
-                                        <a href="tel:{{ contact.primary_phone }}">{{ contact.primary_phone }}</a>
-                                    </li>
-                                {% endif %}
-                                {% if contact.primary_email %}
-                                    <li>
-                                        <a href="mailto:{{ contact.primary_email }}">{{ contact.primary_email }}</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    {% endif %}
-                {% endwith %}
             </div>
         {% endif %}
 
         <div class="footer-bottom">
-            
             <div class="footer-copyright" id="footer-copyright-text" 
-                 data-template="{{ footer_data.brand.copyright_template|default:'© {current_year} {brand_name}. All rights reserved. Crafted with absolute integrity.' }}" 
+                 data-template="{{ footer_data.brand.copyright_template|default:'© {current_year} {brand_name}. All rights reserved.' }}" 
                  data-brand="{{ footer_data.brand.brand_name|default:'Gobindas Handicrafts' }}">
             </div>
 
@@ -239,25 +184,14 @@
                                 <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><text x="6" y="14" font-size="10" font-family="sans-serif" font-weight="bold" fill="currentColor">VISA</text></svg>
                             {% elif method.icon_key == 'mastercard' %}
                                 <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><circle cx="12" cy="10" r="5" fill="none" stroke="currentColor"/><circle cx="20" cy="10" r="5" fill="none" stroke="currentColor"/></svg>
-                            {% elif method.icon_key == 'amex' %}
-                                <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><text x="4" y="14" font-size="8" font-family="sans-serif" font-weight="bold" fill="currentColor">AMEX</text></svg>
-                            {% elif method.icon_key == 'paypal' %}
+                            {% else %}
                                 <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><text x="8" y="14" font-size="9" font-family="sans-serif" font-weight="bold" fill="currentColor">Pay</text></svg>
                             {% endif %}
                         </div>
                     {% endfor %}
                 {% else %}
-                    <div class="payment-icon" aria-label="Accepted: visa">
+                    <div class="payment-icon" aria-label="Accepted: VISA">
                         <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><text x="6" y="14" font-size="10" font-family="sans-serif" font-weight="bold" fill="currentColor">VISA</text></svg>
-                    </div>
-                    <div class="payment-icon" aria-label="Accepted: mastercard">
-                        <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><circle cx="12" cy="10" r="5" fill="none" stroke="currentColor"/><circle cx="20" cy="10" r="5" fill="none" stroke="currentColor"/></svg>
-                    </div>
-                    <div class="payment-icon" aria-label="Accepted: amex">
-                        <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><text x="4" y="14" font-size="8" font-family="sans-serif" font-weight="bold" fill="currentColor">AMEX</text></svg>
-                    </div>
-                    <div class="payment-icon" aria-label="Accepted: paypal">
-                        <svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="30" height="18" rx="3"/><text x="8" y="14" font-size="9" font-family="sans-serif" font-weight="bold" fill="currentColor">Pay</text></svg>
                     </div>
                 {% endif %}
             </div>
@@ -268,23 +202,13 @@
                         <a href="{{ social.url|default:'#' }}" class="social-link" aria-label="{{ social.platform }}" target="_blank" rel="noopener noreferrer">
                             {% if social.icon_key == 'instagram' %}
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                            {% elif social.icon_key == 'pinterest' %}
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 0-3.66 19.3c.04-.81.08-2.06-.2-2.94-.25-.83-1.63-5.5-1.63-5.5s-.41-.83-.41-2.06c0-1.93 1.12-3.37 2.51-3.37 1.18 0 1.75.89 1.75 1.96 0 1.19-.76 2.97-1.15 4.62-.33 1.38.69 2.5 2.05 2.5 2.46 0 4.36-2.59 4.36-6.33 0-3.3-2.37-5.61-5.75-5.61-3.9 0-6.19 2.93-6.19 5.95 0 1.19.46 2.47 1.03 3.16.11.14.13.26.1.38-.1.37-.3 1.18-.34 1.35-.05.19-.18.23-.38.14-1.42-.66-2.31-2.73-2.31-4.4 0-3.58 2.6-6.87 7.5-6.87 3.93 0 6.98 2.8 6.98 6.55 0 3.9-2.46 7.05-5.88 7.05-1.15 0-2.23-.6-2.6-1.3l-.7 2.68c-.26.97-.95 2.19-1.42 2.93A10 10 0 1 0 12 2z"/></svg>
                             {% else %}
                                 {{ social.platform }}
                             {% endif %}
                         </a>
                     {% endfor %}
-                {% else %}
-                    <a href="https://instagram.com" class="social-link" aria-label="instagram" target="_blank" rel="noopener noreferrer">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                    </a>
-                    <a href="https://pinterest.com" class="social-link" aria-label="pinterest" target="_blank" rel="noopener noreferrer">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 0-3.66 19.3c.04-.81.08-2.06-.2-2.94-.25-.83-1.63-5.5-1.63-5.5s-.41-.83-.41-2.06c0-1.93 1.12-3.37 2.51-3.37 1.18 0 1.75.89 1.75 1.96 0 1.19-.76 2.97-1.15 4.62-.33 1.38.69 2.5 2.05 2.5 2.46 0 4.36-2.59 4.36-6.33 0-3.3-2.37-5.61-5.75-5.61-3.9 0-6.19 2.93-6.19 5.95 0 1.19.46 2.47 1.03 3.16.11.14.13.26.1.38-.1.37-.3 1.18-.34 1.35-.05.19-.18.23-.38.14-1.42-.66-2.31-2.73-2.31-4.4 0-3.58 2.6-6.87 7.5-6.87 3.93 0 6.98 2.8 6.98 6.55 0 3.9-2.46 7.05-5.88 7.05-1.15 0-2.23-.6-2.6-1.3l-.7 2.68c-.26.97-.95 2.19-1.42 2.93A10 10 0 1 0 12 2z"/></svg>
-                    </a>
                 {% endif %}
             </div>
-
         </div>
     </div>
 </footer>

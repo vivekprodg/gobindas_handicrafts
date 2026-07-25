@@ -13,7 +13,7 @@
     <form method="post">
         {% csrf_token %}
         {% if form.non_field_errors %}
-            <div style="color: red; font-size: 0.85rem; margin-bottom: 1rem; text-align: center;">
+            <div style="color: #d9534f; font-size: 0.85rem; margin-bottom: 1rem; text-align: center;">
                 {{ form.non_field_errors.0 }}
             </div>
         {% endif %}
@@ -21,21 +21,21 @@
             <label class="form-label" for="id_username">Username</label>
             <input type="text" name="username" id="id_username" class="form-input" required autofocus>
             {% if form.username.errors %}
-                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.username.errors.0 }}</span>
+                <span class="form-error-text">{{ form.username.errors.0 }}</span>
             {% endif %}
         </div>
         <div class="form-group">
             <label class="form-label" for="id_password">Password</label>
             <input type="password" name="password" id="id_password" class="form-input" required>
             {% if form.password.errors %}
-                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.password.errors.0 }}</span>
+                <span class="form-error-text">{{ form.password.errors.0 }}</span>
             {% endif %}
         </div>
         <button type="submit" class="btn-primary">Sign In</button>
     </form>
     <div class="auth-links">
         <a href="{% url 'foundation:register' %}">Create Account</a>
-        <span style="color: var(--text-muted);">|</span>
+        <span style="color: var(--text-muted, #A39B8E);">|</span>
         <a href="{% url 'foundation:password_reset' %}">Forgot Password?</a>
     </div>
 </div>

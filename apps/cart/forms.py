@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
-from typing import Optional, Any  # <-- add this import
+from decimal import Decimal
+from typing import Any, Optional
 
 from django import forms
 from django.utils.translation import gettext_lazy as _
-
-from .models import CartItem
 
 class AddToCartForm(forms.Form):
     """Form for adding a product to the cart."""
@@ -14,6 +12,7 @@ class AddToCartForm(forms.Form):
     variant_id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     quantity = forms.IntegerField(
         min_value=1,
+        max_value=999,
         initial=1,
         label=_("Quantity"),
     )
@@ -77,8 +76,7 @@ class ApplyCouponForm(forms.Form):
         max_digits=12,
         label=_("Discount Amount"),
         help_text=_(
-            "If left blank, the system will apply the discount associated with the coupon code. "
-            "Otherwise, enter a specific amount to override."
+            "If left blank, the system will apply the discount associated with the coupon code."
         ),
     )
 
@@ -97,20 +95,20 @@ class ApplyCouponForm(forms.Form):
         return None
 
     def clean(self) -> dict[str, Any]:
-        cleaned = super().clean()
-        code = cleaned.get("coupon_code")
-        discount = cleaned.get("discount_amount")
-        if code and discount is not None:
-            # Additional validation: if both provided, ensure discount is reasonable
-            # (e.g., not exceeding a maximum percentage if needed)
-            pass
-        return cleaned
+        return super().clean()
 
 class CartItemActionForm(forms.Form):
-    """Generic form for cart item actions (save for later, move to cart, remove)."""
-    # This form is used primarily for CSRF protection; no fields needed
+    """Generic form for cart item actions (CSRF protection)."""
     pass
 
 class CartClearForm(forms.Form):
-    """Form for clearing the entire cart."""
+    """Form for clearing the entire cart (CSRF protection)."""
     pass
+
+__all__ = [
+    "AddToCartForm",
+    "UpdateCartItemForm",
+    "ApplyCouponForm",
+    "CartItemActionForm",
+    "CartClearForm",
+]

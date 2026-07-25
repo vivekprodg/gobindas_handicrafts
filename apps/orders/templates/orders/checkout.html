@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+{% load static i18n humanize %}
+
+{% block title %}
+    {% trans "Secure Checkout" %} | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --checkout-gold: #C5A880;
+        --checkout-gold-dark: #9A7B54;
+        --checkout-dark: #1A1512;
+        --checkout-muted: #7A726A;
+        --checkout-bg-light: #FCFAF8;
+        --checkout-border: #EAE5E0;
+        --checkout-error: #C0392B;
+        --checkout-success: #2E7D32;
+        --checkout-radius: 8px;
+        --checkout-shadow: 0 4px 24px rgba(26, 21, 18, 0.04);
+    }
+
+    body {
+        background-color: var(--checkout-bg-light);
+    }
+
+    .checkout-page-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 6rem;
+        font-family: var(--font-ui, 'Inter', sans-serif);
+        color: var(--checkout-dark);
+    }
+
+    .checkout-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 2rem;
+        color: var(--checkout-muted);
+    }
+
+    .checkout-breadcrumbs a {
+        color: var(--checkout-muted);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .checkout-breadcrumbs a:hover {
+        color: var(--checkout-gold-dark);
+    }
+
+    .checkout-breadcrumbs .separator::after {
+        content: "/";
+        margin-left: 8px;
+    }
+
+    .checkout-breadcrumbs .current {
+        color: var(--checkout-dark);
+        font-weight: 600;
+    }
+
+    .checkout-header {
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+
+    .checkout-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .checkout-subtitle {
+        color: var(--checkout-muted);
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .checkout-steps-bar {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .step-node {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--checkout-muted);
+    }
+
+    .step-node.active {
+        color: var(--checkout-dark);
+        font-weight: 700;
+    }
+
+    .step-number {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #EAE5E0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .step-node.active .step-number {
+        background: var(--checkout-gold);
+        color: #FFFFFF;
+    }
+
+    .checkout-layout-grid {
+        display: grid;
+        grid-template-columns: 1fr 440px;
+        gap: 3rem;
+        align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+        .checkout-layout-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .checkout-card {
+        background: #FFFFFF;
+        border: 1px solid var(--checkout-border);
+        border-radius: var(--checkout-radius);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--checkout-shadow);
+    }
+
+    .checkout-card-header {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.35rem;
+        margin: 0 0 1.5rem 0;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--checkout-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+        .form-row, .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--checkout-dark);
+    }
+
+    .premium-input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--checkout-border);
+        border-radius: 4px;
+        font-size: 0.95rem;
+        background: #FFFFFF;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease;
+    }
+
+    .premium-input:focus {
+        outline: none;
+        border-color: var(--checkout-gold);
+    }
+
+    .field-error {
+        color: var(--checkout-error);
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .saved-address-selector {
+        background: var(--checkout-bg-light);
+        border: 1px solid var(--checkout-border);
+        padding: 1.25rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+
+    .order-summary-items {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.5rem 0;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .summary-item-row {
+        display: grid;
+        grid-template-columns: 60px 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--checkout-border);
+    }
+
+    .summary-item-image {
+        width: 60px;
+        height: 72px;
+        background: #F5F1ED;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .summary-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .summary-financial-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        font-size: 0.95rem;
+    }
+
+    .summary-financial-row.discount {
+        color: var(--checkout-success);
+    }
+
+    .summary-financial-row.grand-total {
+        border-top: 2px solid var(--checkout-dark);
+        margin-top: 1rem;
+        padding-top: 1.25rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .btn-checkout-submit {
+        display: block;
+        width: 100%;
+        padding: 1.1rem;
+        background: var(--checkout-gold);
+        color: #FFFFFF;
+        border: none;
+        border-radius: 4px;
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        margin-top: 1.5rem;
+    }
+
+    .btn-checkout-submit:hover {
+        background: var(--checkout-dark);
+    }
+
+    .trust-footer-badges {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--checkout-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-page-container">
+    <nav class="checkout-breadcrumbs" aria-label="Breadcrumb">
+        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a><span class="separator"></span>
+        <a href="{% url 'cart:cart_detail' %}">{% trans "Shopping Bag" %}</a><span class="separator"></span>
+        <span class="current">{% trans "Checkout" %}</span>
+    </nav>
+
+    <header class="checkout-header">
+        <h1 class="checkout-title">{% trans "Curated Checkout" %}</h1>
+        <p class="checkout-subtitle">{% trans "Provide delivery details to receive your handcrafted masterpieces." %}</p>
+        <div class="checkout-steps-bar">
+            <div class="step-node active">
+                <span class="step-number">1</span>
+                <span>{% trans "Delivery & Review" %}</span>
+            </div>
+            <div class="step-node">
+                <span class="step-number">2</span>
+                <span>{% trans "Confirmation" %}</span>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 1rem 1.5rem; background: #FFEBEE; color: var(--checkout-error); border-radius: 6px; margin-bottom: 2rem;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'orders:checkout_prepare' %}" id="checkoutForm">
+        {% csrf_token %}
+        <div class="checkout-layout-grid">
+            
+            <!-- Main Details Pane -->
+            <div class="checkout-main-pane">
+                <section class="checkout-card">
+                    <h2 class="checkout-card-header">
+                        <span>{% trans "Shipping Address" %}</span>
+                        {% if request.user.is_authenticated %}
+                            <small style="font-size: 0.8rem; font-family: var(--font-ui); color: var(--checkout-muted);">
+                                {% trans "Logged in as" %} {{ request.user.email }}
+                            </small>
+                        {% endif %}
+                    </h2>
+
+                    {% if request.user.is_authenticated and form.saved_shipping_address.field.choices|length > 1 %}
+                        <div class="saved-address-selector">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" for="{{ form.saved_shipping_address.id_for_label }}">
+                                    {{ form.saved_shipping_address.label }}
+                                </label>
+                                {{ form.saved_shipping_address }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div id="newAddressFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }} *</label>
+                                {{ form.full_name }}
+                                {% if form.full_name.errors %}
+                                    <span class="field-error">{{ form.full_name.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }} *</label>
+                                {{ form.phone_number }}
+                                {% if form.phone_number.errors %}
+                                    <span class="field-error">{{ form.phone_number.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if not request.user.is_authenticated %}
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }} *</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <span class="field-error">{{ form.email.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.address_line_1.id_for_label }}">{{ form.address_line_1.label }} *</label>
+                            {{ form.address_line_1 }}
+                            {% if form.address_line_1.errors %}
+                                <span class="field-error">{{ form.address_line_1.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.address_line_2.id_for_label }}">{{ form.address_line_2.label }}</label>
+                            {{ form.address_line_2 }}
+                        </div>
+
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label class="form-label" for="{{ form.city.id_for_label }}">{{ form.city.label }} *</label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <span class="field-error">{{ form.city.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="{{ form.state_or_province.id_for_label }}">{{ form.state_or_province.label }} *</label>
+                                {{ form.state_or_province }}
+                                {% if form.state_or_province.errors %}
+                                    <span class="field-error">{{ form.state_or_province.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}</label>
+                                {{ form.postal_code }}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.country.id_for_label }}">{{ form.country.label }} *</label>
+                            {{ form.country }}
+                            {% if form.country.errors %}
+                                <span class="field-error">{{ form.country.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="checkout-card">
+                    <h2 class="checkout-card-header">{% trans "Special Instructions & Notes" %}</h2>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        {{ form.customer_note }}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Order Summary Sidebar -->
+            <aside class="checkout-sidebar">
+                <div class="checkout-card">
+                    <h2 class="checkout-card-header">{% trans "Order Summary" %}</h2>
+
+                    <ul class="order-summary-items">
+                        {% for item in cart_items %}
+                        <li class="summary-item-row">
+                            <div class="summary-item-image">
+                                {% if item.product_image_snapshot %}
+                                    <img src="{{ item.product_image_snapshot.url }}" alt="{{ item.product_name_snapshot }}">
+                                {% elif item.product.primary_image %}
+                                    <img src="{{ item.product.primary_image.url }}" alt="{{ item.product.title }}">
+                                {% else %}
+                                    <div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:0.7rem; color:#AAA;">IMG</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <strong style="font-size: 0.9rem; display: block;">{{ item.product_name_snapshot|default:item.product.title }}</strong>
+                                {% if item.variant_name_snapshot %}
+                                    <span style="font-size: 0.75rem; color: var(--checkout-muted); display: block;">{{ item.variant_name_snapshot }}</span>
+                                {% endif %}
+                                <span style="font-size: 0.8rem; color: var(--checkout-muted);">{% trans "Qty" %}: {{ item.quantity }}</span>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">
+                                {{ cart.currency|default:'NPR' }} {{ item.line_subtotal|floatformat:2|intcomma }}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="summary-financial-row">
+                        <span>{% trans "Subtotal" %}</span>
+                        <strong>{{ cart.currency|default:'NPR' }} {{ totals.subtotal|floatformat:2|intcomma }}</strong>
+                    </div>
+
+                    {% if totals.discount > 0 %}
+                    <div class="summary-financial-row discount">
+                        <span>{% trans "Coupon Discount" %} ({{ cart.coupon_code }})</span>
+                        <strong>&minus; {{ cart.currency|default:'NPR' }} {{ totals.discount|floatformat:2|intcomma }}</strong>
+                    </div>
+                    {% endif %}
+
+                    <div class="summary-financial-row">
+                        <span>{% trans "Estimated Tax" %}</span>
+                        <strong>{{ cart.currency|default:'NPR' }} {{ totals.tax|floatformat:2|intcomma }}</strong>
+                    </div>
+
+                    <div class="summary-financial-row">
+                        <span>{% trans "Shipping Fee" %}</span>
+                        <strong>
+                            {% if totals.shipping > 0 %}
+                                {{ cart.currency|default:'NPR' }} {{ totals.shipping|floatformat:2|intcomma }}
+                            {% else %}
+                                {% trans "Calculated at Next Step" %}
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="summary-financial-row grand-total">
+                        <span>{% trans "Estimated Total" %}</span>
+                        <strong>{{ cart.currency|default:'NPR' }} {{ totals.grand_total|floatformat:2|intcomma }}</strong>
+                    </div>
+
+                    <button type="submit" class="btn-checkout-submit">
+                        {% trans "Place Order" %}
+                    </button>
+
+                    <div class="trust-footer-badges">
+                        <span>&bull; Fair-Trade Certified</span>
+                        <span>&bull; Encrypted Processing</span>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedSelect = document.getElementById('id_saved_shipping_address');
+        const newAddressBlock = document.getElementById('newAddressFields');
+
+        if (savedSelect && newAddressBlock) {
+            function toggleAddressFields() {
+                const val = savedSelect.value;
+                if (val && val !== 'new') {
+                    newAddressBlock.style.opacity = '0.5';
+                } else {
+                    newAddressBlock.style.opacity = '1';
+                }
+            }
+            savedSelect.addEventListener('change', toggleAddressFields);
+            toggleAddressFields();
+        }
+    });
+</script>
+{% endblock %}

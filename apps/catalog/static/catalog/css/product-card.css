@@ -27,7 +27,7 @@
 .product-card-media {
     position: relative;
     width: 100%;
-    padding-top: 115%; /* Premium vertical portrait ratio */
+    padding-top: 115%;
     background-color: #F5F1ED;
     overflow: hidden;
     display: block;
@@ -60,10 +60,9 @@
     align-items: flex-start;
     gap: 6px;
     z-index: 2;
-    max-width: calc(100% - 60px); /* Leave room for actions on the right */
+    max-width: calc(100% - 60px);
 }
 
-/* Legacy & Standard Badges */
 .badge-artisan {
     background: rgba(44, 37, 32, 0.85);
     color: #FFFFFF;
@@ -92,7 +91,6 @@
     align-self: flex-start;
 }
 
-/* New Featured Badge Addition */
 .badge-featured {
     background: linear-gradient(135deg, var(--brand-gold, #C5A880) 0%, #9A7B54 100%);
     color: #FFFFFF;
@@ -112,7 +110,7 @@
 .product-card-actions {
     position: absolute;
     top: 12px;
-    right: -50px; /* Hidden state */
+    right: -50px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -164,7 +162,6 @@
     background: #FFFFFF;
 }
 
-/* SKU Display Addition */
 .product-sku {
     font-family: var(--font-ui, 'Inter', sans-serif);
     font-size: 0.65rem;
@@ -182,7 +179,6 @@
     margin-bottom: 0.4rem;
 }
 
-/* Titles and Typography */
 .product-title-link {
     font-family: var(--font-brand, 'Cinzel', serif);
     font-size: 1.15rem;
@@ -319,7 +315,6 @@
     transform: translateY(-50%) rotate(-45deg);
 }
 
-/* Circular Color Variant */
 .swatch-item.color-swatch {
     width: 22px;
     height: 22px;
@@ -335,7 +330,6 @@
     box-shadow: inset 0 0 2px rgba(0,0,0,0.1);
 }
 
-/* Text Variant (Sizes, Materials, Volumes) */
 .swatch-item.text-swatch {
     font-size: 0.7rem;
     padding: 4px 8px;
@@ -345,7 +339,6 @@
     border-radius: 2px;
 }
 
-/* Generic Icon/Image Variant */
 .swatch-item.image-swatch {
     width: 32px;
     height: 32px;
@@ -449,7 +442,6 @@
    Accessibility & Reduced Motion Allowances
    ========================================================================== */
 
-/* Focus-visible ring for rigorous keyboard navigation standards */
 .action-circle-btn:focus-visible,
 .product-title-link:focus-visible,
 .btn-card-add-cart:focus-visible,
@@ -459,7 +451,6 @@
     text-decoration: none;
 }
 
-/* Remove card hover translation if the user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
     .gobindas-product-card {
         transition: none !important;
@@ -482,7 +473,6 @@
     
     .product-card-actions {
         transition: none !important;
-        /* Default to showing actions on focus or gracefully if motion is reduced */
     }
     
     .gobindas-product-card:hover .product-card-actions {

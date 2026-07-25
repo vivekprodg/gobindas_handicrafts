@@ -7,493 +7,85 @@
 
 {% block extra_css %}
 <style>
-    /* Premium Order List Styling synchronized with the finalized enterprise architecture */
     :root {
         --luxury-gold: #C5A880;
-        --luxury-gold-hover: #B3966E;
         --luxury-dark: #111111;
-        --luxury-charcoal: #2A2A2A;
         --luxury-muted: #767676;
         --luxury-bg-light: #FBFBFA;
         --luxury-border: #EAEAEA;
-        --luxury-success: #2E7D32;
-        --luxury-pending: #C62828;
-        --luxury-pending-bg: #FFEBEE;
-        --luxury-radius: 4px;
-        --luxury-shadow: 0 4px 12px rgba(17, 17, 17, 0.03);
     }
-
-    .premium-order-list-container {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: var(--luxury-dark);
-        background-color: #FFFFFF;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 40px 24px 80px;
-        letter-spacing: -0.01em;
-    }
-
-    /* Breadcrumbs */
-    .luxury-breadcrumbs {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 32px;
-        color: var(--luxury-muted);
-        flex-wrap: wrap;
-    }
-    .luxury-breadcrumbs a {
-        color: var(--luxury-muted);
-        text-decoration: none;
-        transition: color 0.2s ease;
-        font-weight: 500;
-    }
-    .luxury-breadcrumbs a:hover {
-        color: var(--luxury-dark);
-    }
-    .luxury-breadcrumbs .separator::after {
-        content: "/";
-        margin-left: 8px;
-    }
-    .luxury-breadcrumbs .current {
-        color: var(--luxury-dark);
-        font-weight: 600;
-    }
-
-    /* Header */
-    .list-header {
-        border-bottom: 1px solid var(--luxury-border);
-        padding-bottom: 24px;
-        margin-bottom: 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-    .list-header h1 {
-        font-family: "Cinzel", serif;
-        font-size: 36px;
-        font-weight: 400;
-        margin: 0 0 8px 0;
-        letter-spacing: -0.02em;
-    }
-    .list-header p {
-        font-size: 14px;
-        color: var(--luxury-muted);
-        margin: 0;
-    }
-    .order-total-count {
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--luxury-muted);
-    }
-
-    /* Status pill (canonical) */
-    .status-pill {
-        display: inline-block;
-        padding: 4px 12px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-radius: 20px;
-        border: 1px solid currentColor;
-    }
-    .status-pill.is-pending,
-    .status-pill.is-awaiting_payment,
-    .status-pill.is-on_hold { background: #FFF8E7; color: #9A7B54; }
-    .status-pill.is-processing,
+    .premium-order-list-container { max-width: 1400px; margin: 0 auto; padding: 40px 24px 80px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .luxury-breadcrumbs { display: flex; gap: 8px; font-size: 13px; text-transform: uppercase; margin-bottom: 32px; color: var(--luxury-muted); }
+    .luxury-breadcrumbs a { color: var(--luxury-muted); text-decoration: none; }
+    .luxury-breadcrumbs .separator::after { content: "/"; margin-left: 8px; }
+    .list-header { border-bottom: 1px solid var(--luxury-border); padding-bottom: 24px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .list-header h1 { font-family: "Cinzel", serif; font-size: 36px; font-weight: 400; margin: 0; }
+    .luxury-order-card { display: grid; grid-template-columns: 1fr 2fr; background: #FFF; border: 1px solid var(--luxury-border); border-radius: 4px; margin-bottom: 24px; overflow: hidden; }
+    @media (max-width: 768px) { .luxury-order-card { grid-template-columns: 1fr; } }
+    .luxury-order-card-left { background-color: var(--luxury-bg-light); padding: 32px; border-right: 1px solid var(--luxury-border); }
+    .luxury-order-card-right { padding: 32px; }
+    .status-pill { display: inline-block; padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 20px; border: 1px solid currentColor; }
+    .status-pill.is-pending { background: #FFF8E7; color: #9A7B54; }
     .status-pill.is-completed { background: #E8F5E9; color: #2E7D32; }
-    .status-pill.is-shipped { background: #E3F2FD; color: #0D47A1; }
-    .status-pill.is-delivered { background: #E0F2F1; color: #00695C; }
-    .status-pill.is-cancelled,
-    .status-pill.is-failed { background: #FFEBEE; color: #C62828; }
-    .status-pill.is-refunded,
-    .status-pill.is-partially_refunded { background: #FFF8E7; color: #9A7B54; }
-    .status-pill.is-paid,
-    .status-pill.is-captured { background: #E8F5E9; color: #2E7D32; }
-
-    /* Premium order cards */
-    .luxury-order-card {
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 0;
-        background: #FFFFFF;
-        border: 1px solid var(--luxury-border);
-        border-radius: var(--luxury-radius);
-        box-shadow: var(--luxury-shadow);
-        margin-bottom: 24px;
-        overflow: hidden;
-        transition: box-shadow 0.3s ease;
-    }
-    .luxury-order-card:hover {
-        box-shadow: 0 8px 24px rgba(17, 17, 17, 0.06);
-    }
-    @media (max-width: 768px) {
-        .luxury-order-card {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .luxury-order-card-left {
-        background-color: var(--luxury-bg-light);
-        padding: 32px;
-        border-right: 1px solid var(--luxury-border);
-    }
-    @media (max-width: 768px) {
-        .luxury-order-card-left {
-            border-right: none;
-            border-bottom: 1px solid var(--luxury-border);
-        }
-    }
-    .luxury-order-card-right {
-        padding: 32px;
-    }
-    @media (max-width: 768px) {
-        .luxury-order-card-right { padding: 24px; }
-        .luxury-order-card-left { padding: 24px; }
-    }
-
-    .luxury-label-small {
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--luxury-muted);
-        margin-bottom: 4px;
-    }
-    .luxury-value-medium {
-        font-size: 18px;
-        font-weight: 500;
-        color: var(--luxury-dark);
-        margin-bottom: 20px;
-    }
-    .luxury-value-large {
-        font-size: 24px;
-        font-weight: 500;
-        color: var(--luxury-dark);
-    }
-
-    /* Action buttons */
-    .luxury-btn-group {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .btn-luxury-primary {
-        background-color: var(--luxury-dark);
-        color: #FFFFFF;
-        border: 1px solid var(--luxury-dark);
-        padding: 10px 18px;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-luxury-primary:hover {
-        background-color: var(--luxury-gold);
-        border-color: var(--luxury-gold);
-        color: #FFFFFF;
-    }
-    .btn-luxury-secondary {
-        background-color: transparent;
-        color: var(--luxury-dark);
-        border: 1px solid var(--luxury-border);
-        padding: 10px 18px;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-luxury-secondary:hover {
-        border-color: var(--luxury-dark);
-        background-color: var(--luxury-bg-light);
-    }
-    .btn-luxury-danger {
-        background-color: var(--luxury-pending);
-        color: #FFFFFF;
-        border: 1px solid var(--luxury-pending);
-        padding: 10px 18px;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-luxury-danger:hover {
-        background-color: #B71C1C;
-        border-color: #B71C1C;
-    }
-    .btn-luxury-link {
-        color: var(--luxury-dark);
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        font-size: 12px;
-        font-weight: 500;
-        transition: color 0.2s ease;
-    }
-    .btn-luxury-link:hover { color: var(--luxury-gold); }
-    .btn-luxury-danger-link {
-        color: var(--luxury-pending);
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        font-size: 12px;
-        font-weight: 500;
-        transition: color 0.2s ease;
-    }
-    .btn-luxury-danger-link:hover { color: #B71C1C; }
-
-    /* Section title */
-    .luxury-section-title {
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--luxury-muted);
-        margin: 0 0 20px 0;
-    }
-
-    /* Empty state */
-    .empty-state {
-        text-align: center;
-        padding: 80px 24px;
-        background-color: var(--luxury-bg-light);
-        border: 1px solid var(--luxury-border);
-        border-radius: var(--luxury-radius);
-    }
-    .empty-state .empty-icon {
-        background: #FFFFFF;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 24px;
-        box-shadow: var(--luxury-shadow);
-    }
-    .empty-state h3 {
-        font-family: "Cinzel", serif;
-        font-size: 24px;
-        font-weight: 400;
-        margin: 0 0 12px 0;
-    }
-    .empty-state p {
-        font-size: 14px;
-        color: var(--luxury-muted);
-        max-width: 480px;
-        margin: 0 auto 24px auto;
-        line-height: 1.6;
-    }
-
-    /* Pagination */
-    .luxury-pagination {
-        margin-top: 40px;
-        display: flex;
-        justify-content: center;
-        gap: 4px;
-    }
-    .luxury-pagination a, .luxury-pagination span {
-        padding: 10px 16px;
-        border: 1px solid var(--luxury-border);
-        color: var(--luxury-dark);
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 500;
-    }
-    .luxury-pagination .current {
-        background-color: var(--luxury-dark);
-        color: #FFFFFF;
-        border-color: var(--luxury-dark);
-    }
-    .luxury-pagination .disabled {
-        color: var(--luxury-muted);
-    }
-
-    /* Messages */
-    .luxury-alert {
-        padding: 16px 24px;
-        border-radius: var(--luxury-radius);
-        margin-bottom: 16px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    .luxury-alert.success { background: #E8F5E9; color: var(--luxury-success); border: 1px solid rgba(46, 125, 50, 0.2); }
-    .luxury-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.2); }
-    .luxury-alert.warning { background: #FFF3E0; color: #E65100; border: 1px solid rgba(230, 81, 0, 0.2); }
-    .luxury-alert.error { background: #FFEBEE; color: var(--luxury-pending); border: 1px solid rgba(198, 40, 40, 0.2); }
+    .status-pill.is-cancelled { background: #FFEBEE; color: #C62828; }
+    .btn-luxury-primary { background: var(--luxury-dark); color: #FFF; padding: 10px 18px; font-size: 12px; text-transform: uppercase; text-decoration: none; display: inline-block; }
+    .btn-luxury-secondary { background: transparent; color: var(--luxury-dark); border: 1px solid var(--luxury-border); padding: 10px 18px; font-size: 12px; text-transform: uppercase; text-decoration: none; display: inline-block; }
+    .btn-luxury-link { color: var(--luxury-dark); text-decoration: underline; font-size: 12px; font-weight: 500; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="premium-order-list-container" aria-label="{% trans 'Order History' %}">
-
+<div class="premium-order-list-container">
     <nav class="luxury-breadcrumbs" aria-label="Breadcrumb">
-        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a>
-        <span class="separator"></span>
-        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a>
-        <span class="separator"></span>
-        <span class="current" aria-current="page">{% trans "Order History" %}</span>
+        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a><span class="separator"></span>
+        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a><span class="separator"></span>
+        <span class="current">{% trans "Order History" %}</span>
     </nav>
 
     <header class="list-header">
         <div>
             <h1>{% trans "Order History" %}</h1>
-            <p>{% trans "Review your past purchases, track shipments, and manage returns." %}</p>
+            <p style="color:var(--luxury-muted); margin:4px 0 0 0;">{% trans "Review your acquisition ledger." %}</p>
         </div>
-        <span class="order-total-count">
-            {{ paginator.count|default:0 }} {% trans "Orders" %}
-        </span>
     </header>
 
-    {% if messages %}
-        <div role="alert" aria-live="polite">
-            {% for message in messages %}
-                <div class="luxury-alert {{ message.tags|default:'info' }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
     {% if orders %}
-        <section aria-label="{% trans 'List of Orders' %}">
+        <section>
             {% for order in orders %}
-                <article class="luxury-order-card" aria-label="{% trans 'Order' %} #{{ order.order_number|default:order.id }}">
-
-                    {# Left column: order metadata #}
+                <article class="luxury-order-card">
                     <div class="luxury-order-card-left">
-                        <p class="luxury-label-small">{% trans "Order Number" %}</p>
-                        <p class="luxury-value-medium">
-                            <a href="{% url 'orders:order_detail' order.id %}" style="color: var(--luxury-dark); text-decoration: none; font-weight: 500;">
-                                #{{ order.order_number|default:order.id }}
-                            </a>
-                        </p>
-
-                        <p class="luxury-label-small">{% trans "Date Placed" %}</p>
-                        <p class="luxury-value-medium">
-                            <time datetime="{{ order.created_at|date:'Y-m-d' }}">{{ order.created_at|date:"F j, Y" }}</time>
-                        </p>
-
-                        <p class="luxury-label-small">{% trans "Total Amount" %}</p>
-                        <p class="luxury-value-large">
-                            {{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}
-                        </p>
-
-                        <div class="luxury-btn-group" style="margin-top: 16px;">
-                            <span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span>
-                            {% if order.payment_status %}
-                                <span class="status-pill is-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span>
-                            {% endif %}
+                        <div style="font-size:11px; color:var(--luxury-muted); text-transform:uppercase;">{% trans "Order Reference" %}</div>
+                        <div style="font-size:18px; font-weight:600; margin-bottom:16px;">
+                            <a href="{% url 'orders:order_detail' order.id %}" style="color:var(--luxury-dark); text-decoration:none;">#{{ order.order_number|default:order.id }}</a>
                         </div>
+                        <div style="font-size:11px; color:var(--luxury-muted); text-transform:uppercase;">{% trans "Placed On" %}</div>
+                        <div style="font-size:14px; margin-bottom:16px;">{{ order.created_at|date:"F j, Y" }}</div>
+                        <div style="font-size:11px; color:var(--luxury-muted); text-transform:uppercase;">{% trans "Valuation" %}</div>
+                        <div style="font-size:20px; font-weight:600;">{{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}</div>
+                        <div style="margin-top:16px;"><span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span></div>
                     </div>
-
-                    {# Right column: action grid #}
                     <div class="luxury-order-card-right">
-                        <h3 class="luxury-section-title">{% trans "Actions" %}</h3>
-                        <div class="luxury-btn-group">
-                            <a href="{% url 'orders:order_detail' order.id %}" class="btn-luxury-primary">
-                                {% trans "View Order" %}
-                            </a>
-                            {% if order.tracking_number or order.shipments.all %}
-                                <a href="{% url 'orders:track_order' order.id %}" class="btn-luxury-secondary">
-                                    {% trans "Track Shipment" %}
-                                </a>
-                            {% endif %}
-                            <a href="{% url 'orders:download_invoice' order.id %}" class="btn-luxury-secondary">
-                                {% trans "Download Invoice" %}
-                            </a>
+                        <h4 style="margin:0 0 16px 0; text-transform:uppercase; font-size:12px; color:var(--luxury-muted);">{% trans "Available Actions" %}</h4>
+                        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn-luxury-primary">{% trans "View Order" %}</a>
+                            <a href="{% url 'orders:download_invoice' order.id %}" class="btn-luxury-secondary">{% trans "Invoice" %}</a>
                         </div>
-
-                        <div class="luxury-btn-group" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--luxury-border);">
-                            {# Reorder is always available for completed orders #}
-                            {% if order.status == 'delivered' or order.status == 'completed' or order.status == 'shipped' %}
-                                <a href="{% url 'orders:reorder' order.id %}" class="btn-luxury-link">
-                                    {% trans "Buy Again" %}
-                                </a>
-                            {% endif %}
-
-                            {# Returns only available for delivered/completed orders #}
-                            {% if order.status == 'delivered' or order.status == 'completed' %}
-                                <a href="{% url 'orders:return_request' order.id %}" class="btn-luxury-link">
-                                    {% trans "Request Return" %}
-                                </a>
-                            {% endif %}
-
-                            {# Cancellation only available for pre-dispatch states #}
-                            {% if order.status == 'pending' or order.status == 'awaiting_payment' or order.status == 'processing' or order.status == 'on_hold' %}
-                                <a href="{% url 'orders:cancel_order' order.id %}" class="btn-luxury-danger-link">
-                                    {% trans "Cancel Order" %}
-                                </a>
+                        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--luxury-border); display:flex; gap:16px;">
+                            <a href="{% url 'orders:reorder' order.id %}" class="btn-luxury-link">{% trans "Buy Again" %}</a>
+                            {% if order.can_be_cancelled %}
+                                <a href="{% url 'orders:cancel_order' order.id %}" class="btn-luxury-link" style="color:var(--luxury-pending);">{% trans "Cancel Order" %}</a>
                             {% endif %}
                         </div>
                     </div>
-
                 </article>
             {% endfor %}
         </section>
     {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true" style="color: var(--luxury-muted);">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-            </div>
-            <h3>{% trans "No orders found" %}</h3>
-            <p>{% trans "You haven't placed any orders yet. Discover our latest collection of premium handcrafted items and begin your journey." %}</p>
-            <a href="{% url 'foundation:home' %}" class="btn-luxury-primary">
-                {% trans "Continue Shopping" %}
-            </a>
+        <div style="text-align:center; padding:80px 24px; background:var(--luxury-bg-light); border:1px solid var(--luxury-border);">
+            <h3>{% trans "No Order Records Found" %}</h3>
+            <p style="color:var(--luxury-muted);">{% trans "You have not placed any orders yet." %}</p>
+            <a href="{% url 'foundation:home' %}" class="btn-luxury-primary" style="margin-top:16px;">{% trans "Begin Shopping" %}</a>
         </div>
     {% endif %}
-
-    {# Pagination #}
-    {% if is_paginated %}
-        <nav class="luxury-pagination" aria-label="{% trans 'Pagination' %}">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="{% trans 'Previous' %}">&larr;</a>
-            {% else %}
-                <span class="disabled" aria-hidden="true">&larr;</span>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <span class="current" aria-current="page">{{ num }}</span>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="{% trans 'Next' %}">&rarr;</a>
-            {% else %}
-                <span class="disabled" aria-hidden="true">&rarr;</span>
-            {% endif %}
-        </nav>
-    {% endif %}
-
 </div>
 {% endblock %}

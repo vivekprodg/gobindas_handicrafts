@@ -1,11 +1,8 @@
 {% extends "base.html" %}
-{% load static %}
-{% load humanize %}
-{% load currency_tags %}
-{% load inventory_tags %}
+{% load static humanize currency_tags inventory_tags catalog_tags %}
 
 {% block title %}
-    {% if title %}{{ title|default:category.name|default:'Catalog' }}{% else %}{{ category.name|default:'Catalog'|default:'Product Catalog' }} | Gobindas Handicrafts{% endif %}
+    {% if title %}{{ title }}{% else %}{{ category.name|default:'Catalog' }} | Gobindas Handicrafts{% endif %}
 {% endblock %}
 
 {% block meta %}
@@ -23,340 +20,6 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'catalog/css/product-list.css' %}">
     <link rel="stylesheet" href="{% static 'catalog/css/product-card.css' %}">
-    <style>
-        .plp-wrapper {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 2rem;
-            font-family: var(--font-ui, 'Inter', sans-serif);
-        }
-
-        .plp-skip-link {
-            position: absolute;
-            top: -40px;
-            left: 8px;
-            padding: 8px 16px;
-            background: var(--brand-dark, #1A1512);
-            color: #FFFFFF;
-            text-decoration: none;
-            z-index: 10000;
-            font-weight: 600;
-            border-radius: 0 0 4px 4px;
-        }
-        .plp-skip-link:focus { top: 0; outline: 2px solid var(--brand-gold, #C5A880); }
-
-        .plp-visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .plp-breadcrumbs-nav {
-            font-size: 0.8rem;
-            color: var(--text-muted, #7A726A);
-            margin-bottom: 2rem;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-        .plp-breadcrumbs-nav a {
-            color: var(--text-muted, #7A726A);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-        .plp-breadcrumbs-nav a:hover { color: var(--brand-gold-dark, #9A7B54); }
-        .plp-breadcrumbs-nav .separator { margin: 0 8px; color: var(--brand-gold, #C5A880); }
-
-        .category-hero-section { margin-bottom: 2rem; }
-        .category-title {
-            font-family: var(--font-brand, 'Cinzel', serif);
-            font-size: 2.5rem;
-            color: var(--brand-dark, #1A1512);
-            margin: 0 0 0.75rem 0;
-            font-weight: 600;
-            line-height: 1.15;
-        }
-        .category-description {
-            font-size: 1rem;
-            color: var(--text-muted, #7A726A);
-            max-width: 800px;
-            line-height: 1.6;
-        }
-
-        .catalog-control-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 0;
-            border-top: 1px solid var(--border-light, #EAE5E0);
-            border-bottom: 1px solid var(--border-light, #EAE5E0);
-            margin-bottom: 2rem;
-        }
-        .product-metrics-count {
-            font-size: 0.85rem;
-            color: var(--text-muted, #7A726A);
-            font-weight: 500;
-        }
-        .catalog-interaction-controls { display: flex; gap: 0.75rem; align-items: center; }
-        .select-custom-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-        .select-custom-wrapper select {
-            appearance: none;
-            -webkit-appearance: none;
-            background: #FFFFFF;
-            border: 1px solid var(--border-light, #EAE5E0);
-            padding: 0.65rem 2.5rem 0.65rem 1rem;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--brand-dark, #1A1512);
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-radius: 2px;
-            transition: border-color 0.3s ease;
-        }
-        .select-custom-wrapper select:hover { border-color: var(--brand-gold-dark, #9A7B54); }
-        .select-custom-wrapper select:focus-visible {
-            outline: 2px solid var(--brand-gold, #C5A880);
-            outline-offset: 2px;
-        }
-        .select-custom-wrapper::after {
-            content: "";
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid var(--brand-dark, #1A1512);
-            border-bottom: 2px solid var(--brand-dark, #1A1512);
-            transform: translateY(-65%) rotate(45deg);
-            pointer-events: none;
-        }
-
-        .catalog-layout-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 2.5rem;
-            align-items: start;
-        }
-        @media (max-width: 900px) {
-            .catalog-layout-grid { grid-template-columns: 1fr; }
-        }
-
-        .filter-sidebar-panel {
-            background: #FFFFFF;
-            border: 1px solid var(--border-light, #EAE5E0);
-            padding: 1.5rem;
-            position: sticky;
-            top: 1rem;
-            max-height: calc(100vh - 2rem);
-            overflow-y: auto;
-        }
-        .sidebar-panel-header {
-            font-family: var(--font-brand, 'Cinzel', serif);
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--brand-dark, #1A1512);
-            margin: 0 0 1.5rem 0;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--brand-gold, #C5A880);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .filter-accordion-node { margin-bottom: 1rem; }
-        .filter-node-trigger {
-            width: 100%;
-            background: none;
-            border: none;
-            border-bottom: 1px solid var(--border-light, #EAE5E0);
-            padding: 0.75rem 0;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--brand-dark, #1A1512);
-            text-align: left;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: color 0.3s ease;
-        }
-        .filter-node-trigger:hover { color: var(--brand-gold-dark, #9A7B54); }
-        .filter-node-trigger:focus-visible {
-            outline: 2px solid var(--brand-gold, #C5A880);
-            outline-offset: 2px;
-        }
-        .filter-node-trigger::after {
-            content: "";
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid currentColor;
-            border-bottom: 2px solid currentColor;
-            transform: rotate(45deg);
-            transition: transform 0.3s ease;
-        }
-        .filter-accordion-node.active .filter-node-trigger::after {
-            transform: rotate(-135deg);
-        }
-        .filter-node-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            padding-top: 0;
-        }
-        .filter-accordion-node.active .filter-node-content {
-            max-height: 2000px;
-            padding-top: 0.75rem;
-        }
-        .filter-list-option {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0;
-            font-size: 0.85rem;
-            color: var(--brand-dark, #1A1512);
-            cursor: pointer;
-            line-height: 1.4;
-        }
-        .filter-list-option input[type="checkbox"],
-        .filter-list-option input[type="radio"] {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--brand-gold-dark, #9A7B54);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .filter-list-option input[type="checkbox"]:focus-visible,
-        .filter-list-option input[type="radio"]:focus-visible {
-            outline: 2px solid var(--brand-gold, #C5A880);
-            outline-offset: 2px;
-        }
-        .hierarchical-indent { margin-left: 1.25rem; }
-        .price-slider-range-box { padding: 0.5rem 0; }
-        .price-slider-range-box input[type="range"] {
-            width: 100%;
-            accent-color: var(--brand-gold-dark, #9A7B54);
-            margin-bottom: 0.75rem;
-        }
-        .price-slider-range-box input[type="range"]:focus-visible {
-            outline: 2px solid var(--brand-gold, #C5A880);
-            outline-offset: 4px;
-        }
-        .price-text-fields-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: var(--text-muted, #7A726A);
-            font-weight: 600;
-        }
-        .color-swatches-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .color-swatch-bubble {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid var(--border-light, #EAE5E0);
-            transition: transform 0.2s ease, border-color 0.2s ease;
-            cursor: pointer;
-        }
-        .color-swatch-bubble:hover { transform: scale(1.1); }
-        .color-swatch-bubble.selected {
-            border-color: var(--brand-dark, #1A1512);
-            border-width: 3px;
-        }
-
-        .product-showcase-matrix {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1.5rem;
-            align-items: stretch;
-        }
-        @media (max-width: 600px) {
-            .product-showcase-matrix { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
-        }
-
-        .plp-empty-state {
-            grid-column: 1 / -1;
-            padding: 4rem 2rem;
-            text-align: center;
-            color: var(--text-muted, #7A726A);
-        }
-        .plp-empty-state p {
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin: 1rem 0;
-        }
-        .plp-empty-state a {
-            color: var(--brand-gold, #C5A880);
-            text-decoration: underline;
-            margin-top: 0.5rem;
-            display: inline-block;
-        }
-
-        .plp-loading-state {
-            grid-column: 1 / -1;
-            padding: 2rem;
-            text-align: center;
-            color: var(--text-muted, #7A726A);
-            font-style: italic;
-        }
-
-        .catalog-pagination-nav {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 3rem;
-            padding: 2rem 0;
-            flex-wrap: wrap;
-        }
-        .pagination-node {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 40px;
-            height: 40px;
-            padding: 0 0.75rem;
-            border: 1px solid var(--border-light, #EAE5E0);
-            background: #FFFFFF;
-            color: var(--brand-dark, #1A1512);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .pagination-node:hover:not(.disabled):not(.active) {
-            border-color: var(--brand-gold-dark, #9A7B54);
-            color: var(--brand-gold-dark, #9A7B54);
-        }
-        .pagination-node:focus-visible {
-            outline: 2px solid var(--brand-gold, #C5A880);
-            outline-offset: 2px;
-        }
-        .pagination-node.active {
-            background: var(--brand-dark, #1A1512);
-            color: #FFFFFF;
-            border-color: var(--brand-dark, #1A1512);
-        }
-        .pagination-node.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-    </style>
 {% endblock %}
 
 {% block content %}
@@ -364,14 +27,9 @@
 
 <div class="plp-wrapper"
      data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-     data-can-wishlist="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-     data-can-save="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-     data-track-view="true"
      data-list-type="{{ list_type|default:'category' }}"
      data-category-id="{{ category.id|default:'' }}"
-     data-category-slug="{{ category.slug|default:'' }}"
-     data-collection-slug="{{ collection.slug|default:'' }}"
-     data-material-slug="{{ material.slug|default:'' }}">
+     data-category-slug="{{ category.slug|default:'' }}">
 
     {% if breadcrumbs %}
     <nav class="plp-breadcrumbs-nav" aria-label="Breadcrumb">
@@ -389,17 +47,18 @@
         <h1 class="category-title">
             {{ category.name|default:collection.name|default:material.name|default:title|default:'Catalog' }}
         </h1>
-        {% if category.description or collection.description or material.description or description %}
+        {% if category.description or description %}
             <p class="category-description">
-                {{ category.description|default:collection.description|default:material.description|default:description }}
+                {{ category.description|default:description }}
             </p>
         {% endif %}
     </header>
 
+    <!-- Control Toolbar -->
     <section class="catalog-control-bar" aria-label="Catalog controls">
         <div class="product-metrics-count" aria-live="polite">
             {% if total_products %}
-                Showing {{ products.start_index|default:0|intcomma }}&ndash;{{ products.end_index|default:0|intcomma }} of {{ total_products|intcomma }} fine masterpieces
+                Showing {{ products.start_index|default:1|intcomma }}&ndash;{{ products.end_index|default:total_products|intcomma }} of {{ total_products|intcomma }} fine masterpieces
             {% else %}
                 0 fine masterpieces found
             {% endif %}
@@ -407,366 +66,270 @@
         <div class="catalog-interaction-controls">
             <div class="select-custom-wrapper">
                 <select id="catalog-sort-select"
+                        name="sort"
                         aria-label="Sort products"
                         onchange="const form = document.getElementById('catalog-filter-form'); if(form){const s=form.elements['sort']; if(s){s.value=this.value;} form.submit();}">
                     <option value="featured" {% if current_sort == 'featured' or not current_sort %}selected{% endif %}>Featured Collection</option>
                     <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
                     <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
-                    <option value="price-low" {% if current_sort == 'price-low' or current_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
-                    <option value="price-high" {% if current_sort == 'price-high' or current_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="price-low" {% if current_sort == 'price-low' or current_sort == 'price_low' or current_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price-high" {% if current_sort == 'price-high' or current_sort == 'price_high' or current_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
                     <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
                     <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
-                    <option value="name-asc" {% if current_sort == 'name-asc' %}selected{% endif %}>Name: A to Z</option>
-                    <option value="name-desc" {% if current_sort == 'name-desc' %}selected{% endif %}>Name: Z to A</option>
+                    <option value="name-asc" {% if current_sort == 'name-asc' or current_sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+                    <option value="name-desc" {% if current_sort == 'name-desc' or current_sort == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
                 </select>
             </div>
         </div>
     </section>
 
-    <div class="catalog-layout-grid">
+    <!-- Active Filter Chips Workspace -->
+    {% if active_filter_chips %}
+    <div class="active-filters-workspace" aria-label="Active filters">
+        <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Active Filters:</span>
+        {% for chip in active_filter_chips %}
+            <span class="active-filter-chip">
+                <span>{{ chip.label }}</span>
+                <a href="?{% remove_filter_param chip.param chip.key %}" class="chip-remove-btn" title="Remove {{ chip.label }}" aria-label="Remove filter {{ chip.label }}">&times;</a>
+            </span>
+        {% endfor %}
+        <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}" class="clear-all-filters-btn">Clear All</a>
+    </div>
+    {% endif %}
 
-        {% comment %} -- Dynamic filter sidebar -- {% endcomment %}
+    <div class="catalog-layout-grid">
+        <!-- Interactive Sidebar Filter Form -->
         <form method="GET" action="" id="catalog-filter-form" class="filter-sidebar-panel" aria-label="Product filters">
             <input type="hidden" name="sort" value="{{ current_sort|default:'featured' }}">
-
-            {% comment %} -- Preserve all non-filter query parameters -- {% endcomment %}
-            {% for key, value in request.GET.items %}
-                {% if key != 'sort' and key != 'page' and key != 'material' and key != 'artisan' and key != 'origin' and key != 'hue' and key != 'ethical' and key != 'collection' and key != 'tag' and key != 'featured' and key != 'variants' and key != 'availability' and key != 'length' and key != 'width' and key != 'height' and key != 'weight' and key != 'price_max' and key != 'category' %}
-                    <input type="hidden" name="{{ key|escape }}" value="{{ value|escape }}">
-                {% endif %}
-            {% endfor %}
+            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
 
             <h2 class="sidebar-panel-header">Refine Collection</h2>
 
-            {% comment %} -- Category hierarchy filter -- {% endcomment %}
+            <!-- 1. Stock Availability Toggle -->
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Availability</button>
+                <div class="filter-node-content">
+                    <label class="toggle-switch-label">
+                        <input type="checkbox" name="in_stock_only" value="true" {% if request.GET.in_stock_only == 'true' or request.GET.in_stock == '1' %}checked{% endif %} onchange="this.form.submit();">
+                        <span class="toggle-switch-text">Ready to Ship / In Stock Only</span>
+                        {% if facets.in_stock_count is not None %}
+                            <span class="facet-count-badge">{{ facets.in_stock_count|format_facet_count }}</span>
+                        {% endif %}
+                    </label>
+                </div>
+            </fieldset>
+
+            <!-- 2. Dual Price Range Filter -->
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Price Valuation (NPR)</button>
+                <div class="filter-node-content">
+                    <div class="dual-price-range-inputs">
+                        <div class="price-input-group">
+                            <label for="minPriceInput">Min</label>
+                            <input type="number" id="minPriceInput" name="min_price" value="{{ request.GET.min_price|default:'' }}" placeholder="{{ filter_price.min|default:0 }}" min="0" class="price-number-input">
+                        </div>
+                        <span class="price-range-dash">&ndash;</span>
+                        <div class="price-input-group">
+                            <label for="maxPriceInput">Max</label>
+                            <input type="number" id="maxPriceInput" name="price_max" value="{{ request.GET.price_max|default:request.GET.max_price|default:'' }}" placeholder="{{ filter_price.max|default:100000 }}" min="0" class="price-number-input">
+                        </div>
+                        <button type="submit" class="btn-price-apply" aria-label="Apply price filter">Go</button>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 3. Minimum Star Rating -->
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Customer Rating</button>
+                <div class="filter-node-content">
+                    {% for r, count in facets.rating_counts.items %}
+                    <label class="filter-list-option rating-filter-row">
+                        <input type="radio" name="min_rating" value="{{ r }}" {% if request.GET.min_rating == r|stringformat:'d' or request.GET.rating == r|stringformat:'d' %}checked{% endif %} onchange="this.form.submit();">
+                        <span class="star-rating-display">{{ r|render_star_rating }} &amp; Above</span>
+                        <span class="facet-count-badge">{{ count|format_facet_count }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <!-- 4. Category Hierarchy -->
             {% if filter_categories %}
             <fieldset class="filter-accordion-node active">
-                <legend class="plp-visually-hidden">Category Hierarchy</legend>
                 <button type="button" class="filter-node-trigger" aria-expanded="true">Category Hierarchy</button>
                 <div class="filter-node-content">
                     {% for cat in filter_categories %}
                         <label class="filter-list-option">
                             <input type="checkbox" {% if cat.slug == category.slug or cat.slug == category.parent.slug %}checked{% endif %} onclick="if(this.checked){window.location.href='/category/{{ cat.slug|escapejs }}/';}else{window.location.href='?';}">
-                            <a href="/category/{{ cat.slug|escape }}/" style="color: inherit; text-decoration: none;">{{ cat.name|default:'' }}</a>
+                            <a href="/category/{{ cat.slug|escape }}/" style="color: inherit; text-decoration: none; flex: 1;">{{ cat.name|default:'' }}</a>
+                            <span class="facet-count-badge">{{ cat.count|format_facet_count }}</span>
                         </label>
-                        {% if cat.subcategories %}
-                        <div class="hierarchical-indent">
-                            {% for subcat in cat.subcategories %}
-                            <label class="filter-list-option">
-                                <input type="checkbox" {% if subcat.slug == category.slug %}checked{% endif %} onclick="if(this.checked){window.location.href='/category/{{ subcat.slug|escapejs }}/';}else{window.location.href='?';}">
-                                <a href="/category/{{ subcat.slug|escape }}/" style="color: inherit; text-decoration: none;">{{ subcat.name|default:'' }}</a>
-                            </label>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
                     {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Price matrix filter (drives price_max on submit) -- {% endcomment %}
-            {% if filter_price %}
+            <!-- 5. Master Craftsmen / Artisans -->
+            {% if filter_craftsmen %}
             <fieldset class="filter-accordion-node active">
-                <legend class="plp-visually-hidden">Price Matrix</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Price Matrix ({{ filter_price.currency|default:'NPR' }})</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Master Craftsmen</button>
                 <div class="filter-node-content">
-                    <div class="price-slider-range-box">
-                        <input type="range"
-                               name="price_max"
-                               min="{{ filter_price.min|default:0 }}"
-                               max="{{ filter_price.max|default:100000 }}"
-                               value="{{ filter_price.current|default:filter_price.max|default:100000 }}"
-                               id="priceRangeInput"
-                               aria-label="Maximum Price"
-                               onchange="this.form.submit();">
-                        <div class="price-text-fields-row">
-                            <span>Min: {{ filter_price.currency|default:'NPR' }} {{ filter_price.min|default:0|intcomma }}</span>
-                            <span id="maxPriceLabel">Max: {{ filter_price.currency|default:'NPR' }} {{ filter_price.current|default:filter_price.max|default:100000|intcomma }}</span>
-                        </div>
-                    </div>
+                    {% for art in filter_craftsmen %}
+                    <label class="filter-list-option">
+                        <input type="checkbox" name="artisan" value="{{ art.slug|escape }}" {% if art.checked %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">Master {{ art.name|default:'' }}</span>
+                        <span class="facet-count-badge">{{ art.count|format_facet_count }}</span>
+                    </label>
+                    {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Material filter -- {% endcomment %}
+            <!-- 6. Provenance / Origin Region -->
+            {% if filter_provenance %}
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Origin &amp; Region</button>
+                <div class="filter-node-content">
+                    {% for orig in filter_provenance %}
+                    <label class="filter-list-option">
+                        <input type="checkbox" name="origin" value="{{ orig.name|escape }}" {% if orig.checked %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">{{ orig.name|default:'' }}</span>
+                        <span class="facet-count-badge">{{ orig.count|format_facet_count }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            <!-- 7. Material Configuration -->
             {% if filter_materials %}
             <fieldset class="filter-accordion-node active">
-                <legend class="plp-visually-hidden">Material Configuration</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Material Configuration</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Material</button>
                 <div class="filter-node-content">
                     {% for mat in filter_materials %}
                     <label class="filter-list-option">
                         <input type="checkbox" name="material" value="{{ mat.name|escape }}" {% if mat.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ mat.name|default:'' }}</span>
+                        <span style="flex: 1;">{{ mat.name|default:'' }}</span>
+                        <span class="facet-count-badge">{{ mat.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Master craftsman filter -- {% endcomment %}
-            {% if filter_craftsmen %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Master Craftsman</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Master Craftsman</button>
-                <div class="filter-node-content">
-                    {% for artisan in filter_craftsmen %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="artisan" value="{{ artisan.slug|escape }}" {% if artisan.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ artisan.name|default:'' }}</span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </fieldset>
-            {% endif %}
-
-            {% comment %} -- Origin / provenance filter -- {% endcomment %}
-            {% if filter_provenance %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Origin Provenance</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Origin Provenance</button>
-                <div class="filter-node-content">
-                    {% for provenance in filter_provenance %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="origin" value="{{ provenance.name|escape }}" {% if provenance.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ provenance.name|default:'' }}</span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </fieldset>
-            {% endif %}
-
-            {% comment %} -- Hue aesthetics filter (color swatches) -- {% endcomment %}
+            <!-- 8. Hue / Color Aesthetics -->
             {% if filter_hues %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Hue Aesthetics</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Hue Aesthetics</button>
-                <div class="filter-node-content">
-                    <div class="color-swatches-grid">
-                        {% for hue in filter_hues %}
-                        <label class="color-swatch-bubble-label" title="{{ hue.name|default:'Hue' }}">
-                            <input type="checkbox" name="hue" value="{{ hue.name|escape }}" {% if hue.checked %}checked{% endif %} style="position: absolute; opacity: 0; pointer-events: none;" onchange="this.form.submit();">
-                            <div class="color-swatch-bubble {% if hue.checked %}selected{% endif %}" style="background: {{ hue.color|default:'#EAE5E0' }};" aria-label="{{ hue.name|default:'Hue' }}"></div>
-                        </label>
-                        {% endfor %}
-                    </div>
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Hue Aesthetic</button>
+                <div class="filter-node-content color-swatches-grid">
+                    {% for hue in filter_hues %}
+                    <label class="color-swatch-bubble-label" title="{{ hue.name }}">
+                        <input type="checkbox" name="hue" value="{{ hue.name|escape }}" {% if hue.checked %}checked{% endif %} onchange="this.form.submit();" style="display:none;">
+                        <span class="color-swatch-bubble {% if hue.checked %}selected{% endif %}" style="background-color: {{ hue.color|default:'#C5A880' }};"></span>
+                        <span class="pdp-visually-hidden">{{ hue.name }}</span>
+                    </label>
+                    {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Ethical standards filter -- {% endcomment %}
+            <!-- 9. Ethical Standards -->
             {% if filter_ethical %}
             <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Ethical Standards</legend>
                 <button type="button" class="filter-node-trigger" aria-expanded="false">Ethical Standards</button>
                 <div class="filter-node-content">
-                    {% for std in filter_ethical %}
+                    {% for eth in filter_ethical %}
                     <label class="filter-list-option">
-                        <input type="checkbox" name="ethical" value="{{ std.name|escape }}" {% if std.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ std.name|default:'' }}</span>
+                        <input type="checkbox" name="ethical" value="{{ eth.name|escape }}" {% if eth.checked %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">{{ eth.name|default:'' }}</span>
+                        <span class="facet-count-badge">{{ eth.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Curated collections filter -- {% endcomment %}
-            {% if filter_collections %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Curated Collections</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Curated Collections</button>
-                <div class="filter-node-content">
-                    {% for collection in filter_collections %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="collection" value="{{ collection.slug|escape }}" {% if collection.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ collection.name|default:'' }}</span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </fieldset>
-            {% endif %}
-
-            {% comment %} -- Tags filter -- {% endcomment %}
+            <!-- 10. Product Tags Matrix -->
             {% if filter_tags %}
             <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Descriptive Tags</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Descriptive Tags</button>
-                <div class="filter-node-content">
+                <button type="button" class="filter-node-trigger" aria-expanded="false">Product Tags</button>
+                <div class="filter-node-content tag-cloud-matrix">
                     {% for tag in filter_tags %}
-                    <label class="filter-list-option">
+                    <label class="filter-chip-item">
                         <input type="checkbox" name="tag" value="{{ tag.slug|escape }}" {% if tag.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ tag.name|default:'' }}</span>
+                        <span class="filter-chip-visual">#{{ tag.name }} {{ tag.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Featured status filter -- {% endcomment %}
+            <!-- 11. Craft Collections -->
+            {% if filter_collections %}
             <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Featured Status</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Featured Masterpieces</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">Collections</button>
                 <div class="filter-node-content">
+                    {% for col in filter_collections %}
                     <label class="filter-list-option">
-                        <input type="checkbox" name="featured" value="true" {% if request.GET.featured == 'true' %}checked{% endif %} onchange="this.form.submit();">
-                        <span>Featured Only</span>
-                    </label>
-                </div>
-            </fieldset>
-
-            {% comment %} -- Variants filter -- {% endcomment %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Product Variations</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Product Variations</button>
-                <div class="filter-node-content">
-                    <label class="filter-list-option">
-                        <input type="radio" name="variants" value="" {% if not request.GET.variants %}checked{% endif %} onchange="this.form.submit();">
-                        <span>All Products</span>
-                    </label>
-                    <label class="filter-list-option">
-                        <input type="radio" name="variants" value="true" {% if request.GET.variants == 'true' %}checked{% endif %} onchange="this.form.submit();">
-                        <span>Has Variations</span>
-                    </label>
-                    <label class="filter-list-option">
-                        <input type="radio" name="variants" value="false" {% if request.GET.variants == 'false' %}checked{% endif %} onchange="this.form.submit();">
-                        <span>Single Items Only</span>
-                    </label>
-                </div>
-            </fieldset>
-
-            {% comment %} -- Inventory availability filter (driven by inventory context) -- {% endcomment %}
-            {% if filter_availability %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Inventory Availability</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Availability</button>
-                <div class="filter-node-content">
-                    {% for avail in filter_availability %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="availability" value="{{ avail.value|escape }}" {% if avail.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ avail.label|default:'' }}</span>
+                        <input type="checkbox" name="collection" value="{{ col.slug|escape }}" {% if col.checked %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">{{ col.name|default:'' }}</span>
+                        <span class="facet-count-badge">{{ col.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
                 </div>
             </fieldset>
             {% endif %}
 
-            {% comment %} -- Dimensions filter -- {% endcomment %}
-            {% if filter_dimensions %}
+            <!-- 12. Special Offers & Sales -->
             <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Dimensions</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Dimensions</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">Promotions &amp; Sales</button>
                 <div class="filter-node-content">
-                    {% if filter_dimensions.length %}
-                    <div style="margin-bottom: 12px;">
-                        <strong style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted, #7A726A); text-transform: uppercase; letter-spacing: 0.05em;">Length Ranges</strong>
-                        {% for dim in filter_dimensions.length %}
-                        <label class="filter-list-option">
-                            <input type="checkbox" name="length" value="{{ dim.value|escape }}" {% if dim.checked %}checked{% endif %} onchange="this.form.submit();">
-                            <span>{{ dim.label|default:'' }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    {% if filter_dimensions.width %}
-                    <div style="margin-bottom: 12px;">
-                        <strong style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted, #7A726A); text-transform: uppercase; letter-spacing: 0.05em;">Width Ranges</strong>
-                        {% for dim in filter_dimensions.width %}
-                        <label class="filter-list-option">
-                            <input type="checkbox" name="width" value="{{ dim.value|escape }}" {% if dim.checked %}checked{% endif %} onchange="this.form.submit();">
-                            <span>{{ dim.label|default:'' }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    {% if filter_dimensions.height %}
-                    <div>
-                        <strong style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted, #7A726A); text-transform: uppercase; letter-spacing: 0.05em;">Height Ranges</strong>
-                        {% for dim in filter_dimensions.height %}
-                        <label class="filter-list-option">
-                            <input type="checkbox" name="height" value="{{ dim.value|escape }}" {% if dim.checked %}checked{% endif %} onchange="this.form.submit();">
-                            <span>{{ dim.label|default:'' }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-            </fieldset>
-            {% endif %}
-
-            {% comment %} -- Weight filter -- {% endcomment %}
-            {% if filter_weight %}
-            <fieldset class="filter-accordion-node">
-                <legend class="plp-visually-hidden">Weight Category</legend>
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Weight Category</button>
-                <div class="filter-node-content">
-                    {% for weight_class in filter_weight %}
                     <label class="filter-list-option">
-                        <input type="checkbox" name="weight" value="{{ weight_class.value|escape }}" {% if weight_class.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span>{{ weight_class.label|default:'' }}</span>
+                        <input type="checkbox" name="on_sale" value="true" {% if request.GET.on_sale == 'true' %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">Special Offer / On Sale</span>
+                        {% if facets.on_sale_count is not None %}
+                            <span class="facet-count-badge">{{ facets.on_sale_count|format_facet_count }}</span>
+                        {% endif %}
                     </label>
-                    {% endfor %}
                 </div>
             </fieldset>
-            {% endif %}
 
             <noscript>
                 <button type="submit" class="pagination-node" style="margin-top: 1rem; width: 100%;">Apply Filters</button>
             </noscript>
         </form>
 
-        {% comment %} -- Main product showcase matrix -- {% endcomment %}
-        <main class="product-showcase-matrix"
-              id="main-product-gallery"
-              role="list"
-              aria-label="Product results"
-              data-wishlist-base-url="{% if wishlist_url %}{{ wishlist_url|escapejs }}{% endif %}"
-              data-cart-save-url="{% if cart_save_url %}{{ cart_save_url|escapejs }}{% endif %}">
-
+        <!-- Product Gallery Grid -->
+        <main class="product-showcase-matrix" id="main-product-gallery" role="list" aria-label="Product results">
             {% if products %}
                 {% for product in products %}
                     {% include "catalog/product-card.html" with product=product %}
                 {% endfor %}
             {% else %}
                 <div class="plp-empty-state" role="status" aria-live="polite">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M8 12h8"></path>
-                    </svg>
                     <p>No masterpieces match your filtering selections.</p>
-                    <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}" aria-label="Clear all filters">Clear Filters</a>
+                    <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}" aria-label="Clear all filters">Clear All Filters</a>
                 </div>
             {% endif %}
         </main>
     </div>
 
+    <!-- Pagination -->
     {% if products.has_other_pages %}
     <nav class="catalog-pagination-nav" aria-label="Catalog Navigation Panel">
         {% if products.has_previous %}
-            <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&amp;{{ key|escape }}={{ value|escape }}{% endif %}{% endfor %}"
-               class="pagination-node"
-               rel="prev"
-               aria-label="Previous Page">&lsaquo;</a>
-        {% else %}
-            <span class="pagination-node disabled" aria-hidden="true">&lsaquo;</span>
+            <a href="?{% url_replace page=products.previous_page_number %}" class="pagination-node" rel="prev" aria-label="Previous Page">&lsaquo;</a>
         {% endif %}
 
         {% for i in products.paginator.page_range %}
             {% if products.number == i %}
                 <span class="pagination-node active" aria-current="page">{{ i }}</span>
             {% else %}
-                <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&amp;{{ key|escape }}={{ value|escape }}{% endif %}{% endfor %}"
-                   class="pagination-node"
-                   aria-label="Go to page {{ i }}">{{ i }}</a>
+                <a href="?{% url_replace page=i %}" class="pagination-node" aria-label="Go to page {{ i }}">{{ i }}</a>
             {% endif %}
         {% endfor %}
 
         {% if products.has_next %}
-            <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&amp;{{ key|escape }}={{ value|escape }}{% endif %}{% endfor %}"
-               class="pagination-node"
-               rel="next"
-               aria-label="Next Page">&rsaquo;</a>
-        {% else %}
-            <span class="pagination-node disabled" aria-hidden="true">&rsaquo;</span>
+            <a href="?{% url_replace page=products.next_page_number %}" class="pagination-node" rel="next" aria-label="Next Page">&rsaquo;</a>
         {% endif %}
     </nav>
     {% endif %}
@@ -776,81 +339,4 @@
 {% block extra_js %}
     <script src="{% static 'catalog/js/product-list.js' %}"></script>
     <script src="{% static 'catalog/js/product-card.js' %}"></script>
-    <script>
-        (function() {
-            'use strict';
-
-            function initFilterAccordions() {
-                var nodes = document.querySelectorAll('.filter-accordion-node');
-                for (var i = 0; i < nodes.length; i++) {
-                    (function(node) {
-                        var trigger = node.querySelector('.filter-node-trigger');
-                        var content = node.querySelector('.filter-node-content');
-                        if (!trigger || !content) return;
-                        trigger.addEventListener('click', function() {
-                            var isActive = node.classList.contains('active');
-                            if (isActive) {
-                                node.classList.remove('active');
-                                trigger.setAttribute('aria-expanded', 'false');
-                            } else {
-                                node.classList.add('active');
-                                trigger.setAttribute('aria-expanded', 'true');
-                            }
-                        });
-                    })(nodes[i]);
-                }
-            }
-
-            function initPriceRange() {
-                var rangeInput = document.getElementById('priceRangeInput');
-                var maxLabel = document.getElementById('maxPriceLabel');
-                if (!rangeInput || !maxLabel) return;
-                function formatNumber(n) {
-                    try {
-                        return new Intl.NumberFormat().format(parseInt(n, 10) || 0);
-                    } catch (e) {
-                        return String(parseInt(n, 10) || 0);
-                    }
-                }
-                rangeInput.addEventListener('input', function() {
-                    var currency = (rangeInput.closest('form') && rangeInput.closest('form').dataset.currency) || 'NPR';
-                    if (maxLabel) {
-                        maxLabel.textContent = 'Max: ' + currency + ' ' + formatNumber(rangeInput.value);
-                    }
-                });
-            }
-
-            function initLazyLoadMore() {
-                if (!('IntersectionObserver' in window)) return;
-                var sentinel = document.getElementById('plp-load-more-sentinel');
-                if (!sentinel) return;
-                var loading = false;
-                var observer = new IntersectionObserver(function(entries) {
-                    for (var i = 0; i < entries.length; i++) {
-                        var entry = entries[i];
-                        if (entry.isIntersecting && !loading) {
-                            loading = true;
-                            window.dispatchEvent(new CustomEvent('gobindas:plp:load-more', {
-                                detail: { page: parseInt(sentinel.dataset.nextPage || '2', 10) }
-                            }));
-                            setTimeout(function() { loading = false; }, 500);
-                        }
-                    }
-                }, { rootMargin: '200px' });
-                observer.observe(sentinel);
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                    initFilterAccordions();
-                    initPriceRange();
-                    initLazyLoadMore();
-                });
-            } else {
-                initFilterAccordions();
-                initPriceRange();
-                initLazyLoadMore();
-            }
-        })();
-    </script>
 {% endblock %}

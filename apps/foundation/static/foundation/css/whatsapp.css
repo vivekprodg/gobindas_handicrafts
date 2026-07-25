@@ -1,0 +1,67 @@
+/* ==========================================================================
+   FLOATING WHATSAPP CONCIERGE SUPPORT WIDGET
+   ========================================================================== */
+.whatsapp-widget-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    direction: ltr;
+}
+
+.whatsapp-float-btn {
+    width: 56px;
+    height: 56px;
+    background-color: #25D366;
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
+    text-decoration: none;
+    position: relative;
+}
+
+.whatsapp-float-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+    background-color: #20BA5A;
+}
+
+.whatsapp-tooltip {
+    background-color: var(--brand-dark, #2A2621);
+    color: var(--brand-light, #FFFFFF);
+    font-family: var(--font-ui, 'Inter', sans-serif);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(10px);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
+}
+
+.whatsapp-widget-container:hover .whatsapp-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+    .whatsapp-widget-container {
+        bottom: 1.25rem;
+        right: 1.25rem;
+    }
+    .whatsapp-tooltip {
+        display: none;
+    }
+}

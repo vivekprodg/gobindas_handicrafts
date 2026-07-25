@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Select Payment Method | Gobindas Handicrafts{% endblock %}
+
+{% block content %}
+<div class="payment-gateways-container">
+    <h2 style="font-family: 'Cinzel', serif; margin-bottom: 0.5rem;">Select Payment Method</h2>
+    <p style="color: #7A726A; margin-bottom: 2rem;">Order Reference: <strong>#{{ order.order_number }}</strong> | Total: <strong>NPR {{ order.grand_total|floatformat:2|intcomma }}</strong></p>
+
+    <form method="post" action="{% url 'payments:checkout' order_id=order.id %}">
+        {% csrf_token %}
+        {% for gateway in gateways %}
+        <label class="gateway-card-option {% if forloop.first %}selected{% endif %}">
+            <input type="radio" name="gateway" value="{{ gateway.code }}" {% if forloop.first %}checked{% endif %} required>
+            <div>
+                <strong style="display: block; font-size: 1rem; color: #1A1512;">{{ gateway.title }}</strong>
+                <span style="font-size: 0.85rem; color: #7A726A;">{{ gateway.description }}</span>
+            </div>
+        </label>
+        {% endfor %}
+
+        <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Proceed to Pay</button>
+    </form>
+</div>
+{% endblock %}

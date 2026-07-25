@@ -1,0 +1,329 @@
+/* ==========================================================================
+   ULTRA-PREMIUM COUPONS & PROMOTIONAL VOUCHERS MODULE STYLES
+   ========================================================================== */
+
+.coupons-widget-container {
+    --gold: #B88A44;
+    --gold-dark: #91682B;
+    --gold-hover: #D4A963;
+    --gold-light: #F8F3E9;
+    --dark: #2A2621;
+    --border-light: rgba(184, 138, 68, 0.25);
+    --font-brand: 'Cinzel', serif;
+    --font-ui: 'Inter', sans-serif;
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    font-family: var(--font-ui);
+    margin: 1.5rem 0;
+    width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   1. APPLIED COUPON CARD
+   -------------------------------------------------------------------------- */
+.applied-coupon-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #ffffff 0%, var(--gold-light) 100%);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(184, 138, 68, 0.12);
+    animation: fadeIn 0.4s ease;
+}
+
+.coupon-tag-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gold-dark);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.applied-code-text {
+    font-family: var(--font-brand);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+.coupon-savings-info {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.savings-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #777777;
+}
+
+.savings-amount {
+    font-size: 1rem;
+    color: var(--dark);
+}
+
+.btn-remove-coupon {
+    background: transparent;
+    border: none;
+    color: #aa3333;
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.btn-remove-coupon:hover {
+    background: rgba(200, 0, 0, 0.1);
+    transform: scale(1.1);
+}
+
+/* --------------------------------------------------------------------------
+   2. FORM & INPUT GROUP
+   -------------------------------------------------------------------------- */
+.coupon-form-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+}
+
+.coupon-input-group {
+    display: flex;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.coupon-text-input {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    color: var(--dark);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+
+.coupon-text-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(184, 138, 68, 0.15);
+}
+
+.btn-apply-coupon {
+    padding: 0 1.75rem;
+    background: var(--gold);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-apply-coupon:hover {
+    background: var(--gold-hover);
+    box-shadow: 0 4px 12px rgba(184, 138, 68, 0.25);
+    transform: translateY(-1px);
+}
+
+.coupon-feedback-message {
+    margin-top: 0.6rem;
+    font-size: 0.825rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+
+.coupon-feedback-message.success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.coupon-feedback-message.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+/* --------------------------------------------------------------------------
+   3. PUBLIC PROMOTIONAL COUPONS DRAWER
+   -------------------------------------------------------------------------- */
+.public-coupons-drawer {
+    margin-top: 1.5rem;
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: #fafafa;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.drawer-header:hover {
+    background: var(--gold-light);
+}
+
+.drawer-title {
+    font-family: var(--font-brand);
+    font-size: 1rem;
+    color: var(--gold-dark);
+    margin: 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.drawer-subtitle {
+    font-size: 0.75rem;
+    color: #777777;
+    margin: 0.25rem 0 0;
+}
+
+.drawer-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--gold-dark);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.public-coupons-drawer.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.public-coupons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+
+.coupon-voucher-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    background: #ffffff;
+    border: 1px dashed var(--gold);
+    border-radius: 6px;
+    transition: var(--transition);
+}
+
+.coupon-voucher-card:hover {
+    background: var(--gold-light);
+    box-shadow: 0 4px 12px rgba(184, 138, 68, 0.08);
+}
+
+.voucher-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: var(--gold);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+}
+
+.voucher-code-title {
+    display: block;
+    font-family: var(--font-brand);
+    font-size: 0.95rem;
+    color: var(--dark);
+    text-transform: uppercase;
+}
+
+.voucher-headline {
+    font-size: 0.8rem;
+    color: #555555;
+    margin: 0.15rem 0;
+}
+
+.voucher-min-spend {
+    font-size: 0.7rem;
+    color: var(--gold-dark);
+    font-weight: 500;
+}
+
+.btn-quick-apply {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold-dark);
+    border-radius: 4px;
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-quick-apply:hover {
+    background: var(--gold);
+    color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   4. ANIMATIONS & SPINNER
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.spinner-svg {
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+    .applied-coupon-card {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+    .coupon-savings-info {
+        text-align: left;
+    }
+}

@@ -3,55 +3,6 @@ Enterprise-grade catalog domain models for the handicraft e-commerce platform.
 
 This module is the SINGLE SOURCE OF TRUTH for product description, taxonomy,
 merchandising, SEO, and presentation metadata.
-
-ARCHITECTURE
-============
-
-The Catalog domain is intentionally INVENTORY-AGNOSTIC. The Inventory app
-is the single source of truth for:
-
-    * Stock levels
-    * Quantities
-    * Availability
-    * Reservations
-    * Allocations
-    * Warehouses
-    * Stock movements
-    * Low stock
-    * Out of stock
-    * Safety stock
-    * Incoming stock
-    * Inventory valuation
-
-Catalog only DESCRIBES products. It never stores stock counts, never
-exposes stock status, and never makes inventory-related decisions.
-
-INVENTORY RELATIONSHIP
-======================
-
-Inventory references Product / ProductVariant by primary key and SKU.
-Catalog does NOT import Inventory models. There are no ForeignKeys from
-Catalog to Inventory. There is no circular import.
-
-When a template or API needs to display stock status, it must query the
-Inventory app's selector or service layer. Catalog is a pure description
-domain.
-
-DESIGN PRINCIPLES
-=================
-
-* **CMS-Driven**: Every configurable value comes from the database.
-* **Optional Fields**: Every field supports blank=True and null=True where
-  technically possible. No field is mandatory.
-* **Enterprise Database Design**: Proper indexes, constraints, Meta classes.
-* **Django 5.1+ Best Practices**: TextChoices, QuerySets, Managers, etc.
-* **OWASP Secure Coding**: Input validation, safe defaults, no mass
-  assignment risks.
-* **PEP 8 + Type Hints**: Python 3.13+ syntax throughout.
-* **Future-Proof**: Designed to integrate with future modules without
-  rewrites.
-
-Author: Handicraft E-commerce Engineering Team
 """
 
 from __future__ import annotations
@@ -59,7 +10,7 @@ from __future__ import annotations
 import uuid
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Dict, Iterable, List, Optional, Union
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
@@ -72,25 +23,13 @@ from django.utils.translation import gettext_lazy as _
 from apps.foundation.models import CMSBaseModel, SingletonCMSModel
 from apps.foundation.services import optimize_uploaded_image
 
-# ==============================================================================
-# MODULE-LEVEL CONSTANTS
-# ==============================================================================
-
-# Default page size for paginated catalog views.
 DEFAULT_CATALOG_PAGE_SIZE: int = 12
-
-# Rating bounds (mirrored by TextChoices in the model).
 MIN_RATING: int = 1
 MAX_RATING: int = 5
-
-# Default currency for catalog pricing fields. Can be overridden per-product.
 DEFAULT_CURRENCY: str = "NPR"
-
-# Default weight unit (catalog description only; inventory tracks its own).
 DEFAULT_WEIGHT_UNIT: str = "kg"
 DEFAULT_DIMENSION_UNIT: str = "cm"
 
-# Image optimization targets (best-effort, fall back gracefully).
 _CATEGORY_IMAGE_TARGET_BYTES: int = 300 * 1024
 _CATEGORY_IMAGE_MAX_WIDTH: int = 800
 _CATEGORY_IMAGE_MIN_WIDTH: int = 400
@@ -103,54 +42,34 @@ _COLLECTION_IMAGE_TARGET_BYTES: int = 400 * 1024
 _COLLECTION_IMAGE_MAX_WIDTH: int = 1200
 _COLLECTION_IMAGE_MIN_WIDTH: int = 600
 
-# ==============================================================================
-# MODULE-LEVEL VALIDATORS
-# ==============================================================================
-
 _hex_color_validator = RegexValidator(
     regex=r"^#(?:[0-9a-fA-F]{3}){1,2}$",
     message=_("Color must be a valid hex code (e.g. #FFFFFF or #FFF)."),
 )
 
-# ==============================================================================
-# UPLOAD PATH HELPERS
-# ==============================================================================
-
 def _upload_to_catalog_media(instance: Any, filename: str) -> str:
-    """
-    Generates a deterministic, collision-resistant upload path for any
-    catalog-related media file. Returns a relative path under
-    ``catalog/media/`` with a UUID-based filename.
-    """
     suffix = Path(filename).suffix.lower() or ".webp"
     return f"catalog/media/{uuid.uuid4().hex}{suffix}"
 
-# ==============================================================================
-# CUSTOM MANAGERS AND QUERYSETS
-# ==============================================================================
 class CategoryQuerySet(models.QuerySet["Category"]):
-    """Custom QuerySet for the Category model."""
-
-    def active(self) -> "CategoryQuerySet":
+    def active(self) -> CategoryQuerySet:
         return self.filter(is_active=True)
 
-    def root(self) -> "CategoryQuerySet":
+    def root(self) -> CategoryQuerySet:
         return self.filter(parent__isnull=True)
 
-    def children_of(self, parent: "Category | None") -> "CategoryQuerySet":
+    def children_of(self, parent: Category | None) -> CategoryQuerySet:
         if parent is None:
             return self.none()
         return self.filter(parent=parent)
 
-    def visible_in_menu(self) -> "CategoryQuerySet":
+    def visible_in_menu(self) -> CategoryQuerySet:
         return self.filter(is_active=True, show_in_menu=True)
 
-    def shown_on_homepage(self) -> "CategoryQuerySet":
+    def shown_on_homepage(self) -> CategoryQuerySet:
         return self.filter(is_active=True, show_on_homepage=True)
 
 class CategoryManager(models.Manager["Category"]):
-    """Custom manager for the Category model."""
-
     def get_queryset(self) -> CategoryQuerySet:
         return CategoryQuerySet(self.model, using=self._db)
 
@@ -167,14 +86,10 @@ class CategoryManager(models.Manager["Category"]):
         return self.get_queryset().shown_on_homepage()
 
 class ArtisanQuerySet(models.QuerySet["Artisan"]):
-    """Custom QuerySet for the Artisan model."""
-
-    def active(self) -> "ArtisanQuerySet":
+    def active(self) -> ArtisanQuerySet:
         return self.filter(is_active=True)
 
 class ArtisanManager(models.Manager["Artisan"]):
-    """Custom manager for the Artisan model."""
-
     def get_queryset(self) -> ArtisanQuerySet:
         return ArtisanQuerySet(self.model, using=self._db)
 
@@ -182,75 +97,176 @@ class ArtisanManager(models.Manager["Artisan"]):
         return self.get_queryset().active()
 
 class ProductQuerySet(models.QuerySet["Product"]):
-    """Custom QuerySet for the Product model with chainable helpers."""
-
-    def active(self) -> "ProductQuerySet":
+    def active(self) -> ProductQuerySet:
         return self.filter(is_active=True)
 
-    def inactive(self) -> "ProductQuerySet":
+    def inactive(self) -> ProductQuerySet:
         return self.filter(is_active=False)
 
-    def drafts(self) -> "ProductQuerySet":
+    def drafts(self) -> ProductQuerySet:
         return self.filter(status=Product.ProductStatus.DRAFT)
 
-    def archived(self) -> "ProductQuerySet":
+    def archived(self) -> ProductQuerySet:
         return self.filter(status=Product.ProductStatus.ARCHIVED)
 
-    def published(self) -> "ProductQuerySet":
-        return self.filter(
-            status=Product.ProductStatus.PUBLISHED,
-            is_active=True,
-        )
+    def published(self) -> ProductQuerySet:
+        return self.filter(status=Product.ProductStatus.PUBLISHED, is_active=True)
 
-    def featured(self) -> "ProductQuerySet":
+    def featured(self) -> ProductQuerySet:
         return self.filter(
             is_featured=True,
             is_active=True,
             status=Product.ProductStatus.PUBLISHED,
         )
 
-    def on_sale(self) -> "ProductQuerySet":
+    def on_sale(self) -> ProductQuerySet:
         return self.filter(
             original_price__isnull=False,
             price__isnull=False,
         ).filter(original_price__gt=F("price"))
 
-    def visible(self) -> "ProductQuerySet":
-        """Published, active, and within their publishing window."""
+    def by_rating(self, min_rating: Optional[Union[int, str]] = None) -> ProductQuerySet:
+        if min_rating is None or min_rating == "":
+            return self
+        try:
+            rating_val = int(min_rating)
+            if MIN_RATING <= rating_val <= MAX_RATING:
+                return self.filter(rating__gte=rating_val)
+        except (ValueError, TypeError):
+            pass
+        return self
+
+    def in_stock_only(self) -> ProductQuerySet:
+        """
+        Filters products that have available stock >= 1 either on product-level inventory
+        or on active product variants.
+        """
+        return self.filter(
+            Q(inventory_records__is_active=True, inventory_records__available_quantity__gt=F("inventory_records__reserved_quantity"))
+            | Q(variants__is_active=True, variants__inventory_records__is_active=True, variants__inventory_records__available_quantity__gt=F("variants__inventory_records__reserved_quantity"))
+        ).distinct()
+
+    def by_tags(self, tags: Optional[Iterable[Union[str, int]]]) -> ProductQuerySet:
+        if not tags:
+            return self
+        tag_list = [t for t in tags if t]
+        if not tag_list:
+            return self
+        
+        if isinstance(tag_list[0], int) or (isinstance(tag_list[0], str) and tag_list[0].isdigit()):
+            return self.filter(tags__id__in=tag_list).distinct()
+        return self.filter(Q(tags__slug__in=tag_list) | Q(tags__name__in=tag_list)).distinct()
+
+    def by_collections(self, collections: Optional[Iterable[Union[str, int]]]) -> ProductQuerySet:
+        if not collections:
+            return self
+        coll_list = [c for c in collections if c]
+        if not coll_list:
+            return self
+            
+        if isinstance(coll_list[0], int) or (isinstance(coll_list[0], str) and coll_list[0].isdigit()):
+            return self.filter(in_collections__id__in=coll_list).distinct()
+        return self.filter(Q(in_collections__slug__in=coll_list) | Q(in_collections__name__in=coll_list)).distinct()
+
+    def by_discount_percentage(self, min_discount_pct: Optional[Union[int, str, Decimal]] = None) -> ProductQuerySet:
+        if min_discount_pct is None or min_discount_pct == "":
+            return self
+        try:
+            min_pct = Decimal(str(min_discount_pct))
+            if min_pct <= Decimal("0"):
+                return self.on_sale()
+            # Formula: ((original_price - price) / original_price) * 100 >= min_pct
+            # => original_price - price >= (min_pct * original_price) / 100
+            # => price <= original_price * (1 - min_pct / 100)
+            multiplier = Decimal("1.00") - (min_pct / Decimal("100.00"))
+            return self.filter(
+                original_price__isnull=False,
+                price__isnull=False,
+                original_price__gt=F("price"),
+                price__lte=F("original_price") * multiplier,
+            )
+        except (InvalidOperation, TypeError, ValueError):
+            return self
+
+    def by_price_range(
+        self, min_price: Optional[Decimal] = None, max_price: Optional[Decimal] = None
+    ) -> ProductQuerySet:
+        qs = self
+        if min_price is not None:
+            try:
+                min_p = Decimal(str(min_price))
+                if min_p >= Decimal("0"):
+                    qs = qs.filter(price__gte=min_p)
+            except (InvalidOperation, TypeError, ValueError):
+                pass
+        if max_price is not None:
+            try:
+                max_p = Decimal(str(max_price))
+                if max_p >= Decimal("0"):
+                    qs = qs.filter(price__lte=max_p)
+            except (InvalidOperation, TypeError, ValueError):
+                pass
+        return qs
+
+    def by_variant_attributes(self, attributes: Optional[Dict[str, List[str]]] = None) -> ProductQuerySet:
+        if not attributes or not isinstance(attributes, dict):
+            return self
+        
+        qs = self
+        for attr_key, attr_values in attributes.items():
+            if not attr_key or not attr_values:
+                continue
+            values = attr_values if isinstance(attr_values, (list, tuple)) else [attr_values]
+            values = [str(v).strip() for v in values if v]
+            if not values:
+                continue
+            
+            # JSONField key lookup for variant attributes (e.g. attributes__size__in=['L', 'XL'])
+            filter_kwargs = {f"variants__attributes__{attr_key}__in": values, "variants__is_active": True}
+            qs = qs.filter(**filter_kwargs)
+            
+        return qs.distinct()
+
+    def visible(self) -> ProductQuerySet:
         now = timezone.now()
         return self.published().filter(
             Q(publish_from__isnull=True) | Q(publish_from__lte=now),
             Q(publish_until__isnull=True) | Q(publish_until__gt=now),
         )
 
-    def in_category(self, category: "Category | None") -> "ProductQuerySet":
+    def in_category(self, category: Category | None) -> ProductQuerySet:
         if category is None:
             return self
-        return self.filter(category=category)
+        category_ids = [category.id]
+        if not category.parent_id:
+            sub_ids = list(category.subcategories.filter(is_active=True).values_list("id", flat=True))
+            category_ids.extend(sub_ids)
+        return self.filter(category_id__in=category_ids)
 
-    def by_artisan(self, artisan: "Artisan | None") -> "ProductQuerySet":
+    def by_artisan(self, artisan: Artisan | None) -> ProductQuerySet:
         if artisan is None:
             return self
         return self.filter(artisan=artisan)
 
-    def by_material(self, material: "Material | None") -> "ProductQuerySet":
+    def by_material(self, material: Material | None) -> ProductQuerySet:
         if material is None:
             return self
         return self.filter(material=material)
 
-    def by_hue(self, hue: "Hue | None") -> "ProductQuerySet":
+    def by_hue(self, hue: Hue | None) -> ProductQuerySet:
         if hue is None:
             return self
         return self.filter(hue=hue)
 
-    def with_ethical_standards(
-        self, *standards: "EthicalStandard",
-    ) -> "ProductQuerySet":
+    def with_ethical_standards(self, *standards: EthicalStandard) -> ProductQuerySet:
         if not standards:
             return self
         return self.filter(ethical_standards__in=standards).distinct()
 
-    def search(self, query: str) -> "ProductQuerySet":
+    def search(self, query: str) -> ProductQuerySet:
+        if not query:
+            return self
+        query = str(query).strip()
         if not query:
             return self
         return self.filter(
@@ -260,18 +276,23 @@ class ProductQuerySet(models.QuerySet["Product"]):
             | Q(short_description__icontains=query)
             | Q(description__icontains=query)
             | Q(story__icontains=query)
-        )
+            | Q(category__name__icontains=query)
+            | Q(material__name__icontains=query)
+            | Q(artisan__name__icontains=query)
+            | Q(tags__name__icontains=query)
+            | Q(in_collections__name__icontains=query)
+        ).distinct()
 
-    def ordered_by_position(self) -> "ProductQuerySet":
+    def ordered_by_position(self) -> ProductQuerySet:
         return self.order_by("position", "-created_at")
 
-    def ordered_by_popularity(self) -> "ProductQuerySet":
+    def ordered_by_popularity(self) -> ProductQuerySet:
         return self.order_by("-wishlist_count", "-view_count")
 
-    def ordered_by_recency(self) -> "ProductQuerySet":
+    def ordered_by_recency(self) -> ProductQuerySet:
         return self.order_by("-created_at")
 
-    def with_related(self) -> "ProductQuerySet":
+    def with_related(self) -> ProductQuerySet:
         return self.select_related(
             "category",
             "artisan",
@@ -288,8 +309,6 @@ class ProductQuerySet(models.QuerySet["Product"]):
         )
 
 class ProductManager(models.Manager["Product"]):
-    """Custom manager for the Product model."""
-
     def get_queryset(self) -> ProductQuerySet:
         return ProductQuerySet(self.model, using=self._db)
 
@@ -308,26 +327,37 @@ class ProductManager(models.Manager["Product"]):
     def on_sale(self) -> ProductQuerySet:
         return self.get_queryset().on_sale()
 
+    def by_rating(self, min_rating: Optional[Union[int, str]] = None) -> ProductQuerySet:
+        return self.get_queryset().by_rating(min_rating)
+
+    def in_stock_only(self) -> ProductQuerySet:
+        return self.get_queryset().in_stock_only()
+
+    def by_tags(self, tags: Optional[Iterable[Union[str, int]]]) -> ProductQuerySet:
+        return self.get_queryset().by_tags(tags)
+
+    def by_collections(self, collections: Optional[Iterable[Union[str, int]]]) -> ProductQuerySet:
+        return self.get_queryset().by_collections(collections)
+
+    def by_discount_percentage(self, min_discount_pct: Optional[Union[int, str, Decimal]] = None) -> ProductQuerySet:
+        return self.get_queryset().by_discount_percentage(min_discount_pct)
+
     def search(self, query: str) -> ProductQuerySet:
         return self.get_queryset().search(query)
 
 class ProductVariantQuerySet(models.QuerySet["ProductVariant"]):
-    """Custom QuerySet for the ProductVariant model."""
-
-    def active(self) -> "ProductVariantQuerySet":
+    def active(self) -> ProductVariantQuerySet:
         return self.filter(is_active=True)
 
-    def default_variant(self) -> "ProductVariantQuerySet":
+    def default_variant(self) -> ProductVariantQuerySet:
         return self.filter(is_default=True, is_active=True)
 
-    def by_sku(self, sku: str) -> "ProductVariantQuerySet":
+    def by_sku(self, sku: str) -> ProductVariantQuerySet:
         if not sku:
             return self.none()
         return self.filter(sku__iexact=sku)
 
 class ProductVariantManager(models.Manager["ProductVariant"]):
-    """Custom manager for the ProductVariant model."""
-
     def get_queryset(self) -> ProductVariantQuerySet:
         return ProductVariantQuerySet(self.model, using=self._db)
 
@@ -337,50 +367,30 @@ class ProductVariantManager(models.Manager["ProductVariant"]):
     def by_sku(self, sku: str) -> ProductVariantQuerySet:
         return self.get_queryset().by_sku(sku)
 
-# ==============================================================================
-# 1. CATALOG SETTINGS (Singleton)
-# ==============================================================================
 class CatalogSettings(SingletonCMSModel):
-    """
-    Singleton CMS configuration for the entire catalog domain.
-
-    Holds CMS-driven default values for catalog-wide behavior. All fields
-    are optional with safe defaults so the platform can boot even if the
-    administrator has not yet configured any values.
-    """
-
     default_items_per_page = models.PositiveIntegerField(
         default=DEFAULT_CATALOG_PAGE_SIZE,
         blank=True,
         null=True,
         verbose_name=_("Default Items Per Page"),
-        help_text=_(
-            "Number of products shown per page in the category listing view."
-        ),
     )
     price_filter_min = models.PositiveIntegerField(
         default=500,
         blank=True,
         null=True,
         verbose_name=_("Price Filter Minimum (NPR)"),
-        help_text=_("Minimum range boundary for the price filter slider."),
     )
     price_filter_max = models.PositiveIntegerField(
         default=100000,
         blank=True,
         null=True,
         verbose_name=_("Price Filter Maximum (NPR)"),
-        help_text=_("Maximum range boundary for the price filter slider."),
     )
     show_stock_warning_threshold = models.PositiveIntegerField(
         default=5,
         blank=True,
         null=True,
         verbose_name=_("Stock Warning Threshold"),
-        help_text=_(
-            "Configured at the catalog level for UI hints; the Inventory "
-            "app remains the source of truth for actual stock state."
-        ),
     )
     default_currency = models.CharField(
         max_length=10,
@@ -388,7 +398,6 @@ class CatalogSettings(SingletonCMSModel):
         blank=True,
         null=True,
         verbose_name=_("Default Currency"),
-        help_text=_("ISO 4217 currency code used as the default for new products."),
     )
     default_weight_unit = models.CharField(
         max_length=10,
@@ -396,7 +405,6 @@ class CatalogSettings(SingletonCMSModel):
         blank=True,
         null=True,
         verbose_name=_("Default Weight Unit"),
-        help_text=_("Unit of measurement used for product weight fields."),
     )
     default_dimension_unit = models.CharField(
         max_length=10,
@@ -404,7 +412,6 @@ class CatalogSettings(SingletonCMSModel):
         blank=True,
         null=True,
         verbose_name=_("Default Dimension Unit"),
-        help_text=_("Unit of measurement used for product dimension fields."),
     )
 
     class Meta:
@@ -415,18 +422,7 @@ class CatalogSettings(SingletonCMSModel):
     def __str__(self) -> str:
         return str(_("Catalog Settings Configuration"))
 
-# ==============================================================================
-# 2. CATEGORY
-# ==============================================================================
 class Category(CMSBaseModel):
-    """
-    Top-level taxonomy for product categorization.
-
-    Supports a two-level hierarchy (Category -> Subcategory) only.
-    Deeper nesting is intentionally not supported to keep the catalog
-    navigation simple and CMS-driven.
-    """
-
     name = models.CharField(
         max_length=120,
         blank=True,
@@ -439,7 +435,6 @@ class Category(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Slug"),
-        help_text=_("URL-friendly identifier. Auto-generated from name if blank."),
     )
     parent = models.ForeignKey(
         "self",
@@ -448,7 +443,6 @@ class Category(CMSBaseModel):
         blank=True,
         related_name="subcategories",
         verbose_name=_("Parent Category"),
-        help_text=_("Leave blank if this is a top-level category."),
     )
     description = models.TextField(
         blank=True,
@@ -461,8 +455,6 @@ class Category(CMSBaseModel):
         null=True,
         verbose_name=_("Category Image"),
     )
-
-    # Visibility and control
     show_on_homepage = models.BooleanField(
         default=False,
         blank=True,
@@ -487,8 +479,6 @@ class Category(CMSBaseModel):
         null=True,
         verbose_name=_("Sort Order"),
     )
-
-    # SEO
     seo_title = models.CharField(
         max_length=150,
         blank=True,
@@ -530,10 +520,12 @@ class Category(CMSBaseModel):
             )
         if self.parent_id and self.parent and self.parent.parent_id:
             raise ValidationError(
-                {"parent": _(
-                    "Nesting categories beyond 2 levels "
-                    "(Category -> Subcategory) is not supported."
-                )}
+                {
+                    "parent": _(
+                        "Nesting categories beyond 2 levels "
+                        "(Category -> Subcategory) is not supported."
+                    )
+                }
             )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
@@ -552,7 +544,6 @@ class Category(CMSBaseModel):
                 )
                 self.image.save(optimized.filename, optimized.file, save=False)
             except Exception:
-                # Defensive: never block save on optimization failure.
                 pass
 
     def __str__(self) -> str:
@@ -570,17 +561,7 @@ class Category(CMSBaseModel):
     def is_subcategory(self) -> bool:
         return self.parent_id is not None
 
-# ==============================================================================
-# 3. ARTISAN (Master Craftsman / Brand)
-# ==============================================================================
 class Artisan(CMSBaseModel):
-    """
-    Represents the master craftsman, brand, or vendor of a product.
-
-    Used for product attribution, artisan story pages, and search
-    filtering. Has no inventory responsibility.
-    """
-
     name = models.CharField(
         max_length=120,
         blank=True,
@@ -615,7 +596,6 @@ class Artisan(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Origin Region/Province"),
-        help_text=_("e.g. Bhaktapur Prov., Patan Valley"),
     )
     website = models.URLField(
         max_length=255,
@@ -688,14 +668,7 @@ class Artisan(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Artisan")
 
-# ==============================================================================
-# 4. MATERIAL
-# ==============================================================================
 class Material(CMSBaseModel):
-    """
-    Raw material or composition used to craft a product.
-    """
-
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -721,21 +694,12 @@ class Material(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Material")
 
-# ==============================================================================
-# 5. HUE (Color Aesthetic)
-# ==============================================================================
 class Hue(CMSBaseModel):
-    """
-    Visual hue / color aesthetic used to describe a product. Useful
-    for color-based filtering and palette management.
-    """
-
     name = models.CharField(
         max_length=100,
         blank=True,
         null=True,
         verbose_name=_("Hue Name"),
-        help_text=_("e.g. Deep Mahogany, Gold Leaf"),
     )
     color_code = models.CharField(
         max_length=7,
@@ -743,14 +707,12 @@ class Hue(CMSBaseModel):
         null=True,
         validators=[_hex_color_validator],
         verbose_name=_("Color Hex Code"),
-        help_text=_("e.g. #4E2A14"),
     )
     swatch_image = models.ImageField(
         upload_to=_upload_to_catalog_media,
         blank=True,
         null=True,
         verbose_name=_("Swatch Image"),
-        help_text=_("Optional swatch override when hex is insufficient."),
     )
 
     class Meta:
@@ -765,24 +727,13 @@ class Hue(CMSBaseModel):
     def __str__(self) -> str:
         return f"{self.name or _('Unnamed Hue')} ({self.color_code or _('No Code')})"
 
-# ==============================================================================
-# 6. ETHICAL STANDARD
-# ==============================================================================
 class EthicalStandard(CMSBaseModel):
-    """
-    Certification or ethical commitment associated with a product
-    (e.g. Fair Trade, Eco-Friendly, Cruelty-Free).
-    """
-
     name = models.CharField(
         max_length=120,
         unique=True,
         blank=True,
         null=True,
         verbose_name=_("Ethical Standard"),
-        help_text=_(
-            "e.g. 100% Certified Fair Trade, Eco-Friendly Sourced Wood"
-        ),
     )
     description = models.TextField(
         blank=True,
@@ -794,7 +745,6 @@ class EthicalStandard(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Icon Class"),
-        help_text=_("e.g. fas fa-leaf"),
     )
     is_active = models.BooleanField(
         default=True,
@@ -816,16 +766,7 @@ class EthicalStandard(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Standard")
 
-# ==============================================================================
-# 7. COLLECTION (Legacy / Forward-Compatible)
-# ==============================================================================
 class Collection(CMSBaseModel):
-    """
-    Lightweight, presentation-only collection entity. Preserved for
-    backward compatibility with legacy code that referenced a flat
-    collection model.
-    """
-
     name = models.CharField(
         max_length=120,
         blank=True,
@@ -877,15 +818,7 @@ class Collection(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Collection")
 
-# ==============================================================================
-# 8. TAG (Legacy / Forward-Compatible)
-# ==============================================================================
 class Tag(CMSBaseModel):
-    """
-    Lightweight, presentation-only tag entity. Preserved for backward
-    compatibility with legacy code that referenced a flat tag model.
-    """
-
     name = models.CharField(
         max_length=50,
         unique=True,
@@ -920,22 +853,12 @@ class Tag(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Tag")
 
-# ==============================================================================
-# 9. VARIANT TYPE
-# ==============================================================================
 class VariantType(CMSBaseModel):
-    """
-    Axis along which a product can vary (e.g. Size, Color, Material).
-    A product is associated with one or more VariantType rows, and
-    each VariantType is associated with multiple VariantOption values.
-    """
-
     name = models.CharField(
         max_length=50,
         blank=True,
         null=True,
         verbose_name=_("Variant Type"),
-        help_text=_("e.g., Size, Color"),
     )
     display_order = models.PositiveIntegerField(
         default=0,
@@ -970,15 +893,7 @@ class VariantType(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Variant Type")
 
-# ==============================================================================
-# 10. VARIANT OPTION
-# ==============================================================================
 class VariantOption(CMSBaseModel):
-    """
-    A specific value within a VariantType (e.g. "Small" or "Red"
-    within "Size" or "Color").
-    """
-
     variant_type = models.ForeignKey(
         VariantType,
         on_delete=models.CASCADE,
@@ -990,7 +905,6 @@ class VariantOption(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Option Value"),
-        help_text=_("e.g., Small, Red"),
     )
     color_code = models.CharField(
         max_length=7,
@@ -998,7 +912,6 @@ class VariantOption(CMSBaseModel):
         null=True,
         validators=[_hex_color_validator],
         verbose_name=_("Color Hex Code"),
-        help_text=_("Optional. Used for color-style variant options."),
     )
     swatch_image = models.ImageField(
         upload_to=_upload_to_catalog_media,
@@ -1035,12 +948,7 @@ class VariantOption(CMSBaseModel):
         )
         return f"{type_name}: {self.value or _('Unnamed Option')}"
 
-# ==============================================================================
-# 11. PRODUCT HIGHLIGHT
-# ==============================================================================
 class ProductHighlight(CMSBaseModel):
-    """Short, attention-grabbing feature for a product."""
-
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -1052,7 +960,6 @@ class ProductHighlight(CMSBaseModel):
         max_length=100,
         blank=True,
         null=True,
-        help_text=_("e.g., fas fa-leaf"),
         verbose_name=_("Icon Class"),
     )
     display_order = models.PositiveIntegerField(
@@ -1081,12 +988,7 @@ class ProductHighlight(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Highlight")
 
-# ==============================================================================
-# 12. TRUST BADGE
-# ==============================================================================
 class TrustBadge(CMSBaseModel):
-    """Visual certification or trust signal (image-based)."""
-
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -1131,12 +1033,7 @@ class TrustBadge(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Trust Badge")
 
-# ==============================================================================
-# 13. PRODUCT LABEL
-# ==============================================================================
 class ProductLabel(CMSBaseModel):
-    """Stylized label (e.g. "New", "Limited", "Hand-Picked")."""
-
     name = models.CharField(
         max_length=50,
         unique=True,
@@ -1200,12 +1097,7 @@ class ProductLabel(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Label")
 
-# ==============================================================================
-# 14. PRODUCT ICON
-# ==============================================================================
 class ProductIcon(CMSBaseModel):
-    """Decorative icon used to highlight product attributes."""
-
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -1217,7 +1109,6 @@ class ProductIcon(CMSBaseModel):
         max_length=100,
         blank=True,
         null=True,
-        help_text=_("e.g., fas fa-star"),
         verbose_name=_("Icon Class"),
     )
     image = models.ImageField(
@@ -1252,38 +1143,13 @@ class ProductIcon(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Icon")
 
-# ==============================================================================
-# 15. PRODUCT (Main Masterpiece Model)
-# ==============================================================================
 class Product(CMSBaseModel):
-    """
-    The central catalog entity. Describes a product for display,
-    search, SEO, and merchandising purposes ONLY.
-
-    This model is intentionally INVENTORY-AGNOSTIC:
-
-        * No stock counts
-        * No availability flags
-        * No low-stock warnings
-        * No inventory validation
-        * No inventory business logic
-        * No inventory helper methods
-        * No inventory properties
-
-    Stock-related state is owned by the Inventory app, which references
-    products by primary key and SKU. Catalog and Inventory are
-    loosely coupled by primary key, never by ForeignKey, to avoid
-    circular imports and to allow Inventory to evolve independently.
-    """
-
     class ProductStatus(models.TextChoices):
-        """Publishing lifecycle states."""
         DRAFT = "draft", _("Draft")
         PUBLISHED = "published", _("Published")
         ARCHIVED = "archived", _("Archived")
 
     class ProductType(models.TextChoices):
-        """Type of product, drives fulfillment logic in downstream apps."""
         PHYSICAL = "physical", _("Physical Product")
         DIGITAL = "digital", _("Digital Product")
         SERVICE = "service", _("Service")
@@ -1291,7 +1157,6 @@ class Product(CMSBaseModel):
         GIFT_CARD = "gift_card", _("Gift Card")
         SUBSCRIPTION = "subscription", _("Subscription")
 
-    # --- Core Product Identification ---
     title = models.CharField(
         max_length=255,
         blank=True,
@@ -1304,7 +1169,6 @@ class Product(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Slug"),
-        help_text=_("URL-friendly identifier."),
     )
     sku = models.CharField(
         max_length=100,
@@ -1313,10 +1177,6 @@ class Product(CMSBaseModel):
         null=True,
         db_index=True,
         verbose_name=_("SKU"),
-        help_text=_(
-            "Stock Keeping Unit. The Inventory app references products "
-            "by this identifier."
-        ),
     )
     barcode = models.CharField(
         max_length=100,
@@ -1325,7 +1185,6 @@ class Product(CMSBaseModel):
         null=True,
         db_index=True,
         verbose_name=_("Barcode"),
-        help_text=_("UPC, EAN, ISBN, or other barcode identifier."),
     )
     product_type = models.CharField(
         max_length=24,
@@ -1346,15 +1205,12 @@ class Product(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Internal Reference"),
-        help_text=_("Internal SKU / catalog reference, not customer-facing."),
     )
 
-    # --- Content & Descriptions ---
     short_description = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Short Description"),
-        help_text=_("Displayed in lists and catalogs."),
     )
     description = models.TextField(
         blank=True,
@@ -1362,24 +1218,20 @@ class Product(CMSBaseModel):
         verbose_name=_("Full Description"),
     )
 
-    # --- Premium Narrative Fields ---
     story = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Artisan / Product Story"),
-        help_text=_("Legacy narratives and storyboards."),
     )
     crafting_process = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Crafting Process"),
-        help_text=_("Detailed explanation of how this masterpiece is crafted."),
     )
     care_instructions = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Care Instructions"),
-        help_text=_("Detailed care steps to preserve heritage materials."),
     )
     shipping_information = models.TextField(
         blank=True,
@@ -1408,7 +1260,6 @@ class Product(CMSBaseModel):
         verbose_name=_("Country of Origin"),
     )
 
-    # --- Pricing ---
     price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -1422,10 +1273,6 @@ class Product(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Original Price (NPR)"),
-        help_text=_(
-            "Optional. Populate to trigger sale pricing and line-through "
-            "original price."
-        ),
     )
     cost_price = models.DecimalField(
         max_digits=12,
@@ -1433,7 +1280,6 @@ class Product(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Cost Price (NPR)"),
-        help_text=_("Internal cost basis. Used by financial integrations."),
     )
     currency = models.CharField(
         max_length=10,
@@ -1441,17 +1287,14 @@ class Product(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Currency"),
-        help_text=_("ISO 4217 currency code for the pricing fields."),
     )
     tax_class = models.CharField(
         max_length=100,
         blank=True,
         null=True,
         verbose_name=_("Tax Class"),
-        help_text=_("CMS-driven tax classification reference."),
     )
 
-    # --- Product Relationships ---
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
@@ -1491,7 +1334,6 @@ class Product(CMSBaseModel):
         verbose_name=_("Ethical Standards"),
     )
 
-    # --- Structural Relational Features ---
     highlights = models.ManyToManyField(
         ProductHighlight,
         blank=True,
@@ -1517,7 +1359,6 @@ class Product(CMSBaseModel):
         verbose_name=_("Product Icons"),
     )
 
-    # --- Merchandising Relationships ---
     related_products = models.ManyToManyField(
         "self",
         blank=True,
@@ -1540,7 +1381,6 @@ class Product(CMSBaseModel):
         verbose_name=_("Cross Sell Products"),
     )
 
-    # --- Core Images ---
     primary_image = models.ImageField(
         upload_to=_upload_to_catalog_media,
         blank=True,
@@ -1560,53 +1400,44 @@ class Product(CMSBaseModel):
         verbose_name=_("Primary Video URL"),
     )
 
-    # --- Physical Dimensions ---
     length = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Length"),
-        help_text=_("Length in cm"),
     )
     width = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Width"),
-        help_text=_("Width in cm"),
     )
     height = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Height"),
-        help_text=_("Height in cm"),
     )
     weight = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Weight"),
-        help_text=_("Weight in kg"),
     )
 
-    # --- Merchandising & Presentation ---
     badge_text = models.CharField(
         max_length=60,
         blank=True,
         null=True,
         verbose_name=_("Primary Badge Text"),
-        help_text=_("e.g. Hand Carved, Limited Edition"),
     )
     secondary_badge_text = models.CharField(
         max_length=60,
         blank=True,
         null=True,
         verbose_name=_("Secondary Badge Text"),
-        help_text=_("e.g. Traditional, Bestseller"),
     )
     ribbon_text = models.CharField(
         max_length=50,
         blank=True,
         null=True,
         verbose_name=_("Ribbon Text"),
-        help_text=_("e.g. Sale, New Arrival"),
     )
     ribbon_bg_color = models.CharField(
         max_length=7,
@@ -1615,7 +1446,6 @@ class Product(CMSBaseModel):
         null=True,
         validators=[_hex_color_validator],
         verbose_name=_("Ribbon Background Color"),
-        help_text=_("Hex color code, e.g. #C5A880"),
     )
     ribbon_text_color = models.CharField(
         max_length=7,
@@ -1624,35 +1454,28 @@ class Product(CMSBaseModel):
         null=True,
         validators=[_hex_color_validator],
         verbose_name=_("Ribbon Text Color"),
-        help_text=_("Hex color code, e.g. #FFFFFF"),
     )
     rating = models.PositiveIntegerField(
         default=5,
         choices=[(i, str(i)) for i in range(MIN_RATING, MAX_RATING + 1)],
         blank=True,
         null=True,
+        db_index=True,
         verbose_name=_("Rating (1-5)"),
-        help_text=_("Denormalized star rating displayed on product pages."),
     )
     reviews_count = models.PositiveIntegerField(
         default=0,
         blank=True,
         null=True,
         verbose_name=_("Reviews Count"),
-        help_text=_("Denormalized count displayed on product pages."),
     )
 
-    # --- Analytics & Customer Interactions (Catalog-side) ---
     view_count = models.PositiveIntegerField(
         default=0,
         blank=True,
         null=True,
         db_index=True,
         verbose_name=_("View Count"),
-        help_text=_(
-            "Denormalized count of how many times this product was viewed. "
-            "This is product analytics only - it is independent of inventory."
-        ),
     )
     wishlist_count = models.PositiveIntegerField(
         default=0,
@@ -1660,13 +1483,8 @@ class Product(CMSBaseModel):
         null=True,
         db_index=True,
         verbose_name=_("Wishlist Count"),
-        help_text=_(
-            "Denormalized count of how many users have favorited/wishlisted "
-            "this product. Independent of inventory."
-        ),
     )
 
-    # --- Status & Publishing Management ---
     status = models.CharField(
         max_length=20,
         choices=ProductStatus.choices,
@@ -1687,6 +1505,7 @@ class Product(CMSBaseModel):
         default=True,
         blank=True,
         null=True,
+        db_index=True,
         verbose_name=_("Is Active"),
     )
     position = models.PositiveIntegerField(
@@ -1705,7 +1524,6 @@ class Product(CMSBaseModel):
         null=True, blank=True, verbose_name=_("Publish Until"),
     )
 
-    # --- SEO & Structured Data ---
     seo_title = models.CharField(
         max_length=150, blank=True, null=True, verbose_name=_("SEO Title"),
     )
@@ -1755,22 +1573,6 @@ class Product(CMSBaseModel):
         verbose_name=_("Schema.org Structured Data"),
     )
 
-    # ------------------------------------------------------------------
-    # CHANGED (related_name collision fix): Renamed ``related_name`` from
-    # ``"line_items"`` to ``"catalog_product_line_items"``.
-    #
-    # Rationale:
-    #   * This Product.cart FK targets ``orders.OrderItem``. After the
-    #     orders-side rename, the ``"line_items"`` name is no longer
-    #     available on OrderItem (the orders app now uses
-    #     ``"catalog_product_line_items"`` as the canonical reverse
-    #     manager for Product→OrderItem and reserves ``"line_items"``
-    #     for the catalog-side reverse accessor ProductVariant→OrderItem).
-    #   * Reusing ``"line_items"`` here would re-introduce the collision
-    #     that the orders-app fix eliminated. We use a name that is
-    #     semantically clear (Product→OrderItem) and unique within the
-    #     single OrderItem model.
-    # ------------------------------------------------------------------
     cart = models.ForeignKey(
         "orders.OrderItem",
         on_delete=models.PROTECT,
@@ -1778,11 +1580,6 @@ class Product(CMSBaseModel):
         blank=True,
         related_name="catalog_product_line_items",
         verbose_name=_("Order Line Item (Audit Reference)"),
-        help_text=_(
-            "AUDIT-ONLY traceability link to the cart line item that "
-            "produced this product's cart snapshot. The Order app "
-            "remains the single source of truth for cart state."
-        ),
     )
 
     objects: ClassVar[ProductManager] = ProductManager()
@@ -1794,6 +1591,9 @@ class Product(CMSBaseModel):
         db_table = "catalog_product"
         indexes = [
             models.Index(fields=["status", "is_active"]),
+            models.Index(fields=["status", "is_active", "price"]),
+            models.Index(fields=["status", "is_active", "rating"]),
+            models.Index(fields=["status", "is_active", "is_featured"]),
             models.Index(fields=["sku"]),
             models.Index(fields=["barcode"]),
             models.Index(fields=["-wishlist_count"]),
@@ -1801,12 +1601,9 @@ class Product(CMSBaseModel):
             models.Index(fields=["slug"]),
             models.Index(fields=["category", "status"]),
             models.Index(fields=["artisan", "status"]),
-            models.Index(fields=["status", "is_featured"]),
             models.Index(fields=["position"]),
         ]
         constraints = [
-            # SKU uniqueness is implicitly enforced by unique=True on the field.
-            # We add an explicit UniqueConstraint for NULL-aware behavior.
             models.UniqueConstraint(
                 fields=["sku"],
                 condition=Q(sku__isnull=False),
@@ -1827,7 +1624,6 @@ class Product(CMSBaseModel):
                 condition=Q(internal_reference__isnull=False),
                 name="catalog_product_unique_internal_ref_when_set",
             ),
-            # Price validation: original price must be > current price.
             models.CheckConstraint(
                 check=(
                     Q(original_price__isnull=True)
@@ -1836,7 +1632,6 @@ class Product(CMSBaseModel):
                 ),
                 name="catalog_product_original_price_gt_price",
             ),
-            # Rating must be within bounds.
             models.CheckConstraint(
                 check=(
                     Q(rating__isnull=True)
@@ -1846,9 +1641,6 @@ class Product(CMSBaseModel):
             ),
         ]
 
-    # ==================================================================
-    # Validation
-    # ==================================================================
     def clean(self) -> None:
         super().clean()
         if (
@@ -1865,14 +1657,9 @@ class Product(CMSBaseModel):
         if self.publish_from and self.publish_until:
             if self.publish_from >= self.publish_until:
                 raise ValidationError(
-                    {"publish_until": _(
-                        "Publish-until must be after publish-from."
-                    )}
+                    {"publish_until": _("Publish-until must be after publish-from.")}
                 )
 
-    # ==================================================================
-    # Persistence
-    # ==================================================================
     def save(self, *args: Any, **kwargs: Any) -> None:
         self._optimize_primary_image()
         self._optimize_hover_image()
@@ -1939,9 +1726,6 @@ class Product(CMSBaseModel):
     def __str__(self) -> str:
         return self.title or _("Unnamed Product")
 
-    # ==================================================================
-    # Computed / Cached Properties (NO INVENTORY)
-    # ==================================================================
     @cached_property
     def display_title(self) -> str:
         return self.title or _("Unnamed Product")
@@ -2001,12 +1785,10 @@ class Product(CMSBaseModel):
 
     @cached_property
     def is_visible(self) -> bool:
-        """Catalog visibility flag (no inventory involved)."""
         return self.is_in_publishing_window
 
     @cached_property
     def default_image(self):
-        """Returns the best available image for the product."""
         if self.primary_image:
             return self.primary_image
         first_gallery = self.gallery_images.order_by("position", "id").first()
@@ -2031,47 +1813,32 @@ class Product(CMSBaseModel):
 
     @cached_property
     def favorite_count(self) -> int:
-        """Catalog-side alias for wishlist statistics."""
         return int(self.wishlist_count or 0)
 
     @cached_property
     def wishlist_total(self) -> int:
-        """Alias for ``favorite_count`` for diverse template definitions."""
         return self.favorite_count
 
-    # ==================================================================
-    # Counter Helpers (Catalog-side analytics only, NO INVENTORY)
-    # ==================================================================
     def increment_view_count(self, commit: bool = True) -> None:
-        """Atomically increments the view counter."""
         self.view_count = F("view_count") + 1
         if commit:
             self.save(update_fields=["view_count", "updated_at"])
             self.refresh_from_db(fields=["view_count"])
 
     def increment_wishlist_count(self, commit: bool = True) -> None:
-        """Atomically increments the wishlist counter."""
         self.wishlist_count = F("wishlist_count") + 1
         if commit:
             self.save(update_fields=["wishlist_count", "updated_at"])
             self.refresh_from_db(fields=["wishlist_count"])
 
     def decrement_wishlist_count(self, commit: bool = True) -> None:
-        """Atomically decrements the wishlist counter."""
         if self.wishlist_count and self.wishlist_count > 0:
             self.wishlist_count = F("wishlist_count") - 1
             if commit:
                 self.save(update_fields=["wishlist_count", "updated_at"])
                 self.refresh_from_db(fields=["wishlist_count"])
 
-    # ==================================================================
-    # Cross-Sell / Recommendation Helpers
-    # ==================================================================
     def get_recommended_products(self, limit: int = 4) -> models.QuerySet["Product"]:
-        """
-        Returns curated related products. Falls back to popular items
-        in the same category. Does NOT query inventory.
-        """
         related = self.related_products.filter(
             is_active=True, status=self.ProductStatus.PUBLISHED
         )
@@ -2099,18 +1866,14 @@ class Product(CMSBaseModel):
             is_active=True, status=self.ProductStatus.PUBLISHED
         )[:limit]
 
-    def get_default_variant(self) -> "ProductVariant | None":
+    def get_default_variant(self) -> ProductVariant | None:
         return self.variants.filter(is_default=True, is_active=True).first()
 
     def get_active_variants(self) -> models.QuerySet["ProductVariant"]:
         return self.variants.filter(is_active=True).order_by("sort_order", "id")
 
-    # ==================================================================
-    # Class-Level Helpers
-    # ==================================================================
     @classmethod
     def get_trending_products(cls, limit: int = 10) -> models.QuerySet["Product"]:
-        """Returns trending products by denormalized popularity counters."""
         return cls.objects.filter(
             status=cls.ProductStatus.PUBLISHED,
             is_active=True,
@@ -2118,7 +1881,6 @@ class Product(CMSBaseModel):
 
     @classmethod
     def get_popular_products(cls, limit: int = 10) -> models.QuerySet["Product"]:
-        """Returns popular products by view count."""
         return cls.objects.filter(
             status=cls.ProductStatus.PUBLISHED,
             is_active=True,
@@ -2126,24 +1888,12 @@ class Product(CMSBaseModel):
 
     @classmethod
     def get_new_arrivals(cls, limit: int = 10) -> models.QuerySet["Product"]:
-        """Returns recently published products."""
         return cls.objects.filter(
             status=cls.ProductStatus.PUBLISHED,
             is_active=True,
         ).order_by("-published_at", "-created_at")[:limit]
 
-# ==============================================================================
-# 16. PRODUCT VARIANT
-# ==============================================================================
 class ProductVariant(CMSBaseModel):
-    """
-    A specific purchasable variant of a product.
-
-    Describes the variant only. Does NOT manage inventory. Stock levels,
-    availability, and reservations are owned by the Inventory app, which
-    references variants by primary key and SKU.
-    """
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -2155,9 +1905,6 @@ class ProductVariant(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Variant Name"),
-        help_text=_(
-            "Auto-generated from attribute values, or set explicitly."
-        ),
     )
     sku = models.CharField(
         max_length=100,
@@ -2166,7 +1913,6 @@ class ProductVariant(CMSBaseModel):
         null=True,
         db_index=True,
         verbose_name=_("SKU"),
-        help_text=_("Variant-level SKU. The Inventory app references variants by this identifier."),
     )
     barcode = models.CharField(
         max_length=100,
@@ -2175,29 +1921,23 @@ class ProductVariant(CMSBaseModel):
         null=True,
         db_index=True,
         verbose_name=_("Barcode"),
-        help_text=_("UPC, EAN, ISBN, or other barcode identifier."),
     )
 
-    # --- Pricing ---
     price_override = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Price Override"),
-        help_text=_("Optional. When set, replaces the parent product price."),
     )
     compare_price = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Compare At Price"),
-        help_text=_("Optional. Strikethrough price for sale display."),
     )
 
-    # --- Physical Description Overrides ---
     weight = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Weight Override"),
-        help_text=_("Optional. Overrides the parent product weight."),
     )
     length = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
@@ -2215,24 +1955,17 @@ class ProductVariant(CMSBaseModel):
         verbose_name=_("Height Override"),
     )
 
-    # --- Visual Override ---
     image = models.ImageField(
         upload_to=_upload_to_catalog_media,
         blank=True,
         null=True,
         verbose_name=_("Variant Image"),
-        help_text=_("Optional. Overrides the product image when this variant is selected."),
     )
 
-    # --- Presentation Metadata ---
     attributes = models.JSONField(
         default=dict,
         blank=True,
         verbose_name=_("Attributes"),
-        help_text=_(
-            "JSON object describing the variant attributes "
-            "(e.g. {\"size\": \"M\", \"color\": \"red\"})."
-        ),
     )
     color_code = models.CharField(
         max_length=7,
@@ -2242,7 +1975,6 @@ class ProductVariant(CMSBaseModel):
         verbose_name=_("Color Hex Code"),
     )
 
-    # --- Status & Ordering ---
     is_active = models.BooleanField(
         default=True, blank=True, null=True, db_index=True,
         verbose_name=_("Is Active"),
@@ -2250,31 +1982,12 @@ class ProductVariant(CMSBaseModel):
     is_default = models.BooleanField(
         default=False, blank=True, null=True, db_index=True,
         verbose_name=_("Is Default Variant"),
-        help_text=_(
-            "Marks the default variant shown when a product page loads."
-        ),
     )
     sort_order = models.PositiveIntegerField(
         default=0, blank=True, null=True, db_index=True,
         verbose_name=_("Sort Order"),
     )
 
-    # ------------------------------------------------------------------
-    # CHANGED (related_name collision fix): Renamed ``related_name`` from
-    # ``"line_items"`` to ``"catalog_variant_line_items"``.
-    #
-    # Rationale:
-    #   * This ProductVariant.cart FK also targets ``orders.OrderItem``.
-    #   * In File 1 we fixed the orders-side collision by renaming
-    #     OrderItem.product.related_name and OrderItem.variant.related_name
-    #     away from the shared ``"order_items"`` value, and we set
-    #     Order.shipping_address and Order.billing_address to ``"+"``.
-    #   * The string token ``"line_items"`` is therefore reserved for
-    #     the catalog-side reverse accessor (ProductVariant→OrderItem).
-    #   * Using the more specific ``"catalog_variant_line_items"`` here
-    #     preserves the unique-name guarantee across the entire
-    #     OrderItem model.
-    # ------------------------------------------------------------------
     cart = models.ForeignKey(
         "orders.OrderItem",
         on_delete=models.PROTECT,
@@ -2282,11 +1995,6 @@ class ProductVariant(CMSBaseModel):
         blank=True,
         related_name="catalog_variant_line_items",
         verbose_name=_("Order Line Item (Audit Reference)"),
-        help_text=_(
-            "AUDIT-ONLY traceability link to the cart line item that "
-            "produced this variant's cart snapshot. The Order app "
-            "remains the single source of truth for cart state."
-        ),
     )
 
     objects: ClassVar[ProductVariantManager] = ProductVariantManager()
@@ -2375,7 +2083,6 @@ class ProductVariant(CMSBaseModel):
 
     @cached_property
     def effective_price(self) -> Decimal | None:
-        """Returns the variant's price override or the parent's price."""
         if self.price_override is not None:
             return self.price_override
         if self.product and self.product.price is not None:
@@ -2388,12 +2095,7 @@ class ProductVariant(CMSBaseModel):
             return False
         return self.compare_price > self.effective_price
 
-# ==============================================================================
-# 17. PRODUCT SPECIFICATION
-# ==============================================================================
 class ProductSpecification(CMSBaseModel):
-    """Key-value technical specification attached to a product."""
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -2417,7 +2119,6 @@ class ProductSpecification(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Group"),
-        help_text=_("Optional grouping (e.g. 'Materials', 'Dimensions')."),
     )
     display_order = models.PositiveIntegerField(
         default=0, blank=True, null=True, db_index=True,
@@ -2441,12 +2142,7 @@ class ProductSpecification(CMSBaseModel):
     def __str__(self) -> str:
         return f"{self.label or _('Unnamed')}: {self.value or ''}"
 
-# ==============================================================================
-# 18. PRODUCT FAQ
-# ==============================================================================
 class ProductFAQ(CMSBaseModel):
-    """Frequently Asked Question attached to a product."""
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -2485,12 +2181,7 @@ class ProductFAQ(CMSBaseModel):
     def __str__(self) -> str:
         return self.question or _("Unanswered FAQ")
 
-# ==============================================================================
-# 19. PRODUCT VIDEO
-# ==============================================================================
 class ProductVideo(CMSBaseModel):
-    """Video resource attached to a product."""
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -2561,15 +2252,7 @@ class ProductVideo(CMSBaseModel):
     def __str__(self) -> str:
         return self.title or self.video_url or _("Untitled Video")
 
-# ==============================================================================
-# 20. PRODUCT GALLERY IMAGE (Primary gallery)
-# ==============================================================================
 class ProductImage(CMSBaseModel):
-    """
-    Primary product gallery image. Maintains backward compatibility
-    with existing inline admin configurations and gallery consumers.
-    """
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -2651,16 +2334,7 @@ class ProductImage(CMSBaseModel):
         )
         return f"Gallery Image for {product_title}"
 
-# ==============================================================================
-# 21. ADDITIONAL PRODUCT GALLERY
-# ==============================================================================
 class ProductGalleryImage(CMSBaseModel):
-    """
-    Additional structured gallery model. Used for richer gallery
-    experiences (zoom, lightbox, video, etc.) where the simple
-    ``ProductImage`` is insufficient.
-    """
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -2685,7 +2359,6 @@ class ProductGalleryImage(CMSBaseModel):
         blank=True,
         null=True,
         verbose_name=_("Media Type"),
-        help_text=_("image, video, 360, etc."),
     )
     sort_order = models.PositiveIntegerField(
         default=0, blank=True, null=True, db_index=True,
@@ -2727,14 +2400,7 @@ class ProductGalleryImage(CMSBaseModel):
         )
         return f"Gallery Image {self.pk} for {product_title}"
 
-# ==============================================================================
-# 22. PRODUCT TAG (Rich tagging)
-# ==============================================================================
 class ProductTag(CMSBaseModel):
-    """
-    Rich tagging entity with description and M2M relation to products.
-    """
-
     name = models.CharField(
         max_length=50, unique=True,
         blank=True, null=True,
@@ -2779,15 +2445,7 @@ class ProductTag(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Tag")
 
-# ==============================================================================
-# 23. PRODUCT COLLECTION (Rich collection)
-# ==============================================================================
 class ProductCollection(CMSBaseModel):
-    """
-    Rich product collection entity with M2M products, image, and
-    presentation metadata.
-    """
-
     name = models.CharField(
         max_length=120, blank=True, null=True, verbose_name=_("Collection Name"),
     )
@@ -2858,16 +2516,7 @@ class ProductCollection(CMSBaseModel):
     def __str__(self) -> str:
         return self.name or _("Unnamed Collection")
 
-# ==============================================================================
-# 24. PRODUCT SEO PROFILE
-# ==============================================================================
 class ProductSEO(CMSBaseModel):
-    """
-    OneToOne SEO profile for a product. Decoupled from the product
-    itself to keep the main model lean and to allow SEO-only
-    migrations and bulk updates.
-    """
-
     product = models.OneToOneField(
         Product,
         on_delete=models.CASCADE,
@@ -2922,14 +2571,7 @@ class ProductSEO(CMSBaseModel):
         )
         return f"SEO for {product_title}"
 
-# ==============================================================================
-# 25. PRODUCT SCHEMA
-# ==============================================================================
 class ProductSchema(CMSBaseModel):
-    """
-    OneToOne schema.org structured data profile for a product.
-    """
-
     product = models.OneToOneField(
         Product,
         on_delete=models.CASCADE,
@@ -2964,16 +2606,7 @@ class ProductSchema(CMSBaseModel):
         )
         return f"Schema for {product_title}"
 
-# ==============================================================================
-# 26. RECENTLY VIEWED PRODUCT
-# ==============================================================================
 class RecentlyViewedProduct(CMSBaseModel):
-    """
-    Tracks recently viewed products per user/session. This is a
-    catalog-side analytics model only - it does not interact with
-    inventory in any way.
-    """
-
     user_id = models.IntegerField(
         null=True, blank=True, db_index=True, verbose_name=_("User ID"),
     )
@@ -3005,11 +2638,7 @@ class RecentlyViewedProduct(CMSBaseModel):
     def __str__(self) -> str:
         return f"Viewed Product {self.product_id} at {self.viewed_at}"
 
-# ==============================================================================
-# PUBLIC MODULE API
-# ==============================================================================
 __all__ = [
-    # Managers / QuerySets
     "CategoryQuerySet",
     "CategoryManager",
     "ArtisanQuerySet",
@@ -3018,41 +2647,31 @@ __all__ = [
     "ProductManager",
     "ProductVariantQuerySet",
     "ProductVariantManager",
-    # Configuration
     "CatalogSettings",
-    # Taxonomy
     "Category",
     "Artisan",
     "Material",
     "Hue",
     "EthicalStandard",
-    # Collections and Tags
     "Collection",
     "Tag",
     "ProductTag",
     "ProductCollection",
-    # Variants
     "VariantType",
     "VariantOption",
-    # Features
     "ProductHighlight",
     "TrustBadge",
     "ProductLabel",
     "ProductIcon",
-    # Main Product
     "Product",
-    # Product children
     "ProductVariant",
     "ProductImage",
     "ProductGalleryImage",
     "ProductSpecification",
     "ProductFAQ",
     "ProductVideo",
-    # Product SEO and Schema
     "ProductSEO",
     "ProductSchema",
-    # Analytics
     "RecentlyViewedProduct",
-    # Helpers
     "_upload_to_catalog_media",
 ]

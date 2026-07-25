@@ -1,52 +1,14 @@
 """
 Enterprise-grade views for the Catalog application.
-
-ARCHITECTURE OVERVIEW
-====================
-
-This module implements the complete presentation layer for the catalog domain.
-The catalog is intentionally INVENTORY-AGNOSTIC:
-
-    * Products and variants NEVER carry stock information directly.
-    * All inventory data is dynamically retrieved from the Inventory
-      application via lazy imports and the selector / service layers.
-    * Read-only inventory context is attached to the template context
-      for backward compatibility with existing templates.
-
-The views delegate:
-    * Filtering / sorting / pagination to ``apps.catalog.services``
-    * Read-only inventory access to ``apps.inventory.selectors``
-    * Computed stock calculations to ``apps.inventory.services``
-    * Breadcrumb / recommendation logic to dedicated services
-
-Every product-related view enriches its template context with a
-standardized inventory payload (read-only) sourced from the Inventory
-application. Templates can safely rely on these keys:
-
-    * ``inventory``             - Full serialized inventory summary
-    * ``inventory_summary``     - Short human-readable summary string
-    * ``inventory_status``      - One of: in_stock / low_stock / out_of_stock / unknown
-    * ``available_quantity``    - Total gross available stock (string Decimal)
-    * ``reserved_quantity``     - Total reserved stock (string Decimal)
-    * ``free_stock``            - Sellable stock = available - reserved
-    * ``warehouse_summary``     - Human-readable warehouse description
-    * ``stock_message``         - UI-friendly stock message
-    * ``is_in_stock``           - Convenience boolean
-    * ``is_out_of_stock``       - Convenience boolean
-    * ``is_low_stock``          - Convenience boolean
-
-Backward compatibility aliases are also provided:
-    * ``stock_status``          - Alias for ``inventory_status``
-    * ``stock_text``            - Alias for ``stock_message``
-
-Author: Handicraft E-commerce Engineering Team
+Provides storefront views (Category, Product Detail, Quick View, Search, Collections, Materials, Artisans)
+and staff catalog management workflows.
 """
 
 from __future__ import annotations
 
 import logging
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -54,7 +16,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -68,7 +30,13 @@ from django.views.generic import (
     View,
 )
 
-# Core catalog models
+from apps.catalog.forms import (
+    ProductFilterForm,
+    ProductForm,
+    ProductSchemaForm,
+    ProductSEOForm,
+    PublishingWorkflowForm,
+)
 from apps.catalog.models import (
     Artisan,
     Category,
@@ -84,48 +52,26 @@ from apps.catalog.models import (
     ProductTag,
     ProductVariant,
 )
-
-# Catalog services
+from apps.catalog.selectors import (
+    get_facet_counts_for_queryset,
+    get_filtered_products_queryset,
+    get_price_bounds_for_queryset,
+)
 from apps.catalog.services import (
     CATALOG_CACHE_TIMEOUT,
     BreadcrumbService,
     CategoryService,
     CollectionService,
     ProductService,
-    RecommendationService,
     RecentlyViewedService,
+    RecommendationService,
     SearchService,
     get_catalog_settings,
 )
 
-# Catalog forms
-from apps.catalog.forms import (
-    ProductForm,
-    ProductSchemaForm,
-    ProductSEOForm,
-    PublishingWorkflowForm,
-)
-
 logger = logging.getLogger(__name__)
 
-# ==============================================================================
-# LAZY INVENTORY ACCESSORS
-# ==============================================================================
-# These helpers perform lazy imports of inventory modules. This is the
-# authoritative pattern used throughout the catalog views to:
-#   * Avoid circular imports between catalog and inventory
-#   * Allow the catalog app to boot even if inventory is partially configured
-#   * Keep the import graph small at module-load time
-#   * Make it trivial to mock inventory in tests
-# ==============================================================================
 def _get_inventory_models() -> Tuple:
-    """
-    Lazy accessor for inventory models.
-
-    Returns a tuple of (Inventory, InventoryTransaction,
-    StockReservation, Warehouse) on success, or an empty tuple on
-    ImportError. Callers MUST handle the empty-tuple case gracefully.
-    """
     try:
         from apps.inventory.models import (
             Inventory,
@@ -135,17 +81,10 @@ def _get_inventory_models() -> Tuple:
         )
         return Inventory, InventoryTransaction, StockReservation, Warehouse
     except ImportError:
-        logger.warning(
-            "Inventory models could not be imported. Inventory context "
-            "will be unavailable in catalog views."
-        )
+        logger.warning("Inventory models could not be imported.")
         return ()
 
 def _get_inventory_selectors():
-    """
-    Lazy accessor for the inventory selectors module.
-    Returns None on ImportError.
-    """
     try:
         from apps.inventory import selectors
         return selectors
@@ -154,10 +93,6 @@ def _get_inventory_selectors():
         return None
 
 def _get_inventory_services():
-    """
-    Lazy accessor for the inventory services module.
-    Returns None on ImportError.
-    """
     try:
         from apps.inventory import services
         return services
@@ -165,39 +100,7 @@ def _get_inventory_services():
         logger.warning("Inventory services could not be imported.")
         return None
 
-# ==============================================================================
-# SAFE INVENTORY WRAPPER
-# ==============================================================================
-def _safe_inventory_lookup(callable_obj, *args, **kwargs) -> Dict[str, Any]:
-    """
-    Safely invoke an inventory selector or service function, returning
-    a structured empty payload on any failure. This guarantees that
-    the catalog view layer NEVER crashes because of an inventory
-    misconfiguration.
-    """
-    empty = _empty_inventory_context()
-    if callable_obj is None:
-        return empty
-    try:
-        result = callable_obj(*args, **kwargs)
-        if isinstance(result, dict):
-            return result
-        return empty
-    except Exception as exc:
-        logger.debug("Safe inventory lookup failed: %s", exc)
-        return empty
-
-# ==============================================================================
-# INVENTORY CONTEXT BUILDERS
-# ==============================================================================
 def _empty_inventory_context() -> Dict[str, Any]:
-    """
-    Returns a complete, safe-default inventory context dictionary.
-
-    Every inventory-related context key is present, even when no
-    inventory data is available. This guarantees that templates
-    never encounter undefined variables.
-    """
     return {
         "exists": False,
         "inventory": None,
@@ -224,13 +127,6 @@ def _empty_inventory_context() -> Dict[str, Any]:
     }
 
 def _get_low_stock_threshold() -> int:
-    """
-    Returns the CMS-driven low-stock threshold from catalog settings.
-
-    Falls back to a safe default of 5 if the settings cannot be loaded.
-    The catalog exposes this as a hint only - the Inventory app
-    remains the single source of truth for actual stock state.
-    """
     try:
         settings = get_catalog_settings()
         threshold = getattr(settings, "show_stock_warning_threshold", None)
@@ -240,15 +136,11 @@ def _get_low_stock_threshold() -> int:
     except Exception:
         return 5
 
-
 def _generate_stock_message(
     free_stock: Decimal,
     is_out_of_stock: bool,
     is_low_stock: bool,
 ) -> str:
-    """
-    Generate a user-friendly stock message for template rendering.
-    """
     if is_out_of_stock:
         return "Out of stock"
     if is_low_stock:
@@ -259,9 +151,6 @@ def _generate_stock_message(
     return "In stock"
 
 def _generate_warehouse_summary(warehouse_ids: set, warehouse_name: Optional[str] = None) -> str:
-    """
-    Generate a human-readable warehouse summary string.
-    """
     if not warehouse_ids:
         return "No warehouse"
     if len(warehouse_ids) == 1:
@@ -281,11 +170,6 @@ def _build_inventory_payload(
     low_stock_variants: int = 0,
     out_of_stock_variants: int = 0,
 ) -> Dict[str, Any]:
-    """
-    Compose a complete inventory context payload from raw aggregate
-    numbers. This is the single point where the standardized inventory
-    context shape is defined.
-    """
     free_stock = max(Decimal("0.00"), total_available - total_reserved)
     total_stock = total_available + total_reserved
     is_out_of_stock = free_stock <= Decimal("0.00")
@@ -344,14 +228,7 @@ def _build_inventory_payload(
         "out_of_stock_variants": out_of_stock_variants,
     }
 
-# ==============================================================================
-# PRODUCT-LEVEL INVENTORY HELPERS
-# ==============================================================================
 def _summarize_variant_inventory_records(inventory_records: Iterable) -> Dict[str, Any]:
-    """
-    Summarize inventory across multiple inventory records
-    (typically all inventory rows for a single variant or product).
-    """
     records = list(inventory_records)
     if not records:
         return _empty_inventory_context()
@@ -383,30 +260,15 @@ def _summarize_product_inventory(
     *,
     use_prefetch: bool = True,
 ) -> Dict[str, Any]:
-    """
-    Build a complete inventory payload for a single product.
-
-    Strategy:
-        1. If the product has active variants, aggregate inventory
-           across all variants (variant-level stock).
-        2. Otherwise, aggregate product-level inventory rows
-           (where ``product_variant`` is NULL).
-        3. If neither exists, return the safe-empty context.
-
-    Uses prefetched data when available to avoid N+1 queries.
-    Falls back to direct queries when prefetched data is absent.
-    """
     if product is None or getattr(product, "pk", None) is None:
         return _empty_inventory_context()
 
-    # 1. Try variant-level inventory
     variants_qs = product.variants.all() if use_prefetch else product.variants.filter(is_active=True)
     variants = list(variants_qs)
 
     if variants:
         return _summarize_variants_aggregated_inventory(variants)
 
-    # 2. Try product-level inventory
     inv_qs = product.inventory_records.all() if use_prefetch else None
     if inv_qs is not None:
         product_records = list(inv_qs)
@@ -433,15 +295,6 @@ def _summarize_product_inventory(
     return _summarize_variant_inventory_records(product_records)
 
 def _summarize_variants_aggregated_inventory(variants: List[ProductVariant]) -> Dict[str, Any]:
-    """
-    Aggregate inventory across multiple product variants.
-
-    Uses prefetched data when available. For each variant, reads
-    its ``inventory_records`` and sums up available/reserved stock.
-
-    Tracks per-variant stock status to surface a meaningful
-    aggregate status (e.g. "3 in stock, 1 low, 1 out of stock").
-    """
     total_available = Decimal("0.00")
     total_reserved = Decimal("0.00")
     warehouse_ids = set()
@@ -451,7 +304,6 @@ def _summarize_variants_aggregated_inventory(variants: List[ProductVariant]) -> 
     out_of_stock_variants = 0
 
     for variant in variants:
-        # Use prefetched inventory_records when available
         records_qs = variant.inventory_records.all() if hasattr(
             variant, "inventory_records"
         ) else None
@@ -459,7 +311,6 @@ def _summarize_variants_aggregated_inventory(variants: List[ProductVariant]) -> 
         if records_qs is not None:
             records = list(records_qs)
         else:
-            # Fallback: lazy query
             models = _get_inventory_models()
             if not models:
                 continue
@@ -496,9 +347,7 @@ def _summarize_variants_aggregated_inventory(variants: List[ProductVariant]) -> 
 
         if variant_free <= Decimal("0.00"):
             out_of_stock_variants += 1
-        elif any(
-            getattr(r, "is_low_stock", False) for r in records
-        ):
+        elif any(getattr(r, "is_low_stock", False) for r in records):
             low_stock_variants += 1
         else:
             in_stock_variants += 1
@@ -517,17 +366,9 @@ def _summarize_variants_aggregated_inventory(variants: List[ProductVariant]) -> 
     )
 
 def _build_inventory_context_for_variant(variant: ProductVariant) -> Dict[str, Any]:
-    """
-    Build inventory context for a single product variant.
-
-    Uses prefetched data when available (i.e. when the parent
-    product queryset was optimized with the inventory prefetch).
-    Falls back to a direct query when prefetched data is absent.
-    """
     if variant is None or getattr(variant, "pk", None) is None:
         return _empty_inventory_context()
 
-    # Use prefetched data if available
     records_qs = variant.inventory_records.all() if hasattr(
         variant, "inventory_records"
     ) else None
@@ -556,26 +397,11 @@ def _build_inventory_context_for_variant(variant: ProductVariant) -> Dict[str, A
     return _summarize_variant_inventory_records(records)
 
 def _build_inventory_context_for_product(product: Product) -> Dict[str, Any]:
-    """
-    Public helper: build the standardized inventory context for a
-    single product. Uses prefetched data when available.
-    """
     if product is None:
         return _empty_inventory_context()
     return _summarize_product_inventory(product, use_prefetch=True)
 
-# ==============================================================================
-# PRODUCT QUERYSET OPTIMIZATION FOR INVENTORY
-# ==============================================================================
 def _optimize_product_queryset_with_inventory(qs):
-    """
-    Optimize a product queryset to avoid N+1 queries when reading
-    inventory data. Adds nested prefetches for:
-
-        * Product variants (active only)
-        * Variant-level inventory records (active only)
-        * Product-level inventory records (active only, variant is NULL)
-    """
     models = _get_inventory_models()
     if not models:
         return qs
@@ -604,14 +430,6 @@ def _optimize_product_queryset_with_inventory(qs):
     return qs.prefetch_related(variant_prefetch, product_inventory_prefetch)
 
 def _attach_inventory_summaries(products: Iterable[Product]) -> List[Product]:
-    """
-    Process an iterable of products and attach a standardized
-    ``inventory_summary`` attribute to each one. Returns the list
-    of products for convenience.
-
-    Uses prefetched data when available. The attachment is done
-    as a view-layer concern, never as a model concern.
-    """
     product_list = list(products)
     for product in product_list:
         try:
@@ -626,27 +444,97 @@ def _attach_inventory_summaries(products: Iterable[Product]) -> List[Product]:
     return product_list
 
 def _process_products_with_inventory(qs) -> List[Product]:
-    """
-    Optimize a product queryset with inventory prefetching and
-    attach inventory summaries to each product. This is the
-    canonical helper for listing views.
-    """
     optimized_qs = _optimize_product_queryset_with_inventory(qs)
     products = list(optimized_qs)
     return _attach_inventory_summaries(products)
 
-# ==============================================================================
-# PERMISSION MIXIN
-# ==============================================================================
+def _extract_filter_parameters(request: HttpRequest) -> Dict[str, Any]:
+    """Helper method to parse and clean incoming GET request filter arguments."""
+    def _parse_decimal(val_str: Optional[str]) -> Optional[Decimal]:
+        if not val_str:
+            return None
+        try:
+            d = Decimal(val_str)
+            return d if d >= Decimal("0.00") else None
+        except (InvalidOperation, ValueError, TypeError):
+            return None
+
+    min_p = _parse_decimal(request.GET.get("min_price"))
+    max_p = _parse_decimal(request.GET.get("price_max") or request.GET.get("max_price"))
+    in_stock = request.GET.get("in_stock_only") == "true" or request.GET.get("in_stock") == "1"
+    min_rating = request.GET.get("min_rating") or request.GET.get("rating")
+    on_sale = request.GET.get("on_sale") == "true" or request.GET.get("on_sale") == "1"
+    
+    min_discount = request.GET.get("min_discount_pct")
+    min_discount_val = None
+    if min_discount:
+        try:
+            min_discount_val = int(min_discount)
+        except (ValueError, TypeError):
+            pass
+
+    return {
+        "sort_by": request.GET.get("sort", "featured") or "featured",
+        "min_price": min_p,
+        "max_price": max_p,
+        "in_stock_only": in_stock,
+        "min_rating": min_rating,
+        "selected_materials": request.GET.getlist("material"),
+        "selected_artisans": request.GET.getlist("artisan"),
+        "selected_origins": request.GET.getlist("origin"),
+        "selected_hues": request.GET.getlist("hue"),
+        "selected_ethical_standards": request.GET.getlist("ethical"),
+        "selected_tags": request.GET.getlist("tag"),
+        "selected_collections": request.GET.getlist("collection"),
+        "on_sale_only": on_sale,
+        "min_discount_pct": min_discount_val,
+        "search_query": request.GET.get("q") or request.GET.get("search"),
+    }
+
+def _build_active_filter_chips(params: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Builds a list of active filter dictionary badges for template chip rendering."""
+    chips: List[Dict[str, str]] = []
+    
+    if params.get("min_price") is not None or params.get("max_price") is not None:
+        label = f"Price: NPR {params.get('min_price', 0) or 0:,.0f} - {params.get('max_price', 'Max')}"
+        chips.append({"param": "price", "key": "price", "label": label})
+        
+    if params.get("in_stock_only"):
+        chips.append({"param": "in_stock_only", "key": "in_stock_only", "label": "In-Stock Only"})
+
+    if params.get("min_rating"):
+        chips.append({"param": "min_rating", "key": "min_rating", "label": f"{params['min_rating']}★ & above"})
+
+    for m in params.get("selected_materials", []):
+        chips.append({"param": "material", "key": m, "label": f"Material: {m}"})
+
+    for a in params.get("selected_artisans", []):
+        chips.append({"param": "artisan", "key": a, "label": f"Craftsman: {a}"})
+
+    for o in params.get("selected_origins", []):
+        chips.append({"param": "origin", "key": o, "label": f"Origin: {o}"})
+
+    for h in params.get("selected_hues", []):
+        chips.append({"param": "hue", "key": h, "label": f"Color: {h}"})
+
+    for e in params.get("selected_ethical_standards", []):
+        chips.append({"param": "ethical", "key": e, "label": f"Standard: {e}"})
+
+    for t in params.get("selected_tags", []):
+        chips.append({"param": "tag", "key": t, "label": f"Tag: #{t}"})
+
+    for c in params.get("selected_collections", []):
+        chips.append({"param": "collection", "key": c, "label": f"Collection: {c}"})
+
+    if params.get("on_sale_only"):
+        chips.append({"param": "on_sale", "key": "on_sale", "label": "On Sale"})
+
+    if params.get("min_discount_pct"):
+        chips.append({"param": "min_discount_pct", "key": "min_discount_pct", "label": f"{params['min_discount_pct']}% OFF or more"})
+
+    return chips
+
 class ProductManagementMixin(UserPassesTestMixin):
-    """
-    Base access mixin for the Product Management module.
-
-    Restricts access to staff or authorized product managers. This
-    mixin is intentionally minimal and serves ONLY as an access
-    control gate. It does NOT touch inventory.
-    """
-
     def test_func(self) -> bool:
         return bool(
             self.request.user
@@ -664,28 +552,14 @@ class ProductManagementMixin(UserPassesTestMixin):
             pass
         return super().handle_no_permission()
 
-# ==============================================================================
-# PUBLIC-FACING CATALOG VIEWS
-# ==============================================================================
 class CategoryListingView(TemplateView):
-    """
-    Public product listing and merchandising discovery view for
-    categories. Delegates dynamic faceted filtering, sorting,
-    pagination, and structural breadcrumbs to modular services.
-
-    Inventory is loaded dynamically and attached to every product
-    in the page via ``product.inventory_summary`` (a standardized
-    read-only context payload).
-    """
-
     template_name = "catalog/product-list.html"
-    slug: Optional[str] = None  # Set via URL conf for legacy routing
+    slug: Optional[str] = None
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         slug = self.slug or self.kwargs.get("slug", "")
 
-        # Safe cache extraction of Category details
         category = cache.get_or_set(
             f"catalog:cat:slug:{slug}",
             lambda: CategoryService.get_category_by_slug(slug),
@@ -695,62 +569,38 @@ class CategoryListingView(TemplateView):
         if not category:
             raise Http404("Category not found")
 
-        # Extract parameters for faceted searches (validated)
-        sort_by = self.request.GET.get("sort", "featured") or "featured"
+        params = _extract_filter_parameters(self.request)
 
-        price_max_raw = self.request.GET.get("price_max")
-        price_max: Optional[Decimal] = None
-        if price_max_raw:
-            try:
-                price_max = Decimal(price_max_raw)
-                if price_max < 0:
-                    price_max = None
-            except (InvalidOperation, ValueError, TypeError):
-                price_max = None
+        # Build base category queryset
+        base_qs = Product.objects.published().in_category(category)
 
-        selected_materials = self.request.GET.getlist("material")
-        selected_artisans = self.request.GET.getlist("artisan")
-        selected_origins = self.request.GET.getlist("origin")
-        selected_hues = self.request.GET.getlist("hue")
-        selected_ethical = self.request.GET.getlist("ethical")
-
-        # Whitelist sort values to prevent SQL injection / unsafe ordering
-        allowed_sort_values = {
-            "featured", "newest", "oldest", "price_low", "price_high",
-            "popularity", "rating", "name_asc", "name_desc",
-        }
-        if sort_by not in allowed_sort_values:
-            sort_by = "featured"
-
-        # Delegation of query generation to the search services layer
-        products_qs = SearchService.query_products_for_category(
-            category=category,
-            sort_by=sort_by,
-            min_price=None,
-            max_price=price_max,
-            selected_materials=selected_materials,
-            selected_artisans=selected_artisans,
-            selected_origins=selected_origins,
-            selected_hues=selected_hues,
-            selected_ethical_standards=selected_ethical,
+        # Apply multi-criteria filtering selector
+        products_qs = get_filtered_products_queryset(
+            qs=base_qs,
+            min_price=params["min_price"],
+            max_price=params["max_price"],
+            in_stock_only=params["in_stock_only"],
+            min_rating=params["min_rating"],
+            selected_materials=params["selected_materials"],
+            selected_artisans=params["selected_artisans"],
+            selected_origins=params["selected_origins"],
+            selected_hues=params["selected_hues"],
+            selected_ethical_standards=params["selected_ethical_standards"],
+            selected_tags=params["selected_tags"],
+            selected_collections=params["selected_collections"],
+            on_sale_only=params["on_sale_only"],
+            min_discount_pct=params["min_discount_pct"],
+            sort_by=params["sort_by"],
         )
 
-        # Optimize with inventory prefetching BEFORE pagination
         products_qs = _optimize_product_queryset_with_inventory(products_qs)
 
-        # Pagination resolution
         catalog_settings = cache.get_or_set(
             "catalog:settings",
             get_catalog_settings,
             CATALOG_CACHE_TIMEOUT,
         )
         page_number = self.request.GET.get("page", 1)
-        try:
-            page_number = int(page_number)
-            if page_number < 1:
-                page_number = 1
-        except (TypeError, ValueError):
-            page_number = 1
 
         paginated_products = SearchService.paginate_products(
             products_qs,
@@ -758,28 +608,31 @@ class CategoryListingView(TemplateView):
             catalog_settings.default_items_per_page,
         )
 
-        # Attach inventory summaries to the current page
         page_products = list(getattr(paginated_products, "object_list", paginated_products))
         _attach_inventory_summaries(page_products)
 
-        # Facets and UI criteria details
         current_selections = {
-            "materials": selected_materials,
-            "artisans": selected_artisans,
-            "origins": selected_origins,
-            "hues": selected_hues,
-            "ethical": selected_ethical,
+            "materials": params["selected_materials"],
+            "artisans": params["selected_artisans"],
+            "origins": params["selected_origins"],
+            "hues": params["selected_hues"],
+            "ethical": params["selected_ethical_standards"],
+            "tags": params["selected_tags"],
+            "collections": params["selected_collections"],
         }
-        sidebar_filters = SearchService.get_sidebar_filter_metadata(
-            category, current_selections
+        
+        facet_metadata = get_facet_counts_for_queryset(
+            qs=base_qs,
+            category=category,
+            current_selections=current_selections,
         )
 
-        min_bound = sidebar_filters["price_bounds"]["min"] or catalog_settings.price_filter_min
-        max_bound = sidebar_filters["price_bounds"]["max"] or catalog_settings.price_filter_max
-        current_val = int(price_max) if price_max is not None else max_bound
+        min_bound = facet_metadata["price_bounds"]["min"] or catalog_settings.price_filter_min
+        max_bound = facet_metadata["price_bounds"]["max"] or catalog_settings.price_filter_max
+        current_val = int(params["max_price"]) if params["max_price"] is not None else max_bound
 
-        # Breadcrumbs built by dedicated builder service
         breadcrumbs = BreadcrumbService.build_for_category(category)
+        active_chips = _build_active_filter_chips(params)
 
         context.update(
             {
@@ -789,12 +642,16 @@ class CategoryListingView(TemplateView):
                 "products": paginated_products,
                 "total_products": products_qs.count(),
                 "breadcrumbs": breadcrumbs,
-                "filter_categories": sidebar_filters["categories"],
-                "filter_materials": sidebar_filters["materials"],
-                "filter_craftsmen": sidebar_filters["artisans"],
-                "filter_provenance": sidebar_filters["origins"],
-                "filter_hues": sidebar_filters["hues"],
-                "filter_ethical": sidebar_filters["ethical"],
+                "facets": facet_metadata,
+                "active_filter_chips": active_chips,
+                "filter_categories": facet_metadata["categories"],
+                "filter_materials": facet_metadata["materials"],
+                "filter_craftsmen": facet_metadata["artisans"],
+                "filter_provenance": facet_metadata["origins"],
+                "filter_hues": facet_metadata["hues"],
+                "filter_ethical": facet_metadata["ethical"],
+                "filter_tags": facet_metadata["tags"],
+                "filter_collections": facet_metadata["collections"],
                 "filter_price": {
                     "min": min_bound,
                     "max": max_bound,
@@ -802,17 +659,12 @@ class CategoryListingView(TemplateView):
                     "min_formatted": f"{min_bound:,.0f}",
                     "current_formatted": f"{current_val:,.0f}",
                 },
-                "current_sort": sort_by,
+                "current_sort": params["sort_by"],
             }
         )
         return context
 
 class ArtisansListView(ListView):
-    """
-    Public listing of all active Master Craftsmen.
-    Inventory is not relevant at the artisan level.
-    """
-
     model = Artisan
     template_name = "catalog/artisans-list.html"
     context_object_name = "artisans"
@@ -831,21 +683,14 @@ class ArtisansListView(ListView):
             {
                 "title": "Meet the Makers",
                 "description": (
-                    "We partner directly with over 150 master craftsmen, "
-                    "ensuring fair wages, safe workshops, and the survival "
-                    "of ancestral lineages."
+                    "We partner directly with master craftsmen, ensuring fair wages, "
+                    "safe workshops, and the survival of ancestral lineages."
                 ),
             }
         )
         return context
 
 class ArtisanDetailView(DetailView):
-    """
-    Public profile detail view for a single Artisan, including
-    their masterpieces. Products are enriched with inventory
-    summaries loaded dynamically from the Inventory app.
-    """
-
     model = Artisan
     template_name = "catalog/artisan-detail.html"
     context_object_name = "artisan"
@@ -858,7 +703,6 @@ class ArtisanDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         artisan = self.get_object()
 
-        # Retrieve optimized artisan masterpieces
         products_qs = (
             Product.objects.filter(artisan=artisan, is_active=True)
             .select_related("category", "material", "hue")
@@ -871,8 +715,7 @@ class ArtisanDetailView(DetailView):
                 "title": f"Master {artisan.name}",
                 "description": (
                     artisan.bio
-                    or f"Explore the exclusive collection and craft lineage "
-                       f"of Master {artisan.name}."
+                    or f"Explore the exclusive collection and craft lineage of Master {artisan.name}."
                 ),
                 "products": products,
             }
@@ -880,18 +723,6 @@ class ArtisanDetailView(DetailView):
         return context
 
 class ProductDetailView(DetailView):
-    """
-    Public product detail view. Enriches rendering with structured
-    microdata schemas, SEO configuration profiles, and records
-    client-side browsing context safely using the Recently Viewed
-    Service layer.
-
-    Inventory is loaded dynamically and exposed via a standardized
-    read-only context payload. Backward-compatible aliases are
-    provided for templates that previously assumed inventory was
-    owned by the Product model.
-    """
-
     model = Product
     template_name = "catalog/product-detail.html"
     context_object_name = "product"
@@ -905,7 +736,6 @@ class ProductDetailView(DetailView):
         return product
 
     def get_queryset(self) -> Any:
-        # Optimize the base queryset with related data and inventory
         qs = super().get_queryset()
         return _optimize_product_queryset_with_inventory(qs)
 
@@ -913,15 +743,9 @@ class ProductDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         product = self.object
 
-        # Build the standardized inventory payload for the main product
         inventory = _build_inventory_context_for_product(product)
-
-        # Build breadcrumbs using the breadcrumb builder service
         breadcrumbs = BreadcrumbService.build_for_product(product)
 
-        # Pull matching product recommendations safely through the
-        # recommendation service. Enrich each related product with
-        # inventory data for the "You may also like" section.
         try:
             related_products_qs = RecommendationService.get_related_products(
                 product, limit=4
@@ -931,8 +755,6 @@ class ProductDetailView(DetailView):
             logger.debug("Related products fetch failed: %s", exc)
             related_products = []
 
-        # Get variants and enrich each variant with its own inventory
-        # context (so product detail pages can show per-variant stock).
         try:
             variants = list(ProductService.get_product_variants(product))
         except Exception as exc:
@@ -953,7 +775,6 @@ class ProductDetailView(DetailView):
                 )
                 variant_inventory_map[variant.pk] = _empty_inventory_context()
 
-        # Resolve SEO fields cleanly
         seo_title = product.title
         seo_desc = product.short_description
         try:
@@ -975,7 +796,6 @@ class ProductDetailView(DetailView):
             seo_title = product.seo_title or product.title or ""
             seo_desc = product.seo_description or product.short_description or ""
 
-        # Safely track browser browsing context
         if not self.request.session.session_key:
             try:
                 self.request.session.create()
@@ -992,13 +812,11 @@ class ProductDetailView(DetailView):
         except Exception as exc:
             logger.debug("Recently viewed tracking failed: %s", exc)
 
-        # Increment analytical display metric counts (catalog-side analytics)
         try:
             product.increment_view_count(commit=True)
         except Exception as exc:
             logger.debug("View count increment failed: %s", exc)
 
-        # Pull active tags and collections safely
         try:
             active_tags = list(product.tags.filter(is_active=True))
         except Exception:
@@ -1018,7 +836,6 @@ class ProductDetailView(DetailView):
                 "variant_inventory_map": variant_inventory_map,
                 "active_tags": active_tags,
                 "active_collections": active_collections,
-                # Standardized inventory context
                 "inventory": inventory.get("inventory"),
                 "inventory_summary": inventory.get("inventory_summary"),
                 "inventory_status": inventory.get("inventory_status"),
@@ -1030,7 +847,6 @@ class ProductDetailView(DetailView):
                 "is_in_stock": inventory.get("is_in_stock"),
                 "is_out_of_stock": inventory.get("is_out_of_stock"),
                 "is_low_stock": inventory.get("is_low_stock"),
-                # Backward-compatible aliases
                 "stock_status": inventory.get("stock_status"),
                 "stock_text": inventory.get("stock_text"),
                 "product_inventory": inventory,
@@ -1038,15 +854,7 @@ class ProductDetailView(DetailView):
         )
         return context
 
-# ==============================================================================
-# DISCOVERY & MERCHANDISING VIEWS
-# ==============================================================================
 class ProductQuickViewView(DetailView):
-    """
-    Lightweight product detail view intended for AJAX quick-view
-    modals. Inventory is loaded dynamically.
-    """
-
     model = Product
     template_name = "catalog/product-quick-view.html"
     context_object_name = "product"
@@ -1075,7 +883,6 @@ class ProductQuickViewView(DetailView):
 
         inventory = _build_inventory_context_for_product(product)
 
-        # Per-variant inventory for quick-view selectors
         variant_inventory_map: Dict[int, Dict[str, Any]] = {}
         try:
             variants = list(product.variants.filter(is_active=True))
@@ -1121,101 +928,67 @@ class ProductQuickViewView(DetailView):
         return context
 
 class ProductSearchView(ListView):
-    """
-    Product search results with dynamic inventory enrichment.
-    """
-
     model = Product
     template_name = "catalog/product-search.html"
     context_object_name = "products"
     paginate_by = 12
 
     def get_queryset(self):
-        query = (self.request.GET.get("q", "") or "").strip()
-
-        qs = (
-            Product.objects.filter(
-                is_active=True,
-                status=Product.ProductStatus.PUBLISHED,
-            )
-            .select_related(
-                "category",
-                "artisan",
-                "material",
-                "hue",
-            )
-            .prefetch_related(
-                "tags",
-                "in_collections",
-            )
+        params = _extract_filter_parameters(self.request)
+        return get_filtered_products_queryset(
+            search_query=params["search_query"],
+            min_price=params["min_price"],
+            max_price=params["max_price"],
+            in_stock_only=params["in_stock_only"],
+            min_rating=params["min_rating"],
+            selected_materials=params["selected_materials"],
+            selected_artisans=params["selected_artisans"],
+            selected_origins=params["selected_origins"],
+            selected_hues=params["selected_hues"],
+            selected_ethical_standards=params["selected_ethical_standards"],
+            selected_tags=params["selected_tags"],
+            selected_collections=params["selected_collections"],
+            on_sale_only=params["on_sale_only"],
+            min_discount_pct=params["min_discount_pct"],
+            sort_by=params["sort_by"],
         )
-
-        if query:
-            qs = qs.filter(
-                Q(title__icontains=query)
-                | Q(short_description__icontains=query)
-                | Q(description__icontains=query)
-                | Q(sku__icontains=query)
-                | Q(category__name__icontains=query)
-                | Q(material__name__icontains=query)
-                | Q(artisan__name__icontains=query)
-            ).distinct()
-
-        # Whitelist ordering to prevent unsafe user-controlled ordering
-        allowed_orderings = {
-            "position": "position",
-            "-position": "-position",
-            "-created_at": "-created_at",
-            "created_at": "created_at",
-            "title": "title",
-            "-title": "-title",
-            "price": "price",
-            "-price": "-price",
-        }
-        order_by = self.request.GET.get("order_by", "position")
-        if order_by not in allowed_orderings:
-            order_by = "position"
-        qs = qs.order_by(allowed_orderings[order_by], "-created_at")
-
-        return qs
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        params = _extract_filter_parameters(self.request)
+        query = params["search_query"] or ""
 
-        query = (self.request.GET.get("q", "") or "").strip()
+        base_search_qs = Product.objects.published().search(query) if query else Product.objects.published()
+        facet_metadata = get_facet_counts_for_queryset(qs=base_search_qs)
+
         products_qs = self.get_queryset()
-
-        # Get total count BEFORE pagination
         total_count = products_qs.count()
 
-        # Optimize with inventory and paginate
-        products_qs = _optimize_product_queryset_with_inventory(products_qs)
-        paginator_attr = context.get("paginator")
         page_obj = context.get("page_obj")
-        if paginator_attr is not None and page_obj is not None:
+        if page_obj is not None:
             page_products = list(page_obj.object_list)
             _attach_inventory_summaries(page_products)
             page_obj.object_list = page_products
 
+        active_chips = _build_active_filter_chips(params)
+
         context.update(
             {
                 "search_query": query,
-                "title": f"Search: {query}" if query else "Search Products",
+                "title": f"Search: {query}" if query else "Search Catalog Masterpieces",
                 "description": (
-                    f"Search results for '{query}'." if query
+                    f"Search results for '{query}' across artisans, materials, and categories." if query
                     else "Browse our handcrafted products."
                 ),
                 "total_products": total_count,
+                "facets": facet_metadata,
+                "active_filter_chips": active_chips,
+                "current_sort": params["sort_by"],
             }
         )
         return context
 
 class CollectionView(DetailView):
-    """
-    Displays all products belonging to a ProductCollection.
-    Each product is enriched with dynamic inventory data.
-    """
-
     model = ProductCollection
     template_name = "catalog/collection-detail.html"
     context_object_name = "collection"
@@ -1228,29 +1001,37 @@ class CollectionView(DetailView):
         context = super().get_context_data(**kwargs)
         collection = self.object
 
-        products_qs = (
-            collection.products.filter(
-                is_active=True,
-                status=Product.ProductStatus.PUBLISHED,
-            )
-            .select_related(
-                "category",
-                "artisan",
-                "material",
-                "hue",
-            )
-            .prefetch_related(
-                "tags",
-                "gallery_images",
-            )
+        params = _extract_filter_parameters(self.request)
+        base_qs = collection.products.published()
+
+        products_qs = get_filtered_products_queryset(
+            qs=base_qs,
+            min_price=params["min_price"],
+            max_price=params["max_price"],
+            in_stock_only=params["in_stock_only"],
+            min_rating=params["min_rating"],
+            selected_materials=params["selected_materials"],
+            selected_artisans=params["selected_artisans"],
+            selected_origins=params["selected_origins"],
+            selected_hues=params["selected_hues"],
+            selected_ethical_standards=params["selected_ethical_standards"],
+            selected_tags=params["selected_tags"],
+            on_sale_only=params["on_sale_only"],
+            min_discount_pct=params["min_discount_pct"],
+            sort_by=params["sort_by"],
         )
+
         products = _process_products_with_inventory(products_qs)
+        facet_metadata = get_facet_counts_for_queryset(qs=base_qs)
 
         context.update(
             {
                 "products": products,
                 "title": collection.name,
                 "description": collection.description,
+                "facets": facet_metadata,
+                "active_filter_chips": _build_active_filter_chips(params),
+                "current_sort": params["sort_by"],
                 "breadcrumbs": [
                     (
                         "Collections",
@@ -1266,11 +1047,6 @@ class CollectionView(DetailView):
         return context
 
 class MaterialView(DetailView):
-    """
-    Displays all products using a particular material. Each
-    product is enriched with dynamic inventory data.
-    """
-
     model = Material
     template_name = "catalog/material-detail.html"
     context_object_name = "material"
@@ -1283,30 +1059,37 @@ class MaterialView(DetailView):
         context = super().get_context_data(**kwargs)
         material = self.object
 
-        products_qs = (
-            Product.objects.filter(
-                material=material,
-                is_active=True,
-                status=Product.ProductStatus.PUBLISHED,
-            )
-            .select_related(
-                "category",
-                "artisan",
-                "hue",
-            )
-            .prefetch_related(
-                "gallery_images",
-                "tags",
-            )
-            .order_by("position", "-created_at")
+        params = _extract_filter_parameters(self.request)
+        base_qs = Product.objects.published().filter(material=material)
+
+        products_qs = get_filtered_products_queryset(
+            qs=base_qs,
+            min_price=params["min_price"],
+            max_price=params["max_price"],
+            in_stock_only=params["in_stock_only"],
+            min_rating=params["min_rating"],
+            selected_artisans=params["selected_artisans"],
+            selected_origins=params["selected_origins"],
+            selected_hues=params["selected_hues"],
+            selected_ethical_standards=params["selected_ethical_standards"],
+            selected_tags=params["selected_tags"],
+            selected_collections=params["selected_collections"],
+            on_sale_only=params["on_sale_only"],
+            min_discount_pct=params["min_discount_pct"],
+            sort_by=params["sort_by"],
         )
+
         products = _process_products_with_inventory(products_qs)
+        facet_metadata = get_facet_counts_for_queryset(qs=base_qs)
 
         context.update(
             {
                 "products": products,
                 "title": material.name,
-                "description": f"Products crafted from {material.name}.",
+                "description": f"Masterpieces crafted from {material.name}.",
+                "facets": facet_metadata,
+                "active_filter_chips": _build_active_filter_chips(params),
+                "current_sort": params["sort_by"],
                 "breadcrumbs": [
                     ("Materials", ""),
                     (material.name, ""),
@@ -1315,17 +1098,7 @@ class MaterialView(DetailView):
         )
         return context
 
-# ==============================================================================
-# ENTERPRISE PRODUCT MANAGEMENT MODULE (Staff / CMS Facing)
-# ==============================================================================
 class ProductManageListView(ProductManagementMixin, ListView):
-    """
-    Enterprise product listing for staff/admin dashboard.
-    Supports deep searching, filtering by status/activity, and
-    pagination. Inventory is not shown here for performance;
-    click into a product to see the inventory summary.
-    """
-
     model = Product
     template_name = "catalog/management/product_list.html"
     context_object_name = "products"
@@ -1339,7 +1112,6 @@ class ProductManageListView(ProductManagementMixin, ListView):
             .order_by("-created_at")
         )
 
-        # Retrieve Search Query
         q = (self.request.GET.get("q", "") or "").strip()
         if q:
             qs = qs.filter(
@@ -1348,13 +1120,11 @@ class ProductManageListView(ProductManagementMixin, ListView):
                 | Q(barcode__icontains=q)
             )
 
-        # Status Filtering (whitelisted)
         status = self.request.GET.get("status", "")
         valid_statuses = {choice[0] for choice in Product.ProductStatus.choices}
         if status in valid_statuses:
             qs = qs.filter(status=status)
 
-        # Activity Filtering
         is_active = self.request.GET.get("is_active", "")
         if is_active in ("1", "0"):
             qs = qs.filter(is_active=(is_active == "1"))
@@ -1375,10 +1145,6 @@ class ProductManageListView(ProductManagementMixin, ListView):
         return context
 
 class ProductManageCreateView(ProductManagementMixin, CreateView):
-    """
-    Secure product creation view with transaction safety.
-    """
-
     model = Product
     form_class = ProductForm
     template_name = "catalog/management/product_form.html"
@@ -1405,8 +1171,6 @@ class ProductManageCreateView(ProductManagementMixin, CreateView):
 
     @transaction.atomic
     def form_valid(self, form: ProductForm):
-        # Force initial status to Draft upon creation unless explicitly
-        # published by an authorized admin.
         try:
             if not form.cleaned_data.get("status"):
                 form.instance.status = Product.ProductStatus.DRAFT
@@ -1415,13 +1179,6 @@ class ProductManageCreateView(ProductManagementMixin, CreateView):
         return super().form_valid(form)
 
 class ProductManageUpdateView(ProductManagementMixin, UpdateView):
-    """
-    Comprehensive product update view handling core data, SEO
-    configuration, structured schema data, and publication state
-    changes. Inventory is shown as a read-only summary sourced
-    from the Inventory app.
-    """
-
     model = Product
     form_class = ProductForm
     template_name = "catalog/management/product_form.html"
@@ -1439,10 +1196,8 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         product = self.object
 
-        # Build read-only inventory summary for the management view
         inventory = _build_inventory_context_for_product(product)
 
-        # Initialize supplementary forms
         try:
             seo_instance = getattr(product, "seo_config", None)
         except Exception:
@@ -1494,7 +1249,6 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
         except Exception:
             context["gallery"] = []
 
-        # Read-only inventory context for the management UI
         context["inventory"] = inventory.get("inventory")
         context["inventory_summary"] = inventory.get("inventory_summary")
         context["inventory_status"] = inventory.get("inventory_status")
@@ -1513,10 +1267,6 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        """
-        Intercept POST to validate and save all unified module
-        forms concurrently.
-        """
         self.object = self.get_object()
         form_class = self.get_form_class()
         form = self.get_form(form_class)
@@ -1558,10 +1308,8 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
             return self.form_invalid(form, seo_form, schema_form, publish_form)
 
     def form_valid(self, form, seo_form, schema_form, publish_form):
-        # Save Core Product Data
         self.object = form.save()
 
-        # Save Publishing State Data safely over instance
         try:
             publish_data = publish_form.save(commit=False)
             publish_data.pk = self.object.pk
@@ -1569,7 +1317,6 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
         except Exception as exc:
             logger.debug("Publish form save failed: %s", exc)
 
-        # Save SEO Profile Configuration
         try:
             seo_instance = seo_form.save(commit=False)
             seo_instance.product = self.object
@@ -1577,7 +1324,6 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
         except Exception as exc:
             logger.debug("SEO form save failed: %s", exc)
 
-        # Save Schema Configuration
         try:
             schema_instance = schema_form.save(commit=False)
             schema_instance.product = self.object
@@ -1599,8 +1345,7 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
         try:
             messages.error(
                 self.request,
-                "There were errors updating the product. Please correct "
-                "the fields below.",
+                "There were errors updating the product. Please correct the fields below.",
             )
         except Exception:
             pass
@@ -1614,16 +1359,6 @@ class ProductManageUpdateView(ProductManagementMixin, UpdateView):
         )
 
 class ProductManageDeleteView(ProductManagementMixin, DeleteView):
-    """
-    Secure product deletion with confirmation and graceful
-    handling of protected inventory references.
-
-    The Inventory app uses ``on_delete=PROTECT`` for its product
-    and product_variant foreign keys, so a product with active
-    inventory cannot be deleted. The view surfaces a friendly
-    error in that case.
-    """
-
     model = Product
     template_name = "catalog/management/product_confirm_delete.html"
     success_url = reverse_lazy("catalog:product_manage_list")
@@ -1633,8 +1368,6 @@ class ProductManageDeleteView(ProductManagementMixin, DeleteView):
         product = self.object
         context["title"] = f"Delete Product: {product.title}"
 
-        # Surface read-only inventory context so staff can see
-        # what stock will be affected before confirming deletion.
         inventory = _build_inventory_context_for_product(product)
         context["inventory"] = inventory.get("inventory")
         context["inventory_summary"] = inventory.get("inventory_summary")
@@ -1667,8 +1400,6 @@ class ProductManageDeleteView(ProductManagementMixin, DeleteView):
                 pass
             return response
         except Exception as exc:
-            # Inventory uses PROTECT on the FK; surface a friendly error
-            # and let the transaction roll back cleanly.
             error_message = str(exc)
             logger.warning(
                 "Product deletion failed for '%s' (SKU: %s): %s",
@@ -1688,19 +1419,12 @@ class ProductManageDeleteView(ProductManagementMixin, DeleteView):
             return redirect("catalog:product_manage_list")
 
 class ProductPublishActionView(ProductManagementMixin, View):
-    """
-    Standalone RPC-style view for quick status toggle operations
-    (Draft, Publish, Archive) from the list view or external
-    integrations.
-    """
-
     http_method_names = ["post", "options"]
 
     def post(self, request, pk: int, action: str):
         product = get_object_or_404(Product, pk=pk)
         title = product.title
 
-        # Whitelist actions to prevent unsafe state transitions
         valid_actions = {"publish", "unpublish", "archive"}
         if action not in valid_actions:
             try:
@@ -1751,9 +1475,7 @@ class ProductPublishActionView(ProductManagementMixin, View):
                 )
 
         except Exception as exc:
-            logger.error(
-                "Publishing action failed for Product %s: %s", pk, exc
-            )
+            logger.error("Publishing action failed for Product %s: %s", pk, exc)
             try:
                 messages.error(
                     request,
@@ -1765,10 +1487,6 @@ class ProductPublishActionView(ProductManagementMixin, View):
         return self._safe_redirect(request, "catalog:product_manage_list")
 
     def _safe_redirect(self, request, default_url_name: str):
-        """
-        Redirect to a user-supplied 'next' URL if it is a safe
-        relative path, otherwise fall back to a known-good URL.
-        """
         next_url = request.POST.get("next", "")
         if next_url and self._is_safe_redirect(next_url):
             try:
@@ -1782,10 +1500,6 @@ class ProductPublishActionView(ProductManagementMixin, View):
 
     @staticmethod
     def _is_safe_redirect(url: str) -> bool:
-        """
-        Prevent open-redirect vulnerabilities by ensuring the
-        redirect target is a relative path on the current host.
-        """
         if not url:
             return False
         if url.startswith("//"):
@@ -1793,3 +1507,19 @@ class ProductPublishActionView(ProductManagementMixin, View):
         if url.startswith("/") and not url.startswith("//"):
             return True
         return False
+
+__all__ = [
+    "CategoryListingView",
+    "ArtisansListView",
+    "ArtisanDetailView",
+    "ProductDetailView",
+    "ProductQuickViewView",
+    "ProductSearchView",
+    "CollectionView",
+    "MaterialView",
+    "ProductManageListView",
+    "ProductManageCreateView",
+    "ProductManageUpdateView",
+    "ProductManageDeleteView",
+    "ProductPublishActionView",
+]

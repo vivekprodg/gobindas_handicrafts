@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Audit Log Record #{{ log.id }} | Gobindas Handicrafts{% endblock %}
+
+{% block content %}
+<div class="audit-container">
+    <h2 style="font-family: 'Cinzel', serif;">Audit Log Entry #{{ log.id }}</h2>
+    <p><strong>Actor:</strong> {{ log.actor|default:'System' }} | <strong>Timestamp:</strong> {{ log.timestamp }}</p>
+    <p><strong>Action:</strong> {{ log.get_action_display }} | <strong>Target:</strong> {{ log.target_repr }}</p>
+
+    <h3>Field Change Diffs</h3>
+    <pre class="json-diff-viewer">{{ log.changes|pprint }}</pre>
+
+    <a href="{% url 'audit:list' %}" class="btn-primary" style="display: inline-block; margin-top: 1rem; width: auto; padding: 0.6rem 1.5rem;">&larr; Return to Audit Logs</a>
+</div>
+{% endblock %}

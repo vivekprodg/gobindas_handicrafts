@@ -1,10 +1,11 @@
 from django.urls import path
+
 from .views import (
     CareGuidesPlaceholderView,
-    TraceabilityPlaceholderView,
-    PoliciesShippingPlaceholderView,
-    CustomOrdersPlaceholderView,
     ContactPageView,
+    CustomOrdersPlaceholderView,
+    PoliciesShippingPlaceholderView,
+    TraceabilityPlaceholderView,
 )
 
 urlpatterns = [

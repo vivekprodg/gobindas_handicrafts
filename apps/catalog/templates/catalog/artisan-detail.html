@@ -104,7 +104,6 @@
 
 {% block content %}
 <div class="artisan-detail-container">
-    <!-- Artisan Profile Row -->
     <section class="artisan-profile-grid">
         <div class="artisan-image-frame">
             {% if artisan.image %}
@@ -125,7 +124,6 @@
         </div>
     </section>
 
-    <!-- Artisan Masterpieces Collection Section -->
     <section class="artisan-collection-section">
         <h2 class="artisan-collection-title">Heritage Collection by Master {{ artisan.name }}</h2>
         
@@ -134,7 +132,7 @@
                 {% include "catalog/product-card.html" with product=product %}
             {% empty %}
                 <div class="no-products-msg" style="grid-column: 1 / -1;">
-                    <p style="margin: 0; font-size: 1rem;">There are currently no active catalog masterpieces listed under Master {{ artisan.name }}. Check back soon for new kiln releases and weaving runs.</p>
+                    <p style="margin: 0; font-size: 1rem;">There are currently no active catalog masterpieces listed under Master {{ artisan.name }}. Check back soon for new releases.</p>
                 </div>
             {% endfor %}
         </div>

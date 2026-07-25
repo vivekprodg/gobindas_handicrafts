@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static i18n humanize %}
+
+{% block title %}
+    {% trans "Order Confirmation" %} #{{ order.order_number }} | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --success-gold: #C5A880;
+        --success-dark: #1A1512;
+        --success-muted: #7A726A;
+        --success-border: #EAE5E0;
+        --success-bg-light: #FCFAF8;
+        --success-green: #2E7D32;
+    }
+
+    body {
+        background-color: var(--success-bg-light);
+    }
+
+    .success-card-wrapper {
+        max-width: 860px;
+        margin: 5rem auto;
+        padding: 3.5rem 2.5rem;
+        background: #FFFFFF;
+        border: 1px solid var(--success-border);
+        border-radius: 12px;
+        box-shadow: 0 12px 36px rgba(26, 21, 18, 0.04);
+        text-align: center;
+        font-family: var(--font-ui, 'Inter', sans-serif);
+        color: var(--success-dark);
+    }
+
+    .success-icon-badge {
+        width: 72px;
+        height: 72px;
+        background: #E8F5E9;
+        color: var(--success-green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem auto;
+    }
+
+    .success-title {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.25rem;
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+
+    .success-subtitle {
+        color: var(--success-muted);
+        font-size: 1.05rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .order-reference-box {
+        background: var(--success-bg-light);
+        border: 1px solid var(--success-border);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: left;
+        margin-bottom: 2.5rem;
+    }
+
+    .reference-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 600px) {
+        .reference-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .action-row-flex {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-action-primary {
+        padding: 0.9rem 2.5rem;
+        background: var(--success-dark);
+        color: #FFFFFF;
+        text-decoration: none;
+        border-radius: 4px;
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: background 0.3s ease;
+    }
+
+    .btn-action-primary:hover {
+        background: var(--success-gold);
+    }
+
+    .btn-action-secondary {
+        padding: 0.9rem 2.5rem;
+        background: transparent;
+        color: var(--success-dark);
+        border: 1px solid var(--success-dark);
+        text-decoration: none;
+        border-radius: 4px;
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+    }
+
+    .btn-action-secondary:hover {
+        background: #F5F1ED;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="success-card-wrapper">
+    <div class="success-icon-badge">
+        <svg width="36" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+
+    <h1 class="success-title">{% trans "Acquisition Request Placed" %}</h1>
+    <p class="success-subtitle">
+        {% trans "Thank you for supporting master artisans. Order" %} <strong>#{{ order.order_number }}</strong> {% trans "has been registered." %}
+    </p>
+
+    <div class="order-reference-box">
+        <h3 style="font-family: var(--font-brand, 'Cinzel', serif); margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--success-border); padding-bottom: 0.5rem;">
+            {% trans "Order Overview" %}
+        </h3>
+        
+        <div class="reference-grid">
+            <div>
+                <p style="margin: 0.25rem 0;"><strong>{% trans "Order Reference" %}:</strong> #{{ order.order_number }}</p>
+                <p style="margin: 0.25rem 0;"><strong>{% trans "Date Placed" %}:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+                <p style="margin: 0.25rem 0;"><strong>{% trans "Notification Email" %}:</strong> {{ order.email }}</p>
+            </div>
+            <div>
+                <p style="margin: 0.25rem 0;"><strong>{% trans "Total Valuation" %}:</strong> {{ order.currency|default:'NPR' }} {{ order.total|floatformat:2|intcomma }}</p>
+                <p style="margin: 0.25rem 0;"><strong>{% trans "Status" %}:</strong> {{ order.get_status_display }}</p>
+            </div>
+        </div>
+
+        {% if order.shipping_address %}
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--success-border);">
+                <strong>{% trans "Delivery Destination" %}:</strong><br>
+                <span style="color: var(--success-muted); font-size: 0.9rem; line-height: 1.5;">
+                    {{ order.shipping_address.full_name }}<br>
+                    {{ order.shipping_address.address_line_1 }}<br>
+                    {{ order.shipping_address.city }}, {{ order.shipping_address.state_or_province }} {{ order.shipping_address.postal_code }}<br>
+                    {{ order.shipping_address.country }}
+                </span>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="action-row-flex">
+        <a href="{% url 'orders:order_detail' order.id %}" class="btn-action-primary">
+            {% trans "View Full Order Details" %}
+        </a>
+        <a href="{% url 'catalog:product_list' %}" class="btn-action-secondary">
+            {% trans "Continue Exploring" %}
+        </a>
+    </div>
+</main>
+{% endblock %}

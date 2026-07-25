@@ -1,0 +1,37 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shipping Label #{{ shipment.shipment_number }}</title>
+    <style>
+        body { font-family: monospace; margin: 0; padding: 20px; background: #EEE; }
+        .label-box { width: 4in; min-height: 5.5in; background: #FFF; border: 2px solid #000; padding: 15px; margin: 0 auto; box-sizing: border-border-box; }
+        .header-brand { font-size: 18px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+        .address-block { font-size: 13px; line-height: 1.4; margin-bottom: 15px; }
+        .barcode-placeholder { text-align: center; border: 1px dashed #000; padding: 20px; font-size: 16px; letter-spacing: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="label-box">
+        <div class="header-brand">GOBINDAS HANDICRAFTS</div>
+        <div class="address-block">
+            <strong>SHIP FROM:</strong><br>
+            Gobindas Handicrafts Warehouse<br>
+            Kathmandu, Bagmati, Nepal
+        </div>
+        <hr>
+        <div class="address-block">
+            <strong>SHIP TO:</strong><br>
+            {{ order.shipping_address.full_name }}<br>
+            {{ order.shipping_address.address_line_1 }}<br>
+            {{ order.shipping_address.city }}, {{ order.shipping_address.state_or_province }} {{ order.shipping_address.postal_code }}<br>
+            {{ order.shipping_address.country }}<br>
+            Phone: {{ order.shipping_address.phone_number }}
+        </div>
+        <div class="barcode-placeholder">
+            *{{ shipment.tracking_number|default:shipment.shipment_number }}*
+        </div>
+    </div>
+</body>
+</html>

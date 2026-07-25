@@ -1,19 +1,15 @@
 """
-apps/cart/services/cart_reorder.py
-
-Re-order workflow: duplicates items from a past order into the
-current active cart. Implements the missing `reorder_items_into_cart`
-referenced by apps/customers and apps/orders views.
+Re-order workflow: duplicates items from a past order into the current active cart.
 """
 from __future__ import annotations
 
-from decimal import Decimal
-from typing import Any, Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
 from ..models import Cart, CartItem
+from .cart_items import CartItemService
 
 class CartReorderService:
     """Re-populates an active cart from a past order's items."""
@@ -21,50 +17,93 @@ class CartReorderService:
     @staticmethod
     @transaction.atomic
     def reorder_items_into_cart(
-        order: Any,
+        cart: Optional[Cart] = None,
+        order: Optional[Any] = None,
+        items: Optional[Iterable[Dict[str, Any]]] = None,
         user: Optional[Any] = None,
         session_key: Optional[str] = None,
-    ) -> Cart:
+        order_reference: str = "",
+    ) -> Union[Cart, Dict[str, Any]]:
         """
-        Duplicates the line items of the given order into the active cart
-        of the user (or session). Returns the resulting cart.
+        Duplicates line items into the specified active cart.
+        Compatible with Order model instances, custom item lists,
+        direct Cart objects, or API response dict expectations.
         """
-        from .cart_core import CartService
-        from .cart_items import CartItemService
-        from ..models import Cart as CartModel
+        target_cart = cart
 
-        # Resolve target cart
-        if user and getattr(user, "is_authenticated", False):
-            cart, _ = CartModel.objects.get_or_create(customer=user)
-        elif session_key:
-            cart, _ = CartModel.objects.get_or_create(session_key=session_key)
-        else:
-            raise ValueError(_("Either an authenticated user or a session key is required."))
+        if target_cart is None:
+            if user and getattr(user, "is_authenticated", False):
+                target_cart, _ = Cart.objects.get_or_create(customer=user, status=Cart.CartStatus.ACTIVE, is_active=True)
+            elif session_key:
+                target_cart, _ = Cart.objects.get_or_create(session_key=session_key, status=Cart.CartStatus.ACTIVE, is_active=True)
 
-        skipped: list[str] = []
+        if target_cart is None:
+            return {
+                "success": False,
+                "code": "cart_not_found",
+                "message": str(_("Target cart could not be resolved.")),
+            }
+
+        skipped: List[str] = []
         added_count = 0
-        for order_item in order.items.filter(status="active").select_related("product", "variant"):
-            if not order_item.product:
-                skipped.append(_(f"Product for '{order_item.product_name_snapshot}' is no longer available."))
-                continue
-            try:
-                CartItemService.add_item(
-                    cart,
-                    product=order_item.product,
-                    variant=order_item.variant,
-                    quantity=order_item.quantity,
-                )
-                added_count += 1
-            except Exception as exc:
-                skipped.append(
-                    _(f"Could not add '{order_item.product_name_snapshot}': {exc}")
-                )
 
-        if skipped:
-            # Surface warnings via messages framework (caller is expected to consume this list)
-            from django.contrib import messages
-            for msg in skipped:
-                messages.warning(None, msg)
+        if order and hasattr(order, "items"):
+            order_items = order.items.all().select_related("product", "variant")
+            for o_item in order_items:
+                p = getattr(o_item, "product", None)
+                v = getattr(o_item, "variant", None)
+                qty = getattr(o_item, "quantity", 1) or 1
 
-        cart.touch()
-        return cart
+                if not p and not v:
+                    skipped.append(str(_("Product for line item is no longer available.")))
+                    continue
+
+                res = CartItemService.add_item(cart=target_cart, product=p, variant=v, quantity=qty)
+                if res.get("success"):
+                    added_count += 1
+                else:
+                    skipped.append(res.get("message") or "Failed to add item")
+
+        elif items:
+            for raw in items:
+                if not isinstance(raw, dict):
+                    continue
+                p_id = raw.get("product_id")
+                v_id = raw.get("variant_id")
+                qty = raw.get("quantity", 1) or 1
+
+                p = None
+                v = None
+                try:
+                    from apps.catalog.models import Product, ProductVariant
+                    if v_id:
+                        v = ProductVariant.objects.filter(pk=v_id).first()
+                        if v:
+                            p = v.product
+                    elif p_id:
+                        p = Product.objects.filter(pk=p_id).first()
+                except Exception:
+                    pass
+
+                if not p and not v:
+                    skipped.append(str(_("Item not found.")))
+                    continue
+
+                res = CartItemService.add_item(cart=target_cart, product=p, variant=v, quantity=qty)
+                if res.get("success"):
+                    added_count += 1
+                else:
+                    skipped.append(res.get("message") or "Failed to add item")
+
+        target_cart.touch()
+
+        return {
+            "success": len(skipped) == 0 or added_count > 0,
+            "code": "reorder_processed" if len(skipped) == 0 else "reorder_partial",
+            "message": str(_("Reordered %(count)d item(s).") % {"count": added_count}),
+            "cart_id": target_cart.pk,
+            "added_count": added_count,
+            "skipped_reasons": skipped,
+        }
+
+__all__ = ["CartReorderService"]

@@ -16,14 +16,14 @@
             <label class="form-label" for="id_order_number">Order Number</label>
             {{ form.order_number }}
             {% if form.order_number.errors %}
-                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.order_number.errors.0 }}</span>
+                <span class="form-error-text">{{ form.order_number.errors.0 }}</span>
             {% endif %}
         </div>
         <div class="form-group">
             <label class="form-label" for="id_email_or_phone">Email or Phone Number</label>
             {{ form.email_or_phone }}
             {% if form.email_or_phone.errors %}
-                <span style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.email_or_phone.errors.0 }}</span>
+                <span class="form-error-text">{{ form.email_or_phone.errors.0 }}</span>
             {% endif %}
         </div>
         <button type="submit" class="btn-primary">Track Status</button>

@@ -1,787 +1,122 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{% trans "Order" %} #{{ order.number|default:order.id }} | {% trans "My Account" %}{% endblock %}
+{% block title %}{% trans "Order" %} #{{ order.number|default:order.id }} | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* 
-     * Gobindas Handicrafts - Premium Order Detail UI 
-     * Extends base brand variables and introduces order-specific layouts.
-     */
-    :root {
-        --order-bg-color: #FAFAF8;
-        --order-card-bg: #FFFFFF;
-        --order-glass-bg: rgba(255, 255, 255, 0.85);
-        --order-glass-border: rgba(234, 229, 224, 0.6);
-        --order-shadow: 0 8px 24px rgba(44, 37, 32, 0.04);
-        --order-shadow-hover: 0 16px 32px rgba(44, 37, 32, 0.08);
-        --status-pending: #D4A373;
-        --status-processing: #4A6B53;
-        --status-shipped: #3A5A8C;
-        --status-delivered: #2C2520;
-        --status-cancelled: #A94442;
-    }
-
     .order-detail-wrapper {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem 1.5rem 5rem;
+        padding: 3rem 1.5rem;
         font-family: var(--font-ui, 'Inter', sans-serif);
-        background-color: var(--order-bg-color);
-        min-height: 80vh;
     }
 
-    /* ==========================================================================
-       Messages & Alerts
-       ========================================================================== */
-    .order-messages-container {
-        margin-bottom: 2rem;
-    }
-    .order-alert {
-        padding: 1rem 1.5rem;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-weight: 500;
-        font-size: 0.9rem;
-        animation: slideDownFade 0.4s ease-out forwards;
-    }
-    .order-alert.success { background-color: #EAF3EC; color: #2B5A38; border-left: 4px solid #4A6B53; }
-    .order-alert.error { background-color: #FDE8E8; color: #A94442; border-left: 4px solid #A94442; }
-    .order-alert.info { background-color: #E8F0FE; color: #3A5A8C; border-left: 4px solid #3A5A8C; }
-
-    @keyframes slideDownFade {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ==========================================================================
-       Navigation & Breadcrumbs
-       ========================================================================== */
-    .order-breadcrumbs {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.85rem;
-        color: var(--text-muted, #7A726A);
-        margin-bottom: 2rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .order-breadcrumbs a {
-        color: var(--brand-dark, #2C2520);
-        text-decoration: none;
-        transition: color 0.2s ease;
-        font-weight: 600;
-    }
-    .order-breadcrumbs a:hover { color: var(--brand-gold, #C5A880); }
-    .order-breadcrumbs span.separator { color: var(--border-color, #EAE5E0); }
-
-    /* ==========================================================================
-       Hero Section (Glassmorphism)
-       ========================================================================== */
-    .order-hero-card {
-        background: var(--order-glass-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--order-glass-border);
-        border-radius: 8px;
-        padding: 2.5rem;
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: var(--order-shadow);
-        position: relative;
-        overflow: hidden;
-    }
-    .order-hero-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; height: 4px;
-        background: linear-gradient(90deg, var(--brand-gold, #C5A880), var(--brand-dark, #2C2520));
-    }
-    .hero-content h1 {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 2.5rem;
-        color: var(--brand-dark, #2C2520);
-        margin: 0 0 0.5rem 0;
-        font-weight: 600;
-    }
-    .hero-content p {
-        margin: 0;
-        color: var(--text-muted, #7A726A);
-        font-size: 1rem;
-    }
-    .hero-status-wrapper {
-        text-align: right;
-    }
-    .order-status-badge {
-        display: inline-block;
-        padding: 0.5rem 1.25rem;
-        border-radius: 50px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        background-color: #F5F1ED;
-        color: var(--brand-dark, #2C2520);
-        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
-    }
-    /* Dynamic Status Colors */
-    .status-pending, .status-unpaid { background-color: #FFF8E7; color: var(--status-pending); box-shadow: inset 0 0 0 1px var(--status-pending); }
-    .status-processing, .status-paid { background-color: #EAF3EC; color: var(--status-processing); box-shadow: inset 0 0 0 1px var(--status-processing); }
-    .status-shipped { background-color: #E8F0FE; color: var(--status-shipped); box-shadow: inset 0 0 0 1px var(--status-shipped); }
-    .status-delivered, .status-completed { background-color: var(--brand-dark, #2C2520); color: #FFF; box-shadow: none; }
-    .status-cancelled, .status-refunded { background-color: #FDE8E8; color: var(--status-cancelled); box-shadow: inset 0 0 0 1px var(--status-cancelled); }
-
-    /* ==========================================================================
-       Timeline Architecture
-       ========================================================================== */
-    .order-timeline-section {
-        background: var(--order-card-bg);
-        border: 1px solid var(--border-color, #EAE5E0);
-        border-radius: 8px;
-        padding: 2.5rem;
-        margin-bottom: 2.5rem;
-        box-shadow: var(--order-shadow);
-    }
-    .timeline-track {
-        display: flex;
-        justify-content: space-between;
-        position: relative;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    .timeline-track::before {
-        content: '';
-        position: absolute;
-        top: 15px;
-        left: 30px;
-        right: 30px;
-        height: 2px;
-        background: #EAE5E0;
-        z-index: 1;
-    }
-    .timeline-step {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        width: 100px;
-    }
-    .timeline-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
+    .order-header-card {
         background: #FFFFFF;
-        border: 2px solid #EAE5E0;
-        margin: 0 auto 0.75rem;
+        border: 1px solid #EAE5E0;
+        border-radius: 12px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        justify-content: center;
-        color: #EAE5E0;
-        transition: all 0.3s ease;
-    }
-    .timeline-step.active .timeline-icon,
-    .timeline-step.completed .timeline-icon {
-        border-color: var(--brand-dark, #2C2520);
-        background: var(--brand-dark, #2C2520);
-        color: #FFFFFF;
-    }
-    .timeline-step.current .timeline-icon {
-        border-color: var(--brand-gold, #C5A880);
-        background: var(--brand-gold, #C5A880);
-        box-shadow: 0 0 0 4px rgba(197, 168, 128, 0.2);
-    }
-    .timeline-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--text-muted, #7A726A);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .timeline-step.active .timeline-label,
-    .timeline-step.completed .timeline-label {
-        color: var(--brand-dark, #2C2520);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     }
 
-    /* ==========================================================================
-       Layout Grid
-       ========================================================================== */
     .order-content-grid {
         display: grid;
         grid-template-columns: 2fr 1fr;
-        gap: 2.5rem;
-        align-items: start;
+        gap: 2rem;
     }
 
-    /* ==========================================================================
-       Items List (Left Column)
-       ========================================================================== */
-    .order-items-card {
-        background: var(--order-card-bg);
-        border: 1px solid var(--border-color, #EAE5E0);
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: var(--order-shadow);
+    .items-card, .sidebar-card {
+        background: #FFFFFF;
+        border: 1px solid #EAE5E0;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
     }
-    .card-header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid var(--border-color, #EAE5E0);
-        background: #FCFBFA;
-    }
-    .card-header h2 {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.25rem;
-        color: var(--brand-dark, #2C2520);
-        margin: 0;
-        font-weight: 600;
-    }
+
     .order-item-row {
         display: flex;
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid #F5F1ED;
+        align-items: center;
         gap: 1.5rem;
-        align-items: center;
-        transition: background-color 0.2s ease;
-    }
-    .order-item-row:hover {
-        background-color: #FCFBFA;
-    }
-    .order-item-row:last-child {
-        border-bottom: none;
-    }
-    .item-media {
-        width: 90px;
-        height: 110px;
-        flex-shrink: 0;
-        background: #F5F1ED;
-        border-radius: 4px;
-        overflow: hidden;
-        position: relative;
-    }
-    .item-media img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    .item-details {
-        flex-grow: 1;
-    }
-    .item-title {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.1rem;
-        color: var(--brand-dark, #2C2520);
-        text-decoration: none;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-        display: inline-block;
-        transition: color 0.2s ease;
-    }
-    .item-title:hover {
-        color: var(--brand-gold, #C5A880);
-    }
-    .item-meta {
-        font-size: 0.8rem;
-        color: var(--text-muted, #7A726A);
-        margin-bottom: 0.2rem;
-    }
-    .item-meta strong {
-        color: var(--brand-dark, #2C2520);
-        font-weight: 500;
-    }
-    .item-financials {
-        text-align: right;
-        flex-shrink: 0;
-    }
-    .item-price {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--brand-dark, #2C2520);
-        margin-bottom: 0.25rem;
-    }
-    .item-qty {
-        font-size: 0.85rem;
-        color: var(--text-muted, #7A726A);
-    }
-
-    /* ==========================================================================
-       Order Totals
-       ========================================================================== */
-    .order-totals-section {
-        padding: 2rem;
-        background: #FAFAF8;
-        border-top: 1px solid var(--border-color, #EAE5E0);
-    }
-    .totals-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
-        color: var(--text-muted, #7A726A);
-    }
-    .totals-row.discount {
-        color: #4A6B53;
-    }
-    .totals-row.grand-total {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px dashed var(--border-color, #EAE5E0);
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--brand-dark, #2C2520);
-        font-family: var(--font-brand, 'Cinzel', serif);
-    }
-
-    /* ==========================================================================
-       Sidebar Information (Right Column)
-       ========================================================================== */
-    .sidebar-card {
-        background: var(--order-card-bg);
-        border: 1px solid var(--border-color, #EAE5E0);
-        border-radius: 8px;
-        padding: 1.75rem;
-        margin-bottom: 1.5rem;
-        box-shadow: var(--order-shadow);
-    }
-    .sidebar-card h3 {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.1rem;
-        color: var(--brand-dark, #2C2520);
-        margin: 0 0 1rem 0;
-        padding-bottom: 0.75rem;
+        padding: 1rem 0;
         border-bottom: 1px solid #F5F1ED;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
     }
-    .sidebar-card h3 svg {
-        color: var(--brand-gold, #C5A880);
-    }
-    .info-block {
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: var(--text-muted, #7A726A);
-    }
-    .info-block strong {
-        color: var(--brand-dark, #2C2520);
-        display: block;
-        margin-bottom: 0.2rem;
-        font-weight: 600;
-    }
-    .info-block p { margin: 0 0 0.5rem 0; }
 
-    /* ==========================================================================
-       Action Buttons & Tracking
-       ========================================================================== */
-    .action-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
     .btn-action {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        width: 100%;
-        padding: 0.85rem 1rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        text-decoration: none;
-        border: 1px solid transparent;
-    }
-    .btn-action:focus-visible {
-        outline: 2px solid var(--brand-dark, #2C2520);
-        outline-offset: 2px;
-    }
-    .btn-primary {
-        background: var(--brand-dark, #2C2520);
-        color: #FFFFFF;
-    }
-    .btn-primary:hover {
-        background: var(--brand-gold, #C5A880);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(197, 168, 128, 0.3);
-    }
-    .btn-outline {
-        background: transparent;
-        border-color: var(--brand-dark, #2C2520);
-        color: var(--brand-dark, #2C2520);
-    }
-    .btn-outline:hover {
-        background: var(--brand-dark, #2C2520);
-        color: #FFFFFF;
-    }
-    .btn-ghost {
-        background: transparent;
-        color: var(--text-muted, #7A726A);
-        border-color: transparent;
-    }
-    .btn-ghost:hover {
-        background: #F5F1ED;
-        color: var(--brand-dark, #2C2520);
-    }
-    
-    .tracking-box {
-        background: #F5F1ED;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-top: 1rem;
-        text-align: center;
-    }
-    .tracking-box .tracking-number {
-        font-family: monospace;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--brand-dark, #2C2520);
-        letter-spacing: 1px;
-        margin: 0.5rem 0;
         display: block;
+        width: 100%;
+        padding: 0.85rem;
+        text-align: center;
+        background: #2C2520;
+        color: #FFFFFF;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
     }
 
-    /* ==========================================================================
-       Responsive Rules
-       ========================================================================== */
-    @media (max-width: 991px) {
-        .order-content-grid { grid-template-columns: 1fr; }
-        .order-hero-card { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-        .hero-status-wrapper { text-align: left; }
-        .timeline-track::before { left: 15px; right: 15px; }
-    }
-    @media (max-width: 768px) {
-        .order-detail-wrapper { padding: 1.5rem 1rem 3rem; }
-        .order-item-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
-        .item-financials { text-align: left; width: 100%; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #EAE5E0; padding-top: 1rem; }
-        .timeline-track { flex-direction: column; gap: 1.5rem; align-items: flex-start; }
-        .timeline-track::before { top: 0; bottom: 0; left: 15px; width: 2px; height: auto; }
-        .timeline-step { display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left; }
-        .timeline-icon { margin: 0; z-index: 2; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .btn-action { transition: none !important; transform: none !important; }
-        .order-alert { animation: none !important; }
-    }
+    @media (max-width: 991px) { .order-content-grid { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
 
 {% block content %}
 <main class="order-detail-wrapper">
-    
-    <!-- Messages Framework Integration -->
-    {% if messages %}
-    <div class="order-messages-container" role="alert" aria-live="polite">
-        {% for message in messages %}
-            <div class="order-alert {% if message.tags %}{{ message.tags }}{% endif %}">
-                {% if 'success' in message.tags %}
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                {% elif 'error' in message.tags %}
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                {% else %}
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                {% endif %}
-                {{ message }}
-            </div>
-        {% endfor %}
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{% url 'customers:order_history' %}" style="color: #7A726A; text-decoration: none; font-weight: 500;">&larr; Back to Order History</a>
     </div>
-    {% endif %}
 
-    <!-- Breadcrumbs Navigation -->
-    <nav class="order-breadcrumbs" aria-label="Breadcrumb">
-        <a href="{% url 'customers:dashboard' %}">{% trans "Account" %}</a>
-        <span class="separator">/</span>
-        {% if 'customers:order_history'|default:'' %}
-            <a href="{% url 'customers:order_history' %}">{% trans "Order History" %}</a>
-        {% else %}
-            <a href="javascript:history.back()">{% trans "Orders" %}</a>
-        {% endif %}
-        <span class="separator">/</span>
-        <span aria-current="page">#{{ order.number|default:order.id }}</span>
-    </nav>
-
-    <!-- Premium Hero Header -->
-    <header class="order-hero-card">
-        <div class="hero-content">
-            <h1>{% trans "Order" %} #{{ order.number|default:order.id }}</h1>
-            <p>{% trans "Placed on" %} {{ order.created_at|date:"F j, Y" }} &bull; {% trans "Thank you for supporting handcrafted creators." %}</p>
+    <header class="order-header-card">
+        <div>
+            <h1 style="font-family: 'Cinzel', serif; margin: 0 0 0.5rem 0;">Order #{{ order.number|default:order.id }}</h1>
+            <p style="margin: 0; color: #7A726A;">Placed on {{ order.created_at|date:"F j, Y" }}</p>
         </div>
-        <div class="hero-status-wrapper">
-            <div class="order-status-badge status-{{ order.status|lower|default:'pending' }}">
+        <div>
+            <span style="padding: 0.5rem 1.25rem; border-radius: 20px; background: #F5F1ED; font-weight: 700; text-transform: uppercase;">
                 {{ order.get_status_display|default:order.status|default:"Processing" }}
-            </div>
-            {% if order.payment_status %}
-            <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-muted, #7A726A); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">
-                {% trans "Payment" %}: <span class="{% if order.payment_status == 'paid' %}status-paid{% else %}status-unpaid{% endif %}" style="padding: 2px 6px; border-radius: 4px;">{{ order.get_payment_status_display|default:order.payment_status }}</span>
-            </div>
-            {% endif %}
+            </span>
         </div>
     </header>
 
-    <!-- Visual Order Timeline -->
-    {% if order.status and order.status|lower != 'cancelled' and order.status|lower != 'refunded' %}
-    <section class="order-timeline-section" aria-label="Order Tracking Timeline">
-        <div class="timeline-track">
-            
-            <div class="timeline-step {% if order.created_at %}completed{% endif %}">
-                <div class="timeline-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                </div>
-                <div class="timeline-label">{% trans "Placed" %}</div>
-            </div>
-
-            <div class="timeline-step {% if order.status|lower == 'processing' or order.status|lower == 'shipped' or order.status|lower == 'delivered' or order.status|lower == 'completed' %}completed{% endif %}">
-                <div class="timeline-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
-                <div class="timeline-label">{% trans "Processing" %}</div>
-            </div>
-
-            <div class="timeline-step {% if order.status|lower == 'shipped' or order.status|lower == 'delivered' or order.status|lower == 'completed' %}completed{% endif %}">
-                <div class="timeline-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                </div>
-                <div class="timeline-label">{% trans "Shipped" %}</div>
-            </div>
-
-            <div class="timeline-step {% if order.status|lower == 'delivered' or order.status|lower == 'completed' %}completed{% endif %}">
-                <div class="timeline-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                </div>
-                <div class="timeline-label">{% trans "Delivered" %}</div>
-            </div>
-
-        </div>
-    </section>
-    {% endif %}
-
     <div class="order-content-grid">
-        
-        <!-- Left Column: Items & Financials -->
-        <div class="main-content-column">
-            
-            <section class="order-items-card" aria-label="Order Items">
-                <header class="card-header">
-                    <h2>{% trans "Items Purchased" %} ({{ order.items.count|default:0 }})</h2>
-                </header>
-                
-                <div class="order-items-list">
-                    {% for item in order.items.all %}
-                        <article class="order-item-row">
-                            <div class="item-media">
-                                {% if item.product.primary_image %}
-                                    <a href="{% if item.product.get_absolute_url %}{{ item.product.get_absolute_url }}{% else %}#{% endif %}">
-                                        <img src="{{ item.product.primary_image.url }}" alt="{{ item.product.title }}" loading="lazy">
-                                    </a>
-                                {% else %}
-                                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#EAE5E0; color:#999;">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="item-details">
-                                {% if item.product.get_absolute_url %}
-                                    <a href="{{ item.product.get_absolute_url }}" class="item-title">{{ item.product.title|default:"Handcrafted Item" }}</a>
-                                {% else %}
-                                    <span class="item-title" style="cursor:default;">{{ item.product.title|default:"Handcrafted Item" }}</span>
-                                {% endif %}
-                                
-                                {% if item.variant %}
-                                    <div class="item-meta"><strong>{% trans "Variant" %}:</strong> {{ item.variant }}</div>
-                                {% endif %}
-                                
-                                {% if item.product.sku or item.sku %}
-                                    <div class="item-meta"><strong>{% trans "SKU" %}:</strong> {{ item.product.sku|default:item.sku }}</div>
-                                {% endif %}
-                                
-                                {% if item.status and item.status != 'active' %}
-                                    <div class="item-meta" style="margin-top: 4px;">
-                                        <span class="order-status-badge" style="font-size: 0.65rem; padding: 2px 8px;">{{ item.get_status_display|default:item.status }}</span>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="item-financials">
-                                <div class="item-price">
-                                    {% if order.currency %}{{ order.currency }} {% else %}NPR {% endif %}{{ item.unit_price|default:item.price|floatformat:2 }}
-                                </div>
-                                <div class="item-qty">{% trans "Qty" %}: {{ item.quantity|default:1 }}</div>
-                            </div>
-                        </article>
-                    {% empty %}
-                        <div style="padding: 3rem 2rem; text-align: center; color: var(--text-muted, #7A726A);">
-                            <p>{% trans "No items found for this order." %}</p>
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <div class="order-totals-section">
-                    {% if order.subtotal %}
-                    <div class="totals-row">
-                        <span>{% trans "Subtotal" %}</span>
-                        <span>{% if order.currency %}{{ order.currency }} {% else %}NPR {% endif %}{{ order.subtotal|floatformat:2 }}</span>
+        <section class="items-card">
+            <h2 style="font-family: 'Cinzel', serif; margin-top: 0;">Purchased Items</h2>
+            {% for item in order.items.all %}
+                <div class="order-item-row">
+                    <div style="flex-grow: 1;">
+                        <h4 style="margin: 0;">{{ item.product.title|default:"Handcrafted Item" }}</h4>
+                        {% if item.variant %}<small style="color: #7A726A;">Variant: {{ item.variant }}</small>{% endif %}
                     </div>
-                    {% endif %}
-                    
-                    {% if order.discount_total and order.discount_total > 0 %}
-                    <div class="totals-row discount">
-                        <span>{% trans "Discounts Applied" %} {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}</span>
-                        <span>- {% if order.currency %}{{ order.currency }} {% else %}NPR {% endif %}{{ order.discount_total|floatformat:2 }}</span>
-                    </div>
-                    {% endif %}
-                    
-                    {% if order.shipping_cost is not None %}
-                    <div class="totals-row">
-                        <span>{% trans "Shipping & Handling" %}</span>
-                        <span>
-                            {% if order.shipping_cost > 0 %}
-                                {% if order.currency %}{{ order.currency }} {% else %}NPR {% endif %}{{ order.shipping_cost|floatformat:2 }}
-                            {% else %}
-                                {% trans "Free" %}
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% endif %}
-
-                    {% if order.tax_total is not None and order.tax_total > 0 %}
-                    <div class="totals-row">
-                        <span>{% trans "Estimated Taxes" %}</span>
-                        <span>{% if order.currency %}{{ order.currency }} {% else %}NPR {% endif %}{{ order.tax_total|floatformat:2 }}</span>
-                    </div>
-                    {% endif %}
-
-                    <div class="totals-row grand-total">
-                        <span>{% trans "Grand Total" %}</span>
-                        <span>{% if order.currency %}{{ order.currency }} {% else %}NPR {% endif %}{{ order.total|default:order.grand_total|floatformat:2 }}</span>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600;">NPR {{ item.unit_price|default:item.price|floatformat:2 }}</div>
+                        <small style="color: #7A726A;">Qty: {{ item.quantity|default:1 }}</small>
                     </div>
                 </div>
-            </section>
-        </div>
+            {% empty %}
+                <p style="color: #7A726A;">No individual line items registered for this order.</p>
+            {% endfor %}
 
-        <!-- Right Column: Meta & Actions -->
-        <aside class="sidebar-column">
-            
-            <!-- Quick Actions -->
-            <div class="sidebar-card action-stack">
-                {% if order.tracking_url or order.tracking_number %}
-                    {% if order.tracking_url %}
-                        <a href="{{ order.tracking_url }}" target="_blank" rel="noopener noreferrer" class="btn-action btn-primary">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                            {% trans "Track Shipment" %}
-                        </a>
-                    {% endif %}
-                    
-                    {% if order.tracking_number %}
-                        <div class="tracking-box">
-                            <span style="font-size: 0.8rem; color: var(--text-muted, #7A726A); text-transform: uppercase;">{% trans "Tracking Number" %}</span>
-                            <span class="tracking-number">{{ order.tracking_number }}</span>
-                            {% if order.carrier %}
-                                <span style="font-size: 0.8rem; color: var(--brand-dark, #2C2520);">Via {{ order.carrier }}</span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                {% endif %}
-
-                {% if order.invoice_url or order.has_invoice %}
-                    <a href="{{ order.invoice_url|default:'#' }}" class="btn-action btn-outline" {% if not order.invoice_url %}onclick="window.print(); return false;"{% endif %}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        {% trans "Download Invoice" %}
-                    </a>
-                {% endif %}
-
-                <!-- Reorder Form preserving Cart workflows -->
-                <form action="{% url 'cart:cart_reorder'|default:'#' %}" method="POST" style="margin: 0; padding: 0;">
-                    {% csrf_token %}
-                    <input type="hidden" name="order_id" value="{{ order.id }}">
-                    <button type="submit" class="btn-action btn-ghost" title="Add these items back to your cart">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
-                        {% trans "Buy Again" %}
-                    </button>
-                </form>
-
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #EAE5E0; font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between;">
+                <span>Total Amount:</span>
+                <span>{% if order.currency %}{{ order.currency }}{% else %}NPR{% endif %} {{ order.total|default:order.grand_total|floatformat:2 }}</span>
             </div>
+        </section>
 
-            <!-- Shipping Information -->
-            {% if order.shipping_address or order.shipping_name %}
+        <aside>
             <div class="sidebar-card">
-                <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    {% trans "Shipping Address" %}
-                </h3>
-                <address class="info-block" style="font-style: normal;">
-                    <strong>{{ order.shipping_name|default:order.customer.get_full_name }}</strong>
-                    {% if order.shipping_address %}
-                        <p>{{ order.shipping_address|linebreaksbr }}</p>
-                    {% endif %}
-                    {% if order.shipping_city or order.shipping_state %}
-                        <p>{{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}</p>
-                    {% endif %}
-                    {% if order.shipping_country %}
-                        <p>{{ order.shipping_country }}</p>
-                    {% endif %}
-                    {% if order.shipping_phone %}
-                        <p style="margin-top: 0.5rem;">{% trans "Phone" %}: {{ order.shipping_phone }}</p>
-                    {% endif %}
-                </address>
-                {% if order.delivery_instructions %}
-                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #EAE5E0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted, #7A726A); text-transform: uppercase; font-weight: 600;">{% trans "Delivery Notes" %}</span>
-                    <p style="font-size: 0.85rem; color: var(--brand-dark, #2C2520); margin: 0.25rem 0 0 0; font-style: italic;">"{{ order.delivery_instructions }}"</p>
-                </div>
+                <h3 style="font-family: 'Cinzel', serif; margin-top: 0;">Order Summary</h3>
+                {% if order.shipping_address %}
+                    <p><strong>Shipping Address:</strong><br>{{ order.shipping_address|linebreaksbr }}</p>
                 {% endif %}
+                {% if order.payment_method %}
+                    <p><strong>Payment Method:</strong> {{ order.get_payment_method_display|default:order.payment_method }}</p>
+                {% endif %}
+                <a href="{% url 'customers:order_history' %}" class="btn-action">Return to List</a>
             </div>
-            {% endif %}
-
-            <!-- Billing Information -->
-            {% if order.billing_address and order.billing_address != order.shipping_address %}
-            <div class="sidebar-card">
-                <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    {% trans "Billing Address" %}
-                </h3>
-                <address class="info-block" style="font-style: normal;">
-                    <strong>{{ order.billing_name|default:order.shipping_name|default:order.customer.get_full_name }}</strong>
-                    <p>{{ order.billing_address|linebreaksbr }}</p>
-                    {% if order.billing_city or order.billing_state %}
-                        <p>{{ order.billing_city }}, {{ order.billing_state }} {{ order.billing_postal_code }}</p>
-                    {% endif %}
-                    {% if order.billing_country %}
-                        <p>{{ order.billing_country }}</p>
-                    {% endif %}
-                </address>
-            </div>
-            {% endif %}
-
-            <!-- Payment Details -->
-            {% if order.payment_method or order.transaction_id %}
-            <div class="sidebar-card">
-                <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                    {% trans "Payment Information" %}
-                </h3>
-                <div class="info-block">
-                    {% if order.payment_method %}
-                        <strong>{% trans "Method" %}</strong>
-                        <p>{{ order.get_payment_method_display|default:order.payment_method }}</p>
-                    {% endif %}
-                    {% if order.transaction_id %}
-                        <strong style="margin-top: 0.75rem;">{% trans "Transaction ID" %}</strong>
-                        <p style="font-family: monospace; font-size: 0.85rem; letter-spacing: 0.5px;">{{ order.transaction_id }}</p>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
         </aside>
     </div>
-
 </main>
 {% endblock %}

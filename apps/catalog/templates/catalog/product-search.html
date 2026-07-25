@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load static humanize currency_tags inventory_tags catalog_tags %}
+
+{% block title %}
+    {% if search_query %}Search: "{{ search_query }}"{% else %}Search Masterpieces{% endif %} | Gobindas Handicrafts
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'catalog/css/product-list.css' %}">
+    <link rel="stylesheet" href="{% static 'catalog/css/product-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<a href="#main-product-gallery" class="plp-skip-link">Skip to search results</a>
+
+<div class="plp-wrapper">
+
+    <header class="category-hero-section">
+        <h1 class="category-title">
+            {% if search_query %}
+                Search Results for &ldquo;{{ search_query }}&rdquo;
+            {% else %}
+                Search Catalog Masterpieces
+            {% endif %}
+        </h1>
+        <p class="category-description">
+            Explore handcrafted Nepali masterpieces matching your keyword query across materials, artisans, and craft lineages.
+        </p>
+    </header>
+
+    <!-- Control Toolbar -->
+    <section class="catalog-control-bar" aria-label="Search result controls">
+        <div class="product-metrics-count" aria-live="polite">
+            {% if total_products %}
+                Found {{ total_products|intcomma }} masterpiece(s) matching your search query
+            {% else %}
+                0 masterpieces found matching &ldquo;{{ search_query }}&rdquo;
+            {% endif %}
+        </div>
+        <div class="catalog-interaction-controls">
+            <div class="select-custom-wrapper">
+                <select id="catalog-sort-select"
+                        name="sort"
+                        aria-label="Sort search results"
+                        onchange="const form = document.getElementById('catalog-filter-form'); if(form){const s=form.elements['sort']; if(s){s.value=this.value;} form.submit();}">
+                    <option value="featured" {% if current_sort == 'featured' or not current_sort %}selected{% endif %}>Featured Collection</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                    <option value="price-low" {% if current_sort == 'price-low' or current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price-high" {% if current_sort == 'price-high' or current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                    <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Active Filter Chips Workspace -->
+    {% if active_filter_chips %}
+    <div class="active-filters-workspace" aria-label="Active search filters">
+        <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Active Filters:</span>
+        {% for chip in active_filter_chips %}
+            <span class="active-filter-chip">
+                <span>{{ chip.label }}</span>
+                <a href="?{% remove_filter_param chip.param chip.key %}" class="chip-remove-btn" title="Remove {{ chip.label }}" aria-label="Remove filter {{ chip.label }}">&times;</a>
+            </span>
+        {% endfor %}
+        <a href="?q={{ search_query|urlencode }}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="clear-all-filters-btn">Clear Filters</a>
+    </div>
+    {% endif %}
+
+    <div class="catalog-layout-grid">
+        <!-- Interactive Filter Sidebar Panel -->
+        <form method="GET" action="" id="catalog-filter-form" class="filter-sidebar-panel" aria-label="Refine search filters">
+            <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+            <input type="hidden" name="sort" value="{{ current_sort|default:'featured' }}">
+
+            <h2 class="sidebar-panel-header">Refine Search</h2>
+
+            <!-- 1. Stock Availability -->
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Availability</button>
+                <div class="filter-node-content">
+                    <label class="toggle-switch-label">
+                        <input type="checkbox" name="in_stock_only" value="true" {% if request.GET.in_stock_only == 'true' %}checked{% endif %} onchange="this.form.submit();">
+                        <span class="toggle-switch-text">Ready to Ship / In Stock Only</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <!-- 2. Price Range -->
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Price Range (NPR)</button>
+                <div class="filter-node-content">
+                    <div class="dual-price-range-inputs">
+                        <div class="price-input-group">
+                            <label for="searchMinPrice">Min</label>
+                            <input type="number" id="searchMinPrice" name="min_price" value="{{ request.GET.min_price|default:'' }}" placeholder="0" min="0" class="price-number-input">
+                        </div>
+                        <span class="price-range-dash">&ndash;</span>
+                        <div class="price-input-group">
+                            <label for="searchMaxPrice">Max</label>
+                            <input type="number" id="searchMaxPrice" name="price_max" value="{{ request.GET.price_max|default:request.GET.max_price|default:'' }}" placeholder="Max" min="0" class="price-number-input">
+                        </div>
+                        <button type="submit" class="btn-price-apply">Go</button>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 3. Star Rating -->
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Minimum Rating</button>
+                <div class="filter-node-content">
+                    {% for r, count in facets.rating_counts.items %}
+                    <label class="filter-list-option rating-filter-row">
+                        <input type="radio" name="min_rating" value="{{ r }}" {% if request.GET.min_rating == r|stringformat:'d' %}checked{% endif %} onchange="this.form.submit();">
+                        <span class="star-rating-display">{{ r|render_star_rating }} &amp; Above</span>
+                        <span class="facet-count-badge">{{ count|format_facet_count }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <!-- 4. Materials -->
+            {% if facets.materials %}
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Material</button>
+                <div class="filter-node-content">
+                    {% for mat in facets.materials %}
+                    <label class="filter-list-option">
+                        <input type="checkbox" name="material" value="{{ mat.name|escape }}" {% if mat.checked %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">{{ mat.name }}</span>
+                        <span class="facet-count-badge">{{ mat.count|format_facet_count }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            <!-- 5. Artisans -->
+            {% if facets.artisans %}
+            <fieldset class="filter-accordion-node active">
+                <button type="button" class="filter-node-trigger" aria-expanded="true">Master Craftsmen</button>
+                <div class="filter-node-content">
+                    {% for art in facets.artisans %}
+                    <label class="filter-list-option">
+                        <input type="checkbox" name="artisan" value="{{ art.slug|escape }}" {% if art.checked %}checked{% endif %} onchange="this.form.submit();">
+                        <span style="flex: 1;">Master {{ art.name }}</span>
+                        <span class="facet-count-badge">{{ art.count|format_facet_count }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            <!-- 6. Color Hues -->
+            {% if facets.hues %}
+            <fieldset class="filter-accordion-node">
+                <button type="button" class="filter-node-trigger" aria-expanded="false">Hue Aesthetic</button>
+                <div class="filter-node-content color-swatches-grid">
+                    {% for hue in facets.hues %}
+                    <label class="color-swatch-bubble-label" title="{{ hue.name }}">
+                        <input type="checkbox" name="hue" value="{{ hue.name|escape }}" {% if hue.checked %}checked{% endif %} onchange="this.form.submit();" style="display:none;">
+                        <span class="color-swatch-bubble {% if hue.checked %}selected{% endif %}" style="background-color: {{ hue.color|default:'#C5A880' }};"></span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endif %}
+
+            <noscript>
+                <button type="submit" class="pagination-node" style="margin-top: 1rem; width: 100%;">Apply Filters</button>
+            </noscript>
+        </form>
+
+        <!-- Product Gallery Grid -->
+        <main class="product-showcase-matrix" id="main-product-gallery" role="list" aria-label="Search results grid">
+            {% if products %}
+                {% for product in products %}
+                    {% include "catalog/product-card.html" with product=product %}
+                {% endfor %}
+            {% else %}
+                <div class="plp-empty-state" role="status" aria-live="polite">
+                    <p>No masterpieces match your query &ldquo;{{ search_query }}&rdquo; and selected filters.</p>
+                    <a href="{% url 'catalog:product_search' %}" aria-label="Clear search">Clear Search Criteria</a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="catalog-pagination-nav" aria-label="Search Results Pagination">
+        {% if page_obj.has_previous %}
+            <a href="?{% url_replace page=page_obj.previous_page_number %}" class="pagination-node" rel="prev" aria-label="Previous Page">&lsaquo;</a>
+        {% endif %}
+
+        {% for i in paginator.page_range %}
+            {% if page_obj.number == i %}
+                <span class="pagination-node active" aria-current="page">{{ i }}</span>
+            {% else %}
+                <a href="?{% url_replace page=i %}" class="pagination-node" aria-label="Go to page {{ i }}">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?{% url_replace page=page_obj.next_page_number %}" class="pagination-node" rel="next" aria-label="Next Page">&rsaquo;</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'catalog/js/product-list.js' %}"></script>
+    <script src="{% static 'catalog/js/product-card.js' %}"></script>
+{% endblock %}

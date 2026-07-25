@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Audit Logs | Gobindas Handicrafts{% endblock %}
+
+{% block content %}
+<div class="audit-container">
+    <h1 style="font-family: 'Cinzel', serif; margin-bottom: 1.5rem;">System Audit Ledger</h1>
+
+    <form method="get" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+        {{ form.action }}
+        {{ form.severity }}
+        <button type="submit" class="btn-primary" style="width: auto; padding: 0.5rem 1.5rem;">Filter</button>
+    </form>
+
+    <table class="audit-table">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Severity</th>
+                <th>Target</th>
+                <th>IP Address</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in logs %}
+            <tr>
+                <td>{{ entry.timestamp|date:"Y-m-d H:i:s" }}</td>
+                <td>{{ entry.actor|default:'System' }}</td>
+                <td>{{ entry.get_action_display }}</td>
+                <td><strong>{{ entry.get_severity_display }}</strong></td>
+                <td>{{ entry.target_repr|default:'-' }}</td>
+                <td>{{ entry.ip_address|default:'-' }}</td>
+                <td><a href="{% url 'audit:detail' pk=entry.id %}">View Diffs</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #7A726A;">No audit log records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

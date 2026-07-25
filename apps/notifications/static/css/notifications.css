@@ -1,0 +1,21 @@
+/* Notification Audit & Preference Styling */
+.notifications-wrapper {
+    max-width: 900px;
+    margin: 3rem auto;
+    background: #FFFFFF;
+    border: 1px solid #EAE5E0;
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.notification-log-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #EAE5E0;
+}
+
+.notification-log-card:last-child {
+    border-bottom: none;
+}

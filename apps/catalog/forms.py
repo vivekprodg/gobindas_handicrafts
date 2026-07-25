@@ -1,66 +1,6 @@
 """
 Enterprise-grade Forms for the Catalog application.
-
-ARCHITECTURE OVERVIEW
-====================
-
-This module implements the COMPLETE form layer for the catalog domain.
-The catalog is intentionally INVENTORY-AGNOSTIC:
-
-    * Catalog forms NEVER carry inventory fields, widgets, validators,
-      save() logic, or business rules.
-    * Catalog forms NEVER edit or create inventory records.
-    * Catalog forms NEVER calculate stock, quantity, or availability.
-    * Catalog forms NEVER validate inventory business rules.
-    * Inventory is the exclusive responsibility of the Inventory app.
-
-Catalog forms are responsible for:
-
-    * Products
-    * Product Variants
-    * Categories / Brands / Collections
-    * Attributes / Attribute Values
-    * Tags
-    * Images / Media
-    * Descriptions / Specifications
-    * SEO / Metadata
-    * Publishing / Visibility
-    * Slugs / Identifiers
-    * Pricing references (price is a catalog description, not a stock value)
-    * Dimensions / Weight
-    * Tax references
-    * Marketing labels / Badges
-
-ARCHITECTURE PRINCIPLES
-=======================
-
-* **Service Layer Purity**: Forms are THIN. They validate input,
-  normalize data, and provide UI feedback. All business logic stays
-  out of forms. Mutations are the responsibility of views and services.
-
-* **Inventory Agnostic**: This module MUST NOT reference the Inventory
-  app. The boundary is enforced architecturally - catalog forms own
-  catalog data only.
-
-* **CMS-Driven**: Every configurable label, help text, and option is
-  derived from constants or the database. No business rule is
-  hardcoded.
-
-* **Backend-Agnostic / Future-Proof**: Designed to integrate with
-  Purchase Orders, Manufacturing, Batch / Lot / Serial, Barcode / QR,
-  Expiry, Mobile ERP, Notifications, etc. without modification.
-
-* **Defensive Validation**: Every optional field is genuinely optional.
-  Missing data NEVER raises an exception. Safe fallbacks are always
-  used.
-
-* **Security-First**: OWASP ASVS compliant. Whitelisted fields,
-  sanitized inputs, no over-posting, no mass-assignment.
-
-* **PEP 8 / Python 3.13+ / Django 5.1+**: Full type hints, docstrings,
-  enterprise conventions.
-
-Author: Handicraft E-commerce Engineering Team
+Provides comprehensive form classes for Catalog CMS management and multi-faceted product discovery filtering.
 """
 
 from __future__ import annotations
@@ -103,13 +43,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-# ==============================================================================
-# WHITELIST HELPER (OWASP mass-assignment defense)
-# ==============================================================================
 def _safe_get(d: Optional[Dict[str, Any]], key: str, default: Any = None) -> Any:
-    """
-    Safe dict access that returns a default on missing or None values.
-    """
     if d is None:
         return default
     value = d.get(key, default)
@@ -121,11 +55,6 @@ def _normalize_decimal(
     allow_none: bool = True,
     min_value: Optional[Decimal] = None,
 ) -> Optional[Decimal]:
-    """
-    Best-effort conversion of a value to Decimal.
-
-    Returns None for empty / None / unparseable values. Never raises.
-    """
     if value is None or value == "":
         return None if allow_none else Decimal("0")
     try:
@@ -144,11 +73,6 @@ def _normalize_integer(
     allow_none: bool = True,
     min_value: Optional[int] = None,
 ) -> Optional[int]:
-    """
-    Best-effort conversion of a value to int.
-
-    Returns None for empty / None / unparseable values. Never raises.
-    """
     if value is None or value == "":
         return None if allow_none else 0
     try:
@@ -163,9 +87,6 @@ def _normalize_integer(
     return int_value
 
 def _normalize_text(value: Any, *, max_length: Optional[int] = None) -> str:
-    """
-    Normalize user-supplied text input to a safe string.
-    """
     if value is None:
         return ""
     text = str(value).strip()
@@ -174,13 +95,6 @@ def _normalize_text(value: Any, *, max_length: Optional[int] = None) -> str:
     return text
 
 def _parse_json_field(value: Any) -> Any:
-    """
-    Safely parse a JSON-encoded form field.
-
-    Returns the parsed value on success, returns the original value
-    unchanged if it is already a structured object, returns an
-    empty container on parse failure.
-    """
     if value is None or value == "":
         return None
     if isinstance(value, (dict, list)):
@@ -190,20 +104,7 @@ def _parse_json_field(value: Any) -> Any:
     except (json.JSONDecodeError, TypeError, ValueError):
         return None
 
-# ==============================================================================
-# CATEGORY FORM
-# ==============================================================================
 class CategoryForm(forms.ModelForm):
-    """
-    Enterprise form for Category management.
-
-    Validates:
-        * Slug uniqueness (excluded when editing the same instance)
-        * Prevents a category from being its own parent
-        * Restricts nesting depth to two levels (Category -> Subcategory)
-        * All other CMS-defined fields validated by ModelForm machinery
-    """
-
     class Meta:
         model = Category
         fields = [
@@ -240,23 +141,11 @@ class CategoryForm(forms.ModelForm):
                         ),
                     )
             except Exception:
-                # Defensive: missing related object should not crash form.
                 pass
 
         return cleaned_data
 
-# ==============================================================================
-# ARTISAN (BRAND) FORM
-# ==============================================================================
 class ArtisanForm(forms.ModelForm):
-    """
-    Enterprise form for Artisan (brand) management.
-
-    Validates:
-        * Slug uniqueness (excluded when editing the same instance)
-        * All CMS-defined fields validated by ModelForm machinery
-    """
-
     class Meta:
         model = Artisan
         fields = [
@@ -287,17 +176,7 @@ class ArtisanForm(forms.ModelForm):
             )
         return slug
 
-# ==============================================================================
-# MATERIAL FORM
-# ==============================================================================
 class MaterialForm(forms.ModelForm):
-    """
-    Enterprise form for Material catalog management.
-
-    Validates:
-        * Name uniqueness (excluded when editing the same instance)
-    """
-
     class Meta:
         model = Material
         fields = ["name", "description"]
@@ -316,19 +195,7 @@ class MaterialForm(forms.ModelForm):
             )
         return name
 
-# ==============================================================================
-# HUE (COLOR) FORM
-# ==============================================================================
 class HueForm(forms.ModelForm):
-    """
-    Enterprise form for Hue (color) catalog management.
-
-    Validates:
-        * Hex color code format (handled by model validator)
-        * Uniqueness by name is NOT enforced at the schema level,
-          so this form performs the slug-style uniqueness check
-    """
-
     class Meta:
         model = Hue
         fields = ["name", "color_code", "swatch_image"]
@@ -339,14 +206,7 @@ class HueForm(forms.ModelForm):
             return value
         return value.upper()
 
-# ==============================================================================
-# ETHICAL STANDARD FORM
-# ==============================================================================
 class EthicalStandardForm(forms.ModelForm):
-    """
-    Enterprise form for EthicalStandard catalog management.
-    """
-
     class Meta:
         model = EthicalStandard
         fields = ["name", "description", "icon", "is_active"]
@@ -365,14 +225,7 @@ class EthicalStandardForm(forms.ModelForm):
             )
         return name
 
-# ==============================================================================
-# COLLECTION FORM
-# ==============================================================================
 class CollectionForm(forms.ModelForm):
-    """
-    Enterprise form for the legacy / lightweight Collection entity.
-    """
-
     class Meta:
         model = Collection
         fields = ["name", "slug", "description", "image", "is_active"]
@@ -391,14 +244,7 @@ class CollectionForm(forms.ModelForm):
             )
         return slug
 
-# ==============================================================================
-# TAG FORM
-# ==============================================================================
 class TagForm(forms.ModelForm):
-    """
-    Enterprise form for the legacy Tag entity.
-    """
-
     class Meta:
         model = Tag
         fields = ["name", "slug"]
@@ -417,14 +263,7 @@ class TagForm(forms.ModelForm):
             )
         return slug
 
-# ==============================================================================
-# VARIANT TYPE FORM
-# ==============================================================================
 class VariantTypeForm(forms.ModelForm):
-    """
-    Enterprise form for VariantType (axis) management.
-    """
-
     class Meta:
         model = VariantType
         fields = ["name", "display_order", "is_active"]
@@ -443,14 +282,7 @@ class VariantTypeForm(forms.ModelForm):
             )
         return name
 
-# ==============================================================================
-# VARIANT OPTION FORM
-# ==============================================================================
 class VariantOptionForm(forms.ModelForm):
-    """
-    Enterprise form for VariantOption (axis value) management.
-    """
-
     class Meta:
         model = VariantOption
         fields = [
@@ -468,38 +300,17 @@ class VariantOptionForm(forms.ModelForm):
             return value
         return value.upper()
 
-# ==============================================================================
-# PRODUCT HIGHLIGHT FORM
-# ==============================================================================
 class ProductHighlightForm(forms.ModelForm):
-    """
-    Enterprise form for ProductHighlight management.
-    """
-
     class Meta:
-        model = ProductHighlight  # type: ignore[name-defined]
+        model = ProductHighlight
         fields = ["name", "icon_class", "display_order", "is_active"]
 
-# ==============================================================================
-# TRUST BADGE FORM
-# ==============================================================================
 class TrustBadgeForm(forms.ModelForm):
-    """
-    Enterprise form for TrustBadge management.
-    """
-
     class Meta:
         model = TrustBadge
         fields = ["name", "image", "description", "display_order", "is_active"]
 
-# ==============================================================================
-# PRODUCT LABEL FORM
-# ==============================================================================
 class ProductLabelForm(forms.ModelForm):
-    """
-    Enterprise form for ProductLabel (marketing label) management.
-    """
-
     class Meta:
         model = ProductLabel
         fields = [
@@ -529,16 +340,9 @@ class ProductLabelForm(forms.ModelForm):
             )
         return slug
 
-# ==============================================================================
-# PRODUCT ICON FORM
-# ==============================================================================
 class ProductIconForm(forms.ModelForm):
-    """
-    Enterprise form for ProductIcon (decorative icon) management.
-    """
-
     class Meta:
-        model = ProductIcon  # type: ignore[name-defined]
+        model = ProductIcon
         fields = [
             "name",
             "icon_class",
@@ -547,30 +351,7 @@ class ProductIconForm(forms.ModelForm):
             "is_active",
         ]
 
-# ==============================================================================
-# PRODUCT FORM (Main Masterpiece)
-# ==============================================================================
 class ProductForm(forms.ModelForm):
-    """
-    Enterprise form for Product Masterpiece management.
-
-    Validates catalog data only. NEVER touches inventory.
-
-    Validation coverage:
-        * Slug uniqueness (excluded when editing the same instance)
-        * SKU uniqueness (excluded when editing the same instance)
-        * Barcode uniqueness (excluded when editing the same instance)
-        * Product cannot be related to itself
-        * Pricing: original price must be greater than current price
-        * Publishing window: publish_from must be before publish_until
-        * Structured data: must be valid JSON if provided as string
-        * All optional fields are genuinely optional
-
-    This form does NOT validate or modify inventory in any way.
-    Stock / availability / quantity validation is exclusively the
-    responsibility of the Inventory application.
-    """
-
     class Meta:
         model = Product
         fields = [
@@ -656,8 +437,6 @@ class ProductForm(forms.ModelForm):
             "structured_data": forms.Textarea(attrs={"rows": 4}),
         }
 
-    # -- Field-level cleaners (catalog integrity only) -----------------
-
     def clean_slug(self) -> str:
         slug = _normalize_text(self.cleaned_data.get("slug"))
         if not slug:
@@ -726,7 +505,6 @@ class ProductForm(forms.ModelForm):
         except ValidationError:
             raise
         except Exception:
-            # Defensive: any membership-check failure is non-fatal.
             pass
         return related
 
@@ -774,12 +552,9 @@ class ProductForm(forms.ModelForm):
                 )
         return value
 
-    # -- Form-level cleaner (catalog integrity only) ------------------
-
     def clean(self) -> Dict[str, Any]:
         cleaned_data = super().clean()
 
-        # Pricing: original price must be greater than current price.
         price = _normalize_decimal(_safe_get(cleaned_data, "price"))
         original_price = _normalize_decimal(
             _safe_get(cleaned_data, "original_price")
@@ -797,7 +572,6 @@ class ProductForm(forms.ModelForm):
                 ),
             )
 
-        # Publishing window: publish_from must be before publish_until.
         publish_from = _safe_get(cleaned_data, "publish_from")
         publish_until = _safe_get(cleaned_data, "publish_until")
         if (
@@ -815,26 +589,7 @@ class ProductForm(forms.ModelForm):
 
         return cleaned_data
 
-# ==============================================================================
-# PRODUCT VARIANT FORM
-# ==============================================================================
 class ProductVariantForm(forms.ModelForm):
-    """
-    Enterprise form for handling Product Variants.
-
-    Validates catalog data only. NEVER touches inventory.
-
-    Validation coverage:
-        * SKU uniqueness (excluded when editing the same instance)
-        * Barcode uniqueness (excluded when editing the same instance)
-        * Pricing override: compare_at_price must be >= price_override
-        * Attributes JSON must be valid if supplied as string
-
-    This form does NOT validate or modify inventory in any way.
-    Stock / availability / quantity validation is exclusively the
-    responsibility of the Inventory application.
-    """
-
     class Meta:
         model = ProductVariant
         fields = [
@@ -926,14 +681,7 @@ class ProductVariantForm(forms.ModelForm):
 
         return cleaned_data
 
-# ==============================================================================
-# PRODUCT IMAGE FORM
-# ==============================================================================
 class ProductImageForm(forms.ModelForm):
-    """
-    Form for validating primary and legacy gallery image metadata.
-    """
-
     class Meta:
         model = ProductImage
         fields = [
@@ -951,10 +699,6 @@ class ProductImageForm(forms.ModelForm):
         return _normalize_text(self.cleaned_data.get("alt_text"))
 
 class ProductGalleryImageForm(forms.ModelForm):
-    """
-    Form for validating explicitly structured gallery images.
-    """
-
     class Meta:
         model = ProductGalleryImage
         fields = [
@@ -979,14 +723,7 @@ class ProductGalleryImageForm(forms.ModelForm):
             return "image"
         return value.lower()
 
-# ==============================================================================
-# PRODUCT TAG FORM
-# ==============================================================================
 class ProductTagForm(forms.ModelForm):
-    """
-    Form for ProductTag (rich tagging) management.
-    """
-
     class Meta:
         model = ProductTag
         fields = ["name", "slug", "description", "is_active", "products"]
@@ -1007,14 +744,7 @@ class ProductTagForm(forms.ModelForm):
             )
         return slug
 
-# ==============================================================================
-# PRODUCT COLLECTION FORM
-# ==============================================================================
 class ProductCollectionForm(forms.ModelForm):
-    """
-    Form for ProductCollection (rich collection) curation management.
-    """
-
     class Meta:
         model = ProductCollection
         fields = [
@@ -1044,14 +774,7 @@ class ProductCollectionForm(forms.ModelForm):
             )
         return slug
 
-# ==============================================================================
-# PRODUCT SPECIFICATION FORM
-# ==============================================================================
 class ProductSpecificationForm(forms.ModelForm):
-    """
-    Form for ProductSpecification (key-value) management.
-    """
-
     class Meta:
         model = ProductSpecification
         fields = [
@@ -1063,14 +786,7 @@ class ProductSpecificationForm(forms.ModelForm):
             "is_active",
         ]
 
-# ==============================================================================
-# PRODUCT FAQ FORM
-# ==============================================================================
 class ProductFAQForm(forms.ModelForm):
-    """
-    Form for ProductFAQ management.
-    """
-
     class Meta:
         model = ProductFAQ
         fields = [
@@ -1081,14 +797,7 @@ class ProductFAQForm(forms.ModelForm):
             "is_active",
         ]
 
-# ==============================================================================
-# PRODUCT VIDEO FORM
-# ==============================================================================
 class ProductVideoForm(forms.ModelForm):
-    """
-    Form for ProductVideo management.
-    """
-
     class Meta:
         model = ProductVideo
         fields = [
@@ -1102,14 +811,7 @@ class ProductVideoForm(forms.ModelForm):
             "is_active",
         ]
 
-# ==============================================================================
-# PRODUCT SEO FORM
-# ==============================================================================
 class ProductSEOForm(forms.ModelForm):
-    """
-    Dedicated form for SEO field management.
-    """
-
     class Meta:
         model = ProductSEO
         fields = [
@@ -1135,14 +837,7 @@ class ProductSEOForm(forms.ModelForm):
     def clean_canonical_url(self) -> str:
         return _normalize_text(self.cleaned_data.get("canonical_url"))
 
-# ==============================================================================
-# PRODUCT SCHEMA FORM
-# ==============================================================================
 class ProductSchemaForm(forms.ModelForm):
-    """
-    Dedicated form for Schema.org JSON structured data management.
-    """
-
     class Meta:
         model = ProductSchema
         fields = ["product", "schema_type", "schema_data", "is_active"]
@@ -1166,18 +861,7 @@ class ProductSchemaForm(forms.ModelForm):
                 )
         return value
 
-# ==============================================================================
-# PUBLISHING WORKFLOW FORM
-# ==============================================================================
 class PublishingWorkflowForm(forms.ModelForm):
-    """
-    Specialized workflow form for Product publishing timelines and
-    status. Designed for use in custom CMS dashboards and bulk action
-    views.
-
-    Validates only publishing fields. NEVER mutates inventory.
-    """
-
     class Meta:
         model = Product
         fields = [
@@ -1219,29 +903,38 @@ class PublishingWorkflowForm(forms.ModelForm):
 
         return cleaned_data
 
-# ==============================================================================
-# PRODUCT FILTER FORM (Search / Filter Form)
-# ==============================================================================
 class ProductFilterForm(forms.Form):
     """
-    Advanced filter form for the Product catalog.
-
-    All fields are genuinely optional. This form does NOT touch
-    inventory; it is used by views to compose catalog querysets.
+    Comprehensive multi-faceted discovery filter form for capture and validation
+    of GET query parameters across storefront catalog, search, and collections.
     """
-
     search = forms.CharField(
         required=False,
         widget=forms.TextInput(
-            attrs={"placeholder": _("Search products...")}
+            attrs={"placeholder": _("Search products..."), "class": "form-input"}
         ),
-        label=_("Search"),
+        label=_("Search Keyword"),
     )
     min_price = forms.DecimalField(
-        required=False, min_value=Decimal("0"), decimal_places=2
+        required=False,
+        min_value=Decimal("0.00"),
+        decimal_places=2,
+        label=_("Minimum Price"),
     )
     max_price = forms.DecimalField(
-        required=False, min_value=Decimal("0"), decimal_places=2
+        required=False,
+        min_value=Decimal("0.00"),
+        decimal_places=2,
+        label=_("Maximum Price"),
+    )
+    in_stock_only = forms.BooleanField(
+        required=False,
+        label=_("In-Stock Items Only"),
+    )
+    min_rating = forms.ChoiceField(
+        required=False,
+        choices=[("", _("All Ratings")), ("5", "5★"), ("4", "4★ & above"), ("3", "3★ & above"), ("2", "2★ & above"), ("1", "1★ & above")],
+        label=_("Minimum Rating"),
     )
     category = forms.ModelMultipleChoiceField(
         queryset=Category.objects.filter(is_active=True),
@@ -1261,19 +954,36 @@ class ProductFilterForm(forms.Form):
     hue = forms.ModelMultipleChoiceField(
         queryset=Hue.objects.all().order_by("name"),
         required=False,
-        label=_("Hues"),
+        label=_("Hues & Colors"),
     )
     ethical_standards = forms.ModelMultipleChoiceField(
         queryset=EthicalStandard.objects.filter(is_active=True).order_by("name"),
         required=False,
         label=_("Ethical Standards"),
     )
-    featured = forms.BooleanField(required=False, label=_("Featured Only"))
-    on_sale = forms.BooleanField(required=False, label=_("On Sale Only"))
+    tags = forms.ModelMultipleChoiceField(
+        queryset=ProductTag.objects.filter(is_active=True).order_by("name"),
+        required=False,
+        label=_("Product Tags"),
+    )
+    collections = forms.ModelMultipleChoiceField(
+        queryset=ProductCollection.objects.filter(is_active=True).order_by("name"),
+        required=False,
+        label=_("Craft Collections"),
+    )
+    featured = forms.BooleanField(required=False, label=_("Featured Masterpieces Only"))
+    on_sale = forms.BooleanField(required=False, label=_("On Sale Items Only"))
+    min_discount_pct = forms.IntegerField(
+        required=False,
+        min_value=0,
+        max_value=100,
+        label=_("Minimum Discount %"),
+    )
     sort_by = forms.ChoiceField(
         required=False,
         choices=[
-            ("", _("Sort by relevance")),
+            ("", _("Featured Collection")),
+            ("featured", _("Featured Collection")),
             ("newest", _("Newest Arrivals")),
             ("oldest", _("Oldest First")),
             ("price-low", _("Price: Low to High")),
@@ -1286,14 +996,17 @@ class ProductFilterForm(forms.Form):
         label=_("Sort by"),
     )
 
+    def clean_min_discount_pct(self) -> Optional[int]:
+        val = self.cleaned_data.get("min_discount_pct")
+        if val is not None and (val < 0 or val > 100):
+            raise forms.ValidationError(_("Discount percentage must be between 0% and 100%."))
+        return val
+
     def clean(self) -> Dict[str, Any]:
         cleaned_data = super().clean()
-        min_price = _normalize_decimal(
-            _safe_get(cleaned_data, "min_price")
-        )
-        max_price = _normalize_decimal(
-            _safe_get(cleaned_data, "max_price")
-        )
+        min_price = _normalize_decimal(_safe_get(cleaned_data, "min_price"))
+        max_price = _normalize_decimal(_safe_get(cleaned_data, "max_price"))
+
         if (
             min_price is not None
             and max_price is not None
@@ -1305,11 +1018,7 @@ class ProductFilterForm(forms.Form):
             )
         return cleaned_data
 
-# ==============================================================================
-# PUBLIC API
-# ==============================================================================
 __all__ = [
-    # Taxonomy
     "CategoryForm",
     "ArtisanForm",
     "MaterialForm",
@@ -1317,15 +1026,12 @@ __all__ = [
     "EthicalStandardForm",
     "CollectionForm",
     "TagForm",
-    # Variants
     "VariantTypeForm",
     "VariantOptionForm",
-    # Features
     "ProductHighlightForm",
     "TrustBadgeForm",
     "ProductLabelForm",
     "ProductIconForm",
-    # Product main
     "ProductForm",
     "ProductVariantForm",
     "ProductImageForm",
@@ -1335,13 +1041,10 @@ __all__ = [
     "ProductSpecificationForm",
     "ProductFAQForm",
     "ProductVideoForm",
-    # SEO / Schema
     "ProductSEOForm",
     "ProductSchemaForm",
-    # Workflow / search
     "PublishingWorkflowForm",
     "ProductFilterForm",
-    # Helpers
     "_safe_get",
     "_normalize_decimal",
     "_normalize_integer",

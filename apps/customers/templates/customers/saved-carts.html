@@ -1,34 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}My Saved Carts | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
+{% block title %}Saved Carts | {{ site_settings.brand_title|default:"Gobindas Handicrafts" }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* ==========================================================================
-       Premium Account Layout & Variables
-       ========================================================================== */
     :root {
         --dash-surface: #FFFFFF;
         --dash-bg: #FCFAF8;
-        --dash-border: var(--border-light, #EAE5E0);
-        --dash-text-main: var(--brand-dark, #2C2520);
-        --dash-text-muted: var(--text-muted, #7A726A);
-        --dash-gold: var(--brand-gold, #C5A880);
-        --dash-gold-dark: var(--brand-gold-dark, #9A7B54);
+        --dash-border: #EAE5E0;
+        --dash-text-main: #2C2520;
+        --dash-text-muted: #7A726A;
+        --dash-gold: #C5A880;
         --dash-radius-lg: 16px;
-        --dash-radius-md: 12px;
-        --dash-radius-sm: 8px;
-        --dash-shadow-soft: 0 12px 36px rgba(44, 37, 32, 0.06);
-        --dash-shadow-hover: 0 20px 48px rgba(44, 37, 32, 0.1);
-        --dash-transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        --auth-error: #C0392B;
-        --auth-error-bg: #FDF0ED;
     }
 
-    body {
-        background-color: var(--dash-bg);
-    }
+    body { background-color: var(--dash-bg); }
 
     .dashboard-layout {
         max-width: 1440px;
@@ -37,18 +24,8 @@
         display: grid;
         grid-template-columns: 280px 1fr;
         gap: 3.5rem;
-        align-items: start;
-        animation: dashboardFadeIn 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
     }
 
-    @keyframes dashboardFadeIn {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ==========================================================================
-       Sidebar Navigation
-       ========================================================================== */
     .dashboard-sidebar {
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
@@ -56,696 +33,101 @@
         padding: 2rem 1.5rem;
         position: sticky;
         top: 110px;
-        box-shadow: var(--dash-shadow-soft);
-        z-index: 10;
     }
 
-    .sidebar-header {
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--dash-border);
-    }
-
-    .sidebar-header h2 {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.25rem;
-        color: var(--dash-text-main);
-        margin: 0;
-        letter-spacing: 0.05em;
-    }
-
-    .sidebar-nav {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
 
     .sidebar-link {
         display: flex;
         align-items: center;
         gap: 1rem;
         padding: 0.85rem 1.25rem;
-        border-radius: var(--dash-radius-sm);
+        border-radius: 8px;
         color: var(--dash-text-muted);
-        font-size: 0.95rem;
-        font-weight: 500;
-        transition: var(--dash-transition);
         text-decoration: none;
     }
 
-    .sidebar-link svg {
-        flex-shrink: 0;
-        color: inherit;
-        transition: var(--dash-transition);
-    }
-
-    .sidebar-link:hover {
-        background: rgba(197, 168, 128, 0.08);
-        color: var(--dash-gold-dark);
-    }
-
-    .sidebar-link.active {
+    .sidebar-link.active, .sidebar-link:hover {
         background: var(--dash-text-main);
         color: #FFFFFF;
-        font-weight: 600;
-        box-shadow: 0 4px 12px rgba(44, 37, 32, 0.15);
     }
 
-    .sidebar-link.active svg {
-        color: var(--dash-gold);
-    }
-
-    .sidebar-link.logout-link {
-        margin-top: 1.5rem;
-        color: #C0392B;
-    }
-    
-    .sidebar-link.logout-link:hover {
-        background: #FDF0ED;
-        color: #A93226;
-    }
-
-    /* ==========================================================================
-       Main Layout & Hero Section
-       ========================================================================== */
-    .dashboard-main {
-        display: flex;
-        flex-direction: column;
-        gap: 2.5rem;
-    }
-
-    .carts-hero {
-        background: linear-gradient(135deg, var(--dash-text-main) 0%, #1A1512 100%);
-        border-radius: var(--dash-radius-lg);
-        padding: 3.5rem 3rem;
-        position: relative;
-        overflow: hidden;
-        color: #FFFFFF;
-        box-shadow: 0 20px 40px rgba(44, 37, 32, 0.15);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .carts-hero::before {
-        content: '';
-        position: absolute;
-        top: 0; right: 0; bottom: 0; left: 0;
-        background-image: radial-gradient(rgba(197, 168, 128, 0.12) 1px, transparent 1px);
-        background-size: 24px 24px;
-        opacity: 0.6;
-        pointer-events: none;
-    }
-
-    .hero-content {
-        position: relative;
-        z-index: 2;
-    }
-
-    .hero-title {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 2.5rem;
-        line-height: 1.2;
-        margin: 0 0 0.5rem 0;
-        color: #FFFFFF;
-    }
-
-    .hero-subtitle {
-        font-size: 1rem;
-        color: rgba(255, 255, 255, 0.85);
-        margin: 0;
-        max-width: 500px;
-        line-height: 1.6;
-    }
-
-    .hero-stats {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        padding: 1.5rem 2.5rem;
-        border-radius: var(--dash-radius-md);
-        text-align: center;
-    }
-
-    .stat-number {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--dash-gold);
-        line-height: 1;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    /* ==========================================================================
-       Saved Carts Grid & Card Architecture
-       ========================================================================== */
     .carts-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 2rem;
     }
 
-    .saved-cart-card {
+    .cart-card {
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
         border-radius: var(--dash-radius-lg);
+        padding: 2rem;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
-        transition: var(--dash-transition);
-        box-shadow: 0 4px 12px rgba(44, 37, 32, 0.02);
-        animation: dashboardFadeIn 0.5s ease-out forwards;
-        animation-fill-mode: both;
-    }
-
-    .saved-cart-card:nth-child(1) { animation-delay: 0.1s; }
-    .saved-cart-card:nth-child(2) { animation-delay: 0.2s; }
-    .saved-cart-card:nth-child(3) { animation-delay: 0.3s; }
-    .saved-cart-card:nth-child(4) { animation-delay: 0.4s; }
-
-    .saved-cart-card:hover {
-        transform: translateY(-6px);
-        box-shadow: var(--dash-shadow-hover);
-        border-color: var(--dash-gold);
-    }
-
-    .cart-header {
-        padding: 1.5rem 1.5rem 1rem;
-        border-bottom: 1px solid #F5F1ED;
-    }
-
-    .cart-title-row {
-        display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.5rem;
-    }
-
-    .cart-title {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 1.25rem;
-        color: var(--dash-text-main);
-        margin: 0;
-        font-weight: 600;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .cart-item-count {
-        background: #F5F1ED;
-        color: var(--dash-text-main);
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.35rem 0.75rem;
-        border-radius: 20px;
-        white-space: nowrap;
-    }
-
-    .cart-meta-date {
-        font-size: 0.8rem;
-        color: var(--dash-text-muted);
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    /* Product Previews (Overlapping Avatars) */
-    .cart-body {
-        padding: 1.5rem;
-        flex-grow: 1;
-        background: #FCFAF8;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .product-preview-stack {
-        display: flex;
-        align-items: center;
-        padding-left: 0.5rem;
-    }
-
-    .preview-thumb {
-        width: 54px;
-        height: 54px;
-        border-radius: 50%;
-        border: 3px solid #FCFAF8;
-        background: #EAE5E0;
-        margin-left: -0.85rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        position: relative;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        transition: var(--dash-transition);
-        z-index: 1;
-    }
-
-    .preview-thumb:hover {
-        transform: translateY(-4px) scale(1.1);
-        z-index: 10;
-    }
-
-    .preview-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .preview-thumb.more-count {
-        background: var(--dash-text-main);
-        color: #FFFFFF;
-        font-size: 0.85rem;
-        font-weight: 600;
-        font-family: var(--font-ui, sans-serif);
-        border-color: #FCFAF8;
-    }
-
-    .cart-summary-text {
-        font-size: 0.85rem;
-        color: var(--dash-text-muted);
-        margin-top: 1rem;
-        font-weight: 500;
-    }
-
-    /* Action Footer */
-    .cart-footer {
-        padding: 1rem 1.5rem;
-        background: var(--dash-surface);
-        border-top: 1px solid #F5F1ED;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
     }
 
     .btn-restore {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1.25rem;
+        padding: 0.75rem 1.5rem;
         background: var(--dash-text-main);
         color: #FFFFFF;
-        border: none;
-        border-radius: var(--dash-radius-sm);
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+        border-radius: 8px;
         text-decoration: none;
-        transition: var(--dash-transition);
-        cursor: pointer;
-    }
-
-    .btn-restore:hover {
-        background: var(--dash-gold);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(197, 168, 128, 0.3);
-    }
-
-    .btn-delete-cart {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        background: transparent;
-        border: 1px solid var(--dash-border);
-        border-radius: var(--dash-radius-sm);
-        color: var(--dash-text-muted);
-        cursor: pointer;
-        transition: var(--dash-transition);
-        padding: 0;
-    }
-
-    .btn-delete-cart:hover {
-        background: var(--auth-error-bg);
-        border-color: rgba(192, 57, 43, 0.2);
-        color: var(--auth-error);
-    }
-
-    /* ==========================================================================
-       Empty State Architecture
-       ========================================================================== */
-    .empty-cart-state {
-        background: var(--dash-surface);
-        border: 2px dashed var(--dash-border);
-        border-radius: var(--dash-radius-lg);
-        padding: 6rem 2rem;
+        font-weight: 600;
         text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 1.5rem;
-        box-shadow: var(--dash-shadow-soft);
     }
 
-    .empty-state-icon {
-        width: 90px;
-        height: 90px;
-        background: #FCFAF8;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--dash-gold);
-        border: 1px solid var(--dash-border);
-        margin-bottom: 0.5rem;
-    }
-
-    .empty-state-title {
-        font-family: var(--font-brand, 'Cinzel', serif);
-        font-size: 2rem;
-        color: var(--dash-text-main);
-        margin: 0;
-    }
-
-    .empty-state-desc {
-        font-size: 1rem;
-        color: var(--dash-text-muted);
-        max-width: 480px;
-        margin: 0 auto;
-        line-height: 1.6;
-    }
-
-    .btn-premium-action {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem 2rem;
-        background: linear-gradient(135deg, var(--dash-gold) 0%, var(--dash-gold-dark) 100%);
-        color: #FFFFFF;
-        border: none;
-        border-radius: var(--dash-radius-sm);
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        text-decoration: none;
-        box-shadow: 0 4px 15px rgba(197, 168, 128, 0.25);
-        transition: var(--dash-transition);
-        cursor: pointer;
-        margin-top: 1rem;
-    }
-
-    .btn-premium-action:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(197, 168, 128, 0.4);
-        color: #FFFFFF;
-    }
-
-    /* ==========================================================================
-       Messages & Native Django Alerts
-       ========================================================================== */
-    .dash-alerts {
-        margin-bottom: 1.5rem;
-    }
-
-    .dash-alert {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 1.5rem;
-        border-radius: var(--dash-radius-sm);
-        font-size: 0.95rem;
-        font-weight: 500;
-        animation: alertSlideDown 0.4s ease-out;
-        margin-bottom: 1rem;
-    }
-
-    .dash-alert.success { background: #E8F5E9; color: #1B5E20; border: 1px solid rgba(45, 106, 79, 0.15); }
-    .dash-alert.error { background: #FDF0ED; color: #C0392B; border: 1px solid rgba(192, 57, 43, 0.15); }
-    .dash-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.15); }
-
-    @keyframes alertSlideDown {
-        0% { opacity: 0; transform: translateY(-8px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ==========================================================================
-       Responsive Engineering Changes
-       ========================================================================== */
-    @media (max-width: 1024px) {
-        .dashboard-layout {
-            grid-template-columns: 1fr;
-            padding: 3rem 1.5rem;
-            gap: 2.5rem;
-        }
-        
-        .dashboard-sidebar {
-            position: static;
-            padding: 1.5rem;
-        }
-
-        .sidebar-nav {
-            flex-direction: row;
-            flex-wrap: wrap;
-        }
-
-        .sidebar-link {
-            flex: 1;
-            min-width: 150px;
-            justify-content: center;
-        }
-        
-        .sidebar-header { display: none; }
-    }
-
-    @media (max-width: 768px) {
-        .carts-hero {
-            flex-direction: column;
-            text-align: center;
-            gap: 2rem;
-            padding: 2.5rem 1.5rem;
-        }
-
-        .hero-stats {
-            width: 100%;
-        }
-
-        .carts-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-        }
-
-        .empty-cart-state {
-            padding: 4rem 1.5rem;
-        }
-        
-        .empty-state-title {
-            font-size: 1.75rem;
-        }
-    }
+    @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-layout">
-    
-    <aside class="dashboard-sidebar" aria-label="Account Management Navigation">
-        <div class="sidebar-header">
-            <h2>My Account</h2>
-        </div>
+    <aside class="dashboard-sidebar">
         <nav class="sidebar-nav">
-            <a href="{% url 'customers:dashboard' %}" class="sidebar-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
-                Dashboard Overview
-            </a>
-            <a href="{% url 'customers:order_history' %}" class="sidebar-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                Order History
-            </a>
-            <a href="{% url 'customers:wishlist' %}" class="sidebar-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                My Wishlist
-            </a>
-            <a href="{% url 'customers:saved_cart_list' %}" class="sidebar-link active" aria-current="page">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                Saved Carts
-            </a>
-            <a href="{% url 'customers:address_list' %}" class="sidebar-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                Address Book
-            </a>
-            <a href="{% url 'customers:profile' %}" class="sidebar-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                Profile Settings
-            </a>
-            <a href="{% url 'customers:logout' %}" class="sidebar-link logout-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Sign Out
-            </a>
+            <a href="{% url 'customers:dashboard' %}" class="sidebar-link">Dashboard</a>
+            <a href="{% url 'customers:order_history' %}" class="sidebar-link">Order History</a>
+            <a href="{% url 'customers:wishlist' %}" class="sidebar-link">My Wishlist</a>
+            <a href="{% url 'customers:saved_cart_list' %}" class="sidebar-link active">Saved Carts</a>
+            <a href="{% url 'customers:address_list' %}" class="sidebar-link">Address Book</a>
+            <a href="{% url 'customers:profile' %}" class="sidebar-link">Profile Settings</a>
+            <form method="post" action="{% url 'customers:logout' %}" style="display: block; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-link" style="width: 100%; background: none; border: none; font: inherit; cursor: pointer; color: #C0392B; text-align: left;">Sign Out</button>
+            </form>
         </nav>
     </aside>
 
     <main class="dashboard-main">
-        
-        {% if messages %}
-            <div class="dash-alerts" role="alert" aria-live="polite">
-                {% for message in messages %}
-                    <div class="dash-alert {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
-                        {% if message.tags == 'error' %}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        {% elif message.tags == 'success' %}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        {% else %}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                        {% endif %}
-                        <span>{{ message }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <section class="carts-hero" aria-label="Saved Carts Summary">
-            <div class="hero-content">
-                <h1 class="hero-title">My Saved Carts</h1>
-                <p class="hero-subtitle">Keep your selections organized and revisit them anytime. Restore a cart to instantly move all items back to your active shopping bag.</p>
-            </div>
-            
-            <div class="hero-stats" aria-label="Cart Statistics">
-                <span class="stat-number">{{ saved_carts|length|default:0 }}</span>
-                <span class="stat-label">Stored Carts</span>
-            </div>
-        </section>
+        <h1 style="font-family: 'Cinzel', serif; margin-top: 0;">My Saved Carts</h1>
 
         {% if saved_carts %}
-            <div class="carts-grid" aria-label="Saved Carts List">
+            <div class="carts-grid">
                 {% for cart in saved_carts %}
-                    <article class="saved-cart-card" id="saved-cart-{{ cart.pk }}">
-                        <header class="cart-header">
-                            <div class="cart-title-row">
-                                <h3 class="cart-title" title="{{ cart.name }}">{{ cart.name }}</h3>
-                                <span class="cart-item-count" aria-label="Total distinct products">
-                                    {{ cart.total_items|default:0 }} Item{{ cart.total_items|pluralize }}
-                                </span>
-                            </div>
-                            <div class="cart-meta-date" aria-label="Last updated">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                Updated {{ cart.updated_at|date:"M j, Y" }}
-                            </div>
-                        </header>
-
-                        <div class="cart-body">
-                            <div class="product-preview-stack" aria-label="Cart Item Previews">
-                                {% for item in cart.items.all|slice:":4" %}
-                                    <div class="preview-thumb">
-                                        {% if item.product.primary_image %}
-                                            <img src="{{ item.product.primary_image.url }}" alt="{{ item.product.title }}" loading="lazy">
-                                        {% else %}
-                                            <span>{{ item.product.title|slice:":1"|upper }}</span>
-                                        {% endif %}
-                                    </div>
-                                {% empty %}
-                                    <span style="font-size: 0.85rem; color: var(--dash-text-muted);">No visible items remaining.</span>
-                                {% endfor %}
-
-                                {% if cart.items.all|length > 4 %}
-                                    <div class="preview-thumb more-count" aria-label="{{ cart.items.all|length|add:'-4' }} more items">
-                                        +{{ cart.items.all|length|add:"-4" }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <p class="cart-summary-text">
-                                Includes {{ cart.total_quantity|default:cart.total_items }} total product quantit{{ cart.total_quantity|pluralize:"y,ies" }}.
-                            </p>
+                    <article class="cart-card">
+                        <div>
+                            <h3 style="font-family: 'Cinzel', serif; margin-top: 0;">{{ cart.name }}</h3>
+                            <p style="color: var(--dash-text-muted);">Contains {{ cart.total_items|default:0 }} item(s)</p>
+                            <small style="color: var(--dash-text-muted);">Updated {{ cart.updated_at|date:"M j, Y" }}</small>
                         </div>
 
-                        <footer class="cart-footer">
-                            <a href="{% url 'customers:saved_cart_load' cart.pk %}" class="btn-restore" aria-label="Restore {{ cart.name }} to active bag">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                                Restore Cart
-                            </a>
-                            
-                            <form action="{% url 'customers:saved_cart_delete' cart.pk %}" method="POST" class="delete-cart-form" data-cart-id="{{ cart.pk }}" style="margin: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; border-top: 1px solid var(--dash-border); padding-top: 1rem;">
+                            <a href="{% url 'customers:saved_cart_load' cart.pk %}" class="btn-restore">Load Cart</a>
+                            <form action="{% url 'customers:saved_cart_delete' cart.pk %}" method="post" style="display: inline;">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-delete-cart" aria-label="Delete {{ cart.name }}" title="Delete Cart">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
+                                <button type="submit" style="background: none; border: none; color: #C0392B; cursor: pointer; font-weight: 600;" onclick="return confirm('Delete this saved cart?');">Delete</button>
                             </form>
-                        </footer>
+                        </div>
                     </article>
                 {% endfor %}
             </div>
         {% else %}
-            <section class="empty-cart-state" aria-label="Empty Saved Carts Info">
-                <div class="empty-state-icon">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                </div>
-                <h2 class="empty-state-title">No Saved Carts Yet</h2>
-                <p class="empty-state-desc">You haven't saved any shopping sessions. You can save your active bag during checkout to resume exactly where you left off later.</p>
-                
-                <a href="{% url 'foundation:home' %}" class="btn-premium-action">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    Start Discovering
-                </a>
-            </section>
+            <div style="background: var(--dash-surface); border: 1px dashed var(--dash-border); border-radius: 16px; padding: 5rem 2rem; text-align: center;">
+                <h3 style="font-family: 'Cinzel', serif;">No Saved Carts</h3>
+                <p style="color: var(--dash-text-muted);">Save your shopping session to access it across devices anytime.</p>
+            </div>
         {% endif %}
-
     </main>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Intercept delete actions to provide a smooth, premium exit animation before submitting
-        const deleteForms = document.querySelectorAll('.delete-cart-form');
-        
-        deleteForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                // We'll let standard form submission happen, but add a visual cue immediately
-                const btn = this.querySelector('button');
-                const cartId = this.dataset.cartId;
-                const card = document.getElementById(`saved-cart-${cartId}`);
-                
-                if (btn.disabled) {
-                    e.preventDefault();
-                    return;
-                }
-                
-                // Optional: A quick confirmation dialogue can be placed here if strict compliance is needed
-                // For a premium feel, trusting the user intention combined with visual feedback is often better.
-                
-                btn.disabled = true;
-                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-anim"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`;
-                
-                // Add a simple inline rotation style for the loading spinner
-                if(!document.getElementById('cart-spinner-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'cart-spinner-style';
-                    style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } } .spin-anim { animation: spin 1s linear infinite; }`;
-                    document.head.appendChild(style);
-                }
-                
-                if (card) {
-                    card.style.opacity = '0.5';
-                    card.style.filter = 'grayscale(100%)';
-                }
-                
-                // The form submits naturally to the DeleteView handled by Django
-            });
-        });
-    });
-</script>
 {% endblock %}

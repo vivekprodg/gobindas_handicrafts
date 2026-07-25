@@ -8,7 +8,7 @@
     <div class="top-header-section">
         {% if header_currencies %}
             <div class="utility-dropdown-container">
-                <button class="utility-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <button class="utility-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Select Currency">
                     {% with default_currency=header_currencies.0 %}
                         {% if default_currency.symbol %}<span class="currency-symbol">{{ default_currency.symbol }}</span> {% endif %}{{ default_currency.code }}
                     {% endwith %}
@@ -37,7 +37,7 @@
 
         {% if header_languages %}
             <div class="utility-dropdown-container">
-                <button class="utility-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <button class="utility-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Select Language">
                     {% with default_lang=header_languages.0 %}
                         {{ default_lang.code|upper }}
                     {% endwith %}
@@ -75,7 +75,7 @@
                         {% elif utility.icon_key == 'map-pin' or utility.icon_key == 'marker' %}
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                         {% elif utility.icon_key == 'truck' or utility.icon_key == 'shipping' %}
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                         {% elif utility.icon_key == 'info' %}
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         {% endif %}
@@ -96,7 +96,7 @@
             {% if header_announcements %}
                 {{ header_announcements.0 }}
             {% else %}
-                Loading campaigns...
+                Welcome to Gobindas Handicrafts
             {% endif %}
         </span>
     </div>
@@ -113,7 +113,7 @@
                         {% elif utility.icon_key == 'map-pin' or utility.icon_key == 'marker' %}
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                         {% elif utility.icon_key == 'truck' or utility.icon_key == 'shipping' %}
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                         {% elif utility.icon_key == 'info' %}
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         {% endif %}
@@ -140,11 +140,7 @@
     <a href="{{ brand_url|default:'/' }}" class="nav-brand" aria-label="{{ brand_title|default:'Gobindas Handicrafts' }} Home">
         <div class="brand-icon">
             {% if brand_logo_url %}
-                <img
-                    src="{{ brand_logo_url }}"
-                    alt="{{ site_settings.logo_alt_text|default:brand_title|default:'Logo' }}"
-                    style="object-fit:contain; display:block;"
-                >
+                <img src="{{ brand_logo_url }}" alt="{{ site_settings.logo_alt_text|default:brand_title|default:'Logo' }}">
             {% else %}
                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1" />
@@ -171,7 +167,7 @@
                     {% endif %}
 
                     {% if item.badge_text %}
-                        <span class="nav-badge {% if item.badge_style %}{{ item.badge_style }}{% endif %}">{{ item.badge_text }}</span>
+                        <span class="nav-badge {{ item.badge_style|default:'' }}">{{ item.badge_text }}</span>
                     {% endif %}
                 </li>
             {% else %}
@@ -185,7 +181,7 @@
                     {% endif %}
 
                     {% if item.badge_text %}
-                        <span class="nav-badge {% if item.badge_style %}{{ item.badge_style }}{% endif %}">{{ item.badge_text }}</span>
+                        <span class="nav-badge {{ item.badge_style|default:'' }}">{{ item.badge_text }}</span>
                     {% endif %}
 
                     <div class="mega-menu">
@@ -202,11 +198,11 @@
                                                 {% if link.label %}
                                                     <li class="{% if link.visibility_scope == 'desktop' %}desktop-only{% elif link.visibility_scope == 'mobile' %}mobile-only{% endif %}">
                                                         {% if link.url %}
-                                                            <a href="{{ link.url }}"{% if link.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %} {% if link.is_featured %}style="font-weight: 700; color: var(--brand-gold);"{% endif %}>
+                                                            <a href="{{ link.url }}"{% if link.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %} {% if link.is_featured %}style="font-weight: 700; color: var(--brand-gold, #B88A44);"{% endif %}>
                                                                 {% if link.icon_key %}<i class="icon-{{ link.icon_key }}"></i> {% endif %}{{ link.label }}
                                                             </a>
                                                         {% else %}
-                                                            <span {% if link.is_featured %}style="font-weight: 700; color: var(--brand-gold);"{% endif %}>
+                                                            <span {% if link.is_featured %}style="font-weight: 700; color: var(--brand-gold, #B88A44);"{% endif %}>
                                                                 {% if link.icon_key %}<i class="icon-{{ link.icon_key }}"></i> {% endif %}{{ link.label }}
                                                             </span>
                                                         {% endif %}
@@ -254,26 +250,12 @@
                         {% if item.featured_is_visible %}
                             <div class="menu-media" style="background-image: url('{% if item.featured_image_url %}{{ item.featured_image_url }}{% elif site_settings and site_settings.default_featured_image %}{{ site_settings.default_featured_image.url }}{% else %}https://images.unsplash.com/photo-1610701596007-11502861dcfa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80{% endif %}');">
                                 <div class="menu-media-caption">
-                                    <strong>
-                                        {% if item.featured_title %}
-                                            {{ item.featured_title }}
-                                        {% elif site_settings and site_settings.default_featured_title %}
-                                            {{ site_settings.default_featured_title }}
-                                        {% else %}
-                                            Meet the Artisans
-                                        {% endif %}
-                                    </strong><br>
-                                    <span style="color:#555; font-size: 0.8rem;">
-                                        {% if item.featured_text %}
-                                            {{ item.featured_text|linebreaksbr }}
-                                        {% elif site_settings and site_settings.default_featured_text %}
-                                            {{ site_settings.default_featured_text|linebreaksbr }}
-                                        {% else %}
-                                            Explore the workshop lineages of India.
-                                        {% endif %}
+                                    <strong>{{ item.featured_title|default:site_settings.default_featured_title|default:"Meet the Artisans" }}</strong><br>
+                                    <span style="color:#555555; font-size: 0.8rem;">
+                                        {{ item.featured_text|default:site_settings.default_featured_text|default:"Explore the workshop lineages of India."|linebreaksbr }}
                                     </span>
                                     {% if item.featured_cta_text and item.featured_cta_url %}
-                                        <a href="{{ item.featured_cta_url }}" style="display: block; margin-top: 0.5rem; font-weight: 600; color: var(--brand-gold);">
+                                        <a href="{{ item.featured_cta_url }}" style="display: block; margin-top: 0.5rem; font-weight: 600; color: var(--brand-gold, #B88A44);">
                                             {{ item.featured_cta_text }} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                                         </a>
                                     {% endif %}
@@ -298,7 +280,12 @@
                             <li><a href="{% url 'customers:saved_cart_list' %}">Saved Carts</a></li>
                             <li><a href="{% url 'customers:address_list' %}">Addresses</a></li>
                             <li><a href="{% url 'customers:profile' %}">Profile Details</a></li>
-                            <li><a href="{% url 'foundation:logout' %}" class="logout-link">Sign Out</a></li>
+                            <li>
+                                <form method="post" action="{% url 'customers:logout' %}" style="display: block; margin: 0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="logout-link" style="background: none; border: none; padding: 0; font: inherit; cursor: pointer; color: inherit; width: 100%; text-align: left;">Sign Out</button>
+                                </form>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -308,11 +295,10 @@
                     <div class="menu-column">
                         <h4>Welcome</h4>
                         <ul>
+                            <li><a href="{% url 'customers:login' %}">Sign In</a></li>
+                            <li><a href="/accounts/google/login/?process=login" style="color: #4285F4; font-weight: 600;">Sign in with Google</a></li>
                             {% if site_settings and site_settings.enable_customer_registration %}
-                                <li><a href="{% url 'foundation:login' %}">Sign In</a></li>
-                                <li><a href="{% url 'foundation:register' %}">Create Account</a></li>
-                            {% else %}
-                                <li><a href="{% url 'foundation:login' %}">Sign In</a></li>
+                                <li><a href="{% url 'customers:register' %}">Create Account</a></li>
                             {% endif %}
                         </ul>
                     </div>
@@ -323,8 +309,8 @@
 
     <div class="nav-utilities">
         <div class="search-box">
-            <input type="text" placeholder="{% if site_settings and site_settings.search_placeholder %}{{ site_settings.search_placeholder }}{% else %}Find artisan rugs...{% endif %}" aria-label="Search Catalog">
-            <button class="icon-btn" aria-label="{% if site_settings and site_settings.search_button_label %}{{ site_settings.search_button_label }}{% else %}Search{% endif %}">
+            <input type="text" placeholder="{{ site_settings.search_placeholder|default:'Find artisan rugs...' }}" aria-label="Search Catalog">
+            <button class="icon-btn" aria-label="{{ site_settings.search_button_label|default:'Search' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
         </div>
@@ -345,8 +331,18 @@
                         </div>
                         <div class="account-meta">
                             <span class="account-greeting">Welcome back,</span>
-                            <span class="account-name">{{ user.get_full_name|default:user.username }}</span>
-                            {% if user.customer_profile and user.customer_profile.is_premium_member %}
+                            <span class="account-name">
+                                {% if user.customer_profile and user.customer_profile.is_business_account and user.customer_profile.company_name %}
+                                    {{ user.customer_profile.company_name }}
+                                {% else %}
+                                    {{ user.get_full_name|default:user.username }}
+                                {% endif %}
+                            </span>
+                            {% if user.customer_profile and user.customer_profile.account_type == 'WHOLESALE' %}
+                                <span class="account-badge member-badge" style="background: #E8F5E9; color: #1B5E20;">Wholeseller</span>
+                            {% elif user.customer_profile and user.customer_profile.account_type == 'ORGANIZATION' %}
+                                <span class="account-badge member-badge" style="background: #E3F2FD; color: #0D47A1;">Corporate / Organization</span>
+                            {% elif user.customer_profile and user.customer_profile.is_premium_member %}
                                 <span class="account-badge member-badge">Premium Member</span>
                             {% endif %}
                         </div>
@@ -374,10 +370,13 @@
                     
                     <ul class="account-action-list bottom-actions">
                         <li role="none">
-                            <a role="menuitem" href="{% url 'foundation:logout' %}" class="account-menu-link logout-action">
-                                Sign Out
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                            </a>
+                            <form method="post" action="{% url 'customers:logout' %}" style="display: block; margin: 0; width: 100%;">
+                                {% csrf_token %}
+                                <button type="submit" role="menuitem" class="account-menu-link logout-action" style="width: 100%; background: none; border: none; font: inherit; cursor: pointer; text-align: left;">
+                                    Sign Out
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                </button>
+                            </form>
                         </li>
                     </ul>
                 </div>
@@ -388,21 +387,32 @@
                 <div class="account-dropdown-menu guest-auth-menu premium-menu-glass" role="menu">
                     <div class="guest-menu-header">
                         <h4 class="guest-title">Welcome to {{ brand_title|default:"Gobindas" }}</h4>
-                        <p class="guest-subtitle">Sign in for seamless checkout, wishlists, and personalized artisan recommendations.</p>
+                        <p class="guest-subtitle">Sign in for individual shopping, wholesale bulk orders, or corporate procurement.</p>
                     </div>
                     <div class="guest-actions">
-                        <a role="menuitem" href="{% url 'foundation:login' %}" class="btn-primary auth-btn-primary">Sign In</a>
+                        {% if foundation_cms.site_settings.enable_google_login|default:True %}
+                        <a role="menuitem" href="/accounts/google/login/?process=login" class="btn-secondary auth-btn-secondary" style="display: flex; gap: 8px; justify-content: center; align-items: center; background: #FFFFFF; border-color: #EAE5E0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            <span>Google Sign-In</span>
+                        </a>
+                        {% endif %}
+                        <a role="menuitem" href="{% url 'customers:login' %}" class="btn-primary auth-btn-primary">Sign In with Email</a>
                         {% if site_settings and site_settings.enable_customer_registration %}
-                            <a role="menuitem" href="{% url 'foundation:register' %}" class="btn-secondary auth-btn-secondary">Create Account</a>
+                            <a role="menuitem" href="{% url 'customers:register' %}" class="btn-secondary auth-btn-secondary">Create Account</a>
                         {% endif %}
                     </div>
                 </div>
             {% endif %}
         </div>
 
-        <button class="icon-btn" aria-label="{% if site_settings and site_settings.cart_button_label %}{{ site_settings.cart_button_label }}{% else %}Shopping Bag{% endif %}">
+        <button class="icon-btn" aria-label="{{ site_settings.cart_button_label|default:'Shopping Bag' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <span class="cart-badge" id="cart-counter">{% if site_settings and site_settings.cart_badge_count is not None %}{{ site_settings.cart_badge_count }}{% else %}0{% endif %}</span>
+            <span class="cart-badge" id="cart-counter">{{ site_settings.cart_badge_count|default:0 }}</span>
         </button>
     </div>
 </nav>

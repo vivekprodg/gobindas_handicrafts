@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Gobindas Handicrafts</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #FCFAF8; color: #1A1512; margin: 0; padding: 0; }
+        .email-card { max-width: 600px; margin: 30px auto; background: #FFFFFF; border: 1px solid #EAE5E0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .header { background: #1A1512; color: #C5A880; text-align: center; padding: 35px 20px; border-bottom: 2px solid #C5A880; }
+        .header h1 { font-family: 'Georgia', serif; font-size: 24px; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+        .content { padding: 40px 30px; line-height: 1.6; }
+        .greeting { font-size: 18px; font-weight: bold; color: #1A1512; margin-bottom: 15px; }
+        .details-box { background: #FCFAF8; border: 1px solid #EAE5E0; padding: 20px; border-radius: 6px; margin: 20px 0; font-size: 14px; }
+        .btn-cta { display: inline-block; background: #C5A880; color: #FFFFFF; text-decoration: none; padding: 12px 30px; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 13px; letter-spacing: 1px; margin-top: 20px; }
+        .btn-cta:hover { background: #1A1512; }
+        .footer { background: #FCFAF8; text-align: center; padding: 20px; font-size: 12px; color: #7A726A; border-top: 1px solid #EAE5E0; }
+    </style>
+</head>
+<body>
+    <div class="email-card">
+        <div class="header">
+            <h1>Gobindas Handicrafts</h1>
+            <div style="font-size: 11px; letter-spacing: 3px; color: #EAE5E0; margin-top: 5px;">HERITAGE & ARTISAN MASTRPIECES</div>
+        </div>
+        <div class="content">
+            <div class="greeting">Welcome, {{ user.first_name|default:user.username }}!</div>
+            <p>Thank you for joining <strong>Gobindas Handicrafts</strong>. Your account has been successfully created and verified.</p>
+            
+            <div class="details-box">
+                <p style="margin:0 0 8px 0;"><strong>Username:</strong> {{ user.username }}</p>
+                <p style="margin:0 0 8px 0;"><strong>Email Address:</strong> {{ user.email }}</p>
+                {% if profile and profile.is_business_account %}
+                    <p style="margin:0 0 8px 0;"><strong>Account Type:</strong> {{ profile.get_account_type_display }}</p>
+                    {% if profile.company_name %}<p style="margin:0 0 8px 0;"><strong>Registered Company:</strong> {{ profile.company_name }}</p>{% endif %}
+                {% else %}
+                    <p style="margin:0 0 8px 0;"><strong>Account Classification:</strong> Individual Retail Account</p>
+                {% endif %}
+                <p style="margin:0;"><strong>Registration Date:</strong> {{ registered_at|date:"F j, Y, g:i a" }}</p>
+            </div>
+
+            <p>You can now explore our curated collection of handcrafted Nepali masterpieces, save your favorite pieces to your personal gallery, and submit wholesale order inquiries.</p>
+
+            <div style="text-align: center;">
+                <a href="{{ request.scheme|default:'https' }}://{{ request.get_host|default:'www.gobindashandicrafts.com' }}/account/" class="btn-cta">Access Your Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            &copy; {% now "Y" %} Gobindas Handicrafts. All rights reserved.<br>
+            Preserving Ancestral Lineages & Supporting Master Craftsmen.
+        </div>
+    </div>
+</body>
+</html>

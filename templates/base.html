@@ -20,6 +20,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- TomSelect CSS for Searchable Dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
@@ -64,6 +67,27 @@
     <script src="{% static 'foundation/js/navbar.js' %}"></script>
     <script src="{% static 'foundation/js/footer.js' %}"></script>
     <script src="{% static 'foundation/js/whatsapp.js' %}"></script>
+
+    <!-- TomSelect JS for Instant Country Search in Dropdowns -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Automatically initialize TomSelect on any searchable country select dropdowns
+            document.querySelectorAll('select[data-searchable="true"], select[name="country"], select[name="country_of_incorporation"]').forEach(function(selectEl) {
+                if (!selectEl.tomselect) {
+                    new TomSelect(selectEl, {
+                        create: false,
+                        maxOptions: 250,
+                        placeholder: "Type or select a country...",
+                        sortField: {
+                            field: "text",
+                            direction: "asc"
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 
     {% block extra_js %}{% endblock %}
 

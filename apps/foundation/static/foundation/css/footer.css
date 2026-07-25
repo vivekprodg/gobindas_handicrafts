@@ -13,16 +13,16 @@ ul {
 a {
     text-decoration: none;
     color: inherit;
-    transition: var(--transition-smooth);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
 }
 
-/* =========================================
-    DYNAMIC FOOTER ARCHITECTURE
-   ========================================= */
+/* ==========================================================================
+   DYNAMIC FOOTER ARCHITECTURE
+   ========================================================================== */
 .premium-footer {
-    background-color: var(--brand-dark);
-    color: var(--brand-light);
-    border-top: 2px solid var(--brand-gold);
+    background-color: var(--brand-dark, #2A2621);
+    color: var(--brand-light, #FFFFFF);
+    border-top: 2px solid var(--brand-gold, #B88A44);
     position: relative;
     overflow: hidden;
     margin-bottom: 0;
@@ -41,7 +41,7 @@ a {
     align-items: flex-start;
     gap: 3rem;
     padding-bottom: 4rem;
-    border-bottom: 1px solid rgba(184, 138, 68, 0.15);
+    border-bottom: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     margin-bottom: 4rem;
 }
 
@@ -52,31 +52,46 @@ a {
 }
 
 .footer-logo {
-    font-family: var(--font-brand);
+    font-family: var(--font-brand, 'Cinzel', serif);
     font-size: 2rem;
     font-weight: 700;
-    color: var(--brand-gold);
+    color: var(--brand-gold, #B88A44);
     letter-spacing: 0.05em;
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-/* Allow the image or svg to scale naturally */
+/*
+ * Logo Image Rendering & Crisp Display:
+ * Renders original gold artwork, elephant motif, and typography vividly
+ * on dark footers with high contrast and zero background box or filter distortion.
+ */
 .footer-logo img, 
 .footer-logo svg {
     background: transparent !important;
-    width: 100%;          /* Fills the container */
-    max-width: 200px;     /* Set this to the maximum size you want the logo to be */
-    height: auto;         /* Maintains the aspect ratio so it doesn't look squashed */
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    width: auto;
+    max-width: 260px;
+    max-height: 100px;
+    height: auto;
     display: block;
-    object-fit: contain;  /* Ensures the logo fits without being cropped */
+    object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: smooth;
+    mix-blend-mode: normal;
+    filter: none !important;
 }
 
 .trust-statement {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
     font-size: 0.9rem;
     line-height: 1.6;
     margin-bottom: 1.5rem;
@@ -84,6 +99,7 @@ a {
 
 .trust-badges {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
 }
 
@@ -94,8 +110,8 @@ a {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--brand-gold);
-    border: 1px solid rgba(184, 138, 68, 0.2);
+    color: var(--brand-gold, #B88A44);
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     padding: 0.5rem 1rem;
     border-radius: 4px;
 }
@@ -107,15 +123,15 @@ a {
 }
 
 .footer-newsletter h3 {
-    font-family: var(--font-brand);
+    font-family: var(--font-brand, 'Cinzel', serif);
     font-size: 1.25rem;
-    color: var(--brand-light);
+    color: var(--brand-light, #FFFFFF);
     margin-bottom: 0.5rem;
     letter-spacing: 0.05em;
 }
 
 .footer-newsletter p {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
     font-size: 0.85rem;
     margin-bottom: 1.5rem;
 }
@@ -129,21 +145,21 @@ a {
     width: 100%;
     background: transparent;
     border: none;
-    border-bottom: 1px solid var(--text-muted);
-    color: var(--brand-light);
-    font-family: var(--font-ui);
+    border-bottom: 1px solid var(--text-muted, #A39B8E);
+    color: var(--brand-light, #FFFFFF);
+    font-family: var(--font-ui, 'Inter', sans-serif);
     font-size: 0.9rem;
     padding: 0.75rem 2.5rem 0.75rem 0;
     outline: none;
-    transition: var(--transition-smooth);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
 }
 
 .newsletter-form input:focus {
-    border-bottom-color: var(--brand-gold);
+    border-bottom-color: var(--brand-gold, #B88A44);
 }
 
 .newsletter-form input::placeholder {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
 }
 
 .newsletter-submit {
@@ -153,14 +169,14 @@ a {
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: var(--brand-gold);
+    color: var(--brand-gold, #B88A44);
     cursor: pointer;
     padding: 0.5rem;
-    transition: var(--transition-smooth);
+    transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
 }
 
 .newsletter-submit:hover {
-    color: var(--brand-gold-hover);
+    color: var(--brand-gold-hover, #D4A963);
 }
 
 .footer-grid {
@@ -171,8 +187,8 @@ a {
 }
 
 .footer-column h4 {
-    font-family: var(--font-brand);
-    color: var(--brand-light);
+    font-family: var(--font-brand, 'Cinzel', serif);
+    color: var(--brand-light, #FFFFFF);
     font-size: 1.1rem;
     margin-bottom: 1.5rem;
     letter-spacing: 0.05em;
@@ -186,18 +202,18 @@ a {
 }
 
 .footer-column ul li a {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
     font-size: 0.85rem;
 }
 
 .footer-column ul li a:hover {
-    color: var(--brand-gold);
+    color: var(--brand-gold, #B88A44);
     padding-left: 4px;
 }
 
 .mobile-toggle {
     display: none;
-    color: var(--brand-gold);
+    color: var(--brand-gold, #B88A44);
     background: none;
     border: none;
     cursor: pointer;
@@ -210,12 +226,12 @@ a {
     align-items: center;
     gap: 1.5rem;
     padding-top: 2rem;
-    border-top: 1px solid rgba(184, 138, 68, 0.15);
+    border-top: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     margin-bottom: 0;
 }
 
 .footer-copyright {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
     font-size: 0.75rem;
 }
 
@@ -225,14 +241,14 @@ a {
 }
 
 .social-link {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .social-link:hover {
-    color: var(--brand-gold);
+    color: var(--brand-gold, #B88A44);
     transform: translateY(-2px);
 }
 
@@ -243,7 +259,7 @@ a {
 }
 
 .payment-icon {
-    color: var(--text-muted);
+    color: var(--text-muted, #A39B8E);
     display: flex;
 }
 
@@ -260,7 +276,7 @@ a {
     }
 
     .footer-column {
-        border-bottom: 1px solid rgba(184, 138, 68, 0.15);
+        border-bottom: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     }
 
     .footer-column h4 {

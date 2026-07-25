@@ -1,38 +1,6 @@
-{% load static %}
-{% load humanize %}
-{% load currency_tags %}
-{% load inventory_tags %}
+{% load static humanize currency_tags inventory_tags %}
 
-{% comment %}
-    ===========================================================================
-    ENTERPRISE PRODUCT CARD
-    ---------------------------------------------------------------------------
-    Inventory-agnostic product card template.
-
-    This template does NOT calculate or own any inventory state. All
-    inventory information is consumed exclusively from the inventory
-    context provided by the view / service layer.
-
-    Expected inventory context keys (all optional, with safe defaults):
-        - inventory.exists                (bool)
-        - inventory.inventory_status      ("in_stock"|"low_stock"|"out_of_stock"|"unknown")
-        - inventory.is_in_stock            (bool)
-        - inventory.is_low_stock           (bool)
-        - inventory.is_out_of_stock        (bool)
-        - inventory.free_stock             (string Decimal)
-        - inventory.available_quantity     (string Decimal)
-        - inventory.reserved_quantity      (string Decimal)
-        - inventory.warehouse_summary      (string)
-        - inventory.stock_message          (string)
-
-    Legacy compatibility aliases (read-only):
-        - stock_status  -> inventory.inventory_status
-        - stock_text    -> inventory.stock_message
-    ===========================================================================
-{% endcomment %}
-
-<article class="gobindas-product-card
-              {% if product.status == 'draft' %}is-draft{% elif product.status == 'archived' %}is-archived{% endif %}"
+<article class="gobindas-product-card {% if product.status == 'draft' %}is-draft{% elif product.status == 'archived' %}is-archived{% endif %}"
          data-product-id="{{ product.id|default:'' }}"
          data-product-slug="{{ product.slug|default:'' }}"
          data-product-category="{{ product.category.slug|default:'' }}"
@@ -45,8 +13,6 @@
          {% if product.status == 'draft' %}style="opacity: 0.85;"{% endif %}>
 
     <div class="product-card-media">
-
-        {% comment %} -- Dynamic badge overlay layer -- {% endcomment %}
         <div class="product-card-badges" data-badge-container aria-hidden="false">
             {% if product.status == 'draft' %}
                 <span class="badge-attribute" style="background: var(--color-error, #A94442); color: #FFFFFF;">Draft</span>
@@ -71,18 +37,10 @@
                 <span class="badge-attribute" style="background: var(--brand-dark, #2C2520);">{{ product.secondary_badge_text }}</span>
             {% endif %}
 
-            {% comment %} -- Inventory-driven sale ribbon -- {% endcomment %}
             {% if inventory.is_in_stock and product.original_price and product.price and product.original_price > product.price %}
-                <span class="badge-sale">
-                    {% with pct_width=product.original_price|stringformat:"f" %}
-                        {% if product.original_price and product.price %}
-                            {% endif %}
-                    {% endwith %}
-                    Sale
-                </span>
+                <span class="badge-sale">Sale</span>
             {% endif %}
 
-            {% comment %} -- Inventory-driven stock-state ribbon -- {% endcomment %}
             {% if inventory.is_out_of_stock %}
                 <span class="badge-stock-state stock-state-out">Sold Out</span>
             {% elif inventory.is_low_stock %}
@@ -90,7 +48,6 @@
             {% endif %}
         </div>
 
-        {% comment %} -- Action overlay layer (wishlist, quickview) -- {% endcomment %}
         <div class="product-card-actions">
             <button type="button"
                     class="action-circle-btn toggle-wishlist {% if is_wishlisted or product.is_wishlisted %}wishlisted{% endif %}"
@@ -122,7 +79,6 @@
             </button>
         </div>
 
-        {% comment %} -- Main media link with primary + hover images -- {% endcomment %}
         <a href="{% url 'catalog:product_detail' slug=product.slug %}"
            aria-label="View details for {{ product.title|default:'product' }}"
            class="product-card-media-link">
@@ -149,7 +105,6 @@
     </div>
 
     <div class="product-card-details">
-
         {% if product.artisan %}
             <div class="product-origin-meta">
                 {% if product.artisan.region %}{{ product.artisan.region }}{% else %}Nepal{% endif %}
@@ -176,7 +131,6 @@
         </div>
         {% endif %}
 
-        {% comment %} -- Dynamic rating display -- {% endcomment %}
         <div class="product-rating-row" aria-label="Product rating: {{ product.rating|default:5 }} out of 5 stars">
             <span class="rating-stars" role="img" aria-label="Rated {{ product.rating|default:5 }} out of 5 stars">
                 <span class="stars-filled" aria-hidden="true">
@@ -203,7 +157,6 @@
             </div>
 
             <div class="product-card-status-stack">
-                {% comment %} -- Inventory-driven stock status display -- {% endcomment %}
                 <div class="stock-indicator stock-status
                     {% if inventory.is_out_of_stock %}stock-out
                     {% elif inventory.is_low_stock %}stock-low
@@ -238,7 +191,6 @@
         </div>
     </div>
 
-    {% comment %} -- Dynamic add-to-cart drawer driven by inventory state -- {% endcomment %}
     <div class="product-card-cta-drawer">
         <button type="button"
                 class="btn-card-add-cart

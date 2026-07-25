@@ -1,124 +1,105 @@
+"""
+URL configurations for the Catalog application.
+Maps public storefront PLP/PDP endpoints and staff catalog management views.
+"""
+
 from django.urls import path
+
 from .views import (
-    CategoryListingView,
-    ArtisansListView,
     ArtisanDetailView,
+    ArtisansListView,
+    CategoryListingView,
+    CollectionView,
+    MaterialView,
     ProductDetailView,
-    ProductManageListView,
     ProductManageCreateView,
-    ProductManageUpdateView,
     ProductManageDeleteView,
+    ProductManageListView,
+    ProductManageUpdateView,
     ProductPublishActionView,
     ProductQuickViewView,
     ProductSearchView,
-    CollectionView,
-    MaterialView,
 )
 
 app_name = "catalog"
 
 urlpatterns = [
-    # ==============================================================================
-    # PUBLIC CATALOG ROUTES
-    # ==============================================================================
-    
-    # Generic parameterised catalog views
-    # Handles all category requests dynamically via database lookup
+    # Public Storefront Catalog Routes
     path(
-        "category/<slug:slug>/", 
-        CategoryListingView.as_view(), 
-        name="category_detail"
-    ),
-    
-    # Product detail view
-    path(
-        "product/<slug:slug>/", 
-        ProductDetailView.as_view(), 
-        name="product_detail"
-    ),
-    
-    # Artisans / makers listing
-    path(
-        "artisans/", 
-        ArtisansListView.as_view(), 
-        name="artisans"
+        "category/<slug:slug>/",
+        CategoryListingView.as_view(),
+        name="category_detail",
     ),
     path(
-        "artisan/", 
-        ArtisansListView.as_view(), 
-        name="artisan_list_alias"
-    ),
-    
-    # Artisan detail / profile view
-    path(
-        "artisans/<slug:slug>/", 
-        ArtisanDetailView.as_view(), 
-        name="artisan_detail"
+        "product/<slug:slug>/",
+        ProductDetailView.as_view(),
+        name="product_detail",
     ),
     path(
-        "artisan/<slug:slug>/", 
-        ArtisanDetailView.as_view(), 
-        name="artisan_detail_singular"
+        "artisans/",
+        ArtisansListView.as_view(),
+        name="artisans",
     ),
-
-    # New Discovery & Merchandising Routes
+    path(
+        "artisan/",
+        ArtisansListView.as_view(),
+        name="artisan_list_alias",
+    ),
+    path(
+        "artisans/<slug:slug>/",
+        ArtisanDetailView.as_view(),
+        name="artisan_detail",
+    ),
+    path(
+        "artisan/<slug:slug>/",
+        ArtisanDetailView.as_view(),
+        name="artisan_detail_singular",
+    ),
     path(
         "quick-view/<slug:slug>/",
         ProductQuickViewView.as_view(),
-        name="product_quick_view"
+        name="product_quick_view",
     ),
     path(
         "search/",
         ProductSearchView.as_view(),
-        name="product_search"
+        name="product_search",
     ),
     path(
         "collection/<slug:slug>/",
         CollectionView.as_view(),
-        name="collection_detail"
+        name="collection_detail",
     ),
     path(
         "material/<slug:slug>/",
         MaterialView.as_view(),
-        name="material_detail"
+        name="material_detail",
     ),
 
-    # ==============================================================================
-    # ENTERPRISE PRODUCT MANAGEMENT ROUTES (CMS / Staff Dashboard)
-    # ==============================================================================
-    
-    # Product Management Dashboard / List
+    # Staff Catalog Management Routes
     path(
         "manage/products/",
         ProductManageListView.as_view(),
-        name="product_manage_list"
+        name="product_manage_list",
     ),
-    
-    # Product Creation Workflow
     path(
         "manage/products/create/",
         ProductManageCreateView.as_view(),
-        name="product_manage_create"
+        name="product_manage_create",
     ),
-    
-    # Product Update & Configuration Workflow (Core, SEO, Schema, Publish state)
     path(
         "manage/products/<int:pk>/edit/",
         ProductManageUpdateView.as_view(),
-        name="product_manage_update"
+        name="product_manage_update",
     ),
-    
-    # Product Deletion Workflow
     path(
         "manage/products/<int:pk>/delete/",
         ProductManageDeleteView.as_view(),
-        name="product_manage_delete"
+        name="product_manage_delete",
     ),
-    
-    # Product Quick Publishing Actions (RPC-style status toggles)
     path(
         "manage/products/<int:pk>/action/<str:action>/",
         ProductPublishActionView.as_view(),
-        name="product_publish_action"
+        name="product_publish_action",
     ),
 ]

@@ -7,10 +7,8 @@
 
 {% block extra_css %}
 <style>
-    /* Premium Luxury Styling Variables & Resets for Order Detail */
     :root {
         --luxury-gold: #C5A880;
-        --luxury-gold-hover: #B3966E;
         --luxury-dark: #111111;
         --luxury-charcoal: #2A2A2A;
         --luxury-muted: #767676;
@@ -21,471 +19,44 @@
         --luxury-radius: 4px;
         --luxury-shadow: 0 4px 12px rgba(17, 17, 17, 0.03);
     }
-
-    .premium-order-container {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: var(--luxury-dark);
-        background-color: #FFFFFF;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 40px 24px 80px;
-        letter-spacing: -0.01em;
-    }
-
-    /* Breadcrumbs */
-    .luxury-breadcrumbs {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 40px;
-        color: var(--luxury-muted);
-        flex-wrap: wrap;
-    }
-    .luxury-breadcrumbs a {
-        color: var(--luxury-muted);
-        text-decoration: none;
-        transition: color 0.2s ease;
-        font-weight: 500;
-    }
-    .luxury-breadcrumbs a:hover {
-        color: var(--luxury-dark);
-    }
-    .luxury-breadcrumbs .separator::after {
-        content: "/";
-        margin-left: 8px;
-    }
-    .luxury-breadcrumbs .current {
-        color: var(--luxury-dark);
-        font-weight: 600;
-    }
-
-    /* Main Header Layout */
-    .order-header-wrapper {
-        border-bottom: 1px solid var(--luxury-border);
-        padding-bottom: 32px;
-        margin-bottom: 48px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        flex-wrap: wrap;
-        gap: 24px;
-    }
-    .order-title-area h1 {
-        font-family: "Cinzel", serif;
-        font-size: 36px;
-        font-weight: 400;
-        margin: 0 0 12px 0;
-        letter-spacing: -0.02em;
-    }
-    .order-meta-info {
-        display: flex;
-        gap: 24px;
-        font-size: 14px;
-        color: var(--luxury-muted);
-        flex-wrap: wrap;
-    }
-    .order-meta-info strong {
-        color: var(--luxury-dark);
-    }
-
-    /* Status pill */
-    .status-pill {
-        display: inline-block;
-        padding: 6px 14px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-radius: 20px;
-        border: 1px solid currentColor;
-    }
-    .status-pill.is-pending,
-    .status-pill.is-awaiting_payment,
-    .status-pill.is-on_hold { background: #FFF8E7; color: #9A7B54; }
-    .status-pill.is-processing,
-    .status-pill.is-completed { background: #E8F5E9; color: #2E7D32; }
+    .premium-order-container { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--luxury-dark); max-width: 1400px; margin: 0 auto; padding: 40px 24px 80px; }
+    .luxury-breadcrumbs { display: flex; gap: 8px; font-size: 13px; text-transform: uppercase; margin-bottom: 40px; color: var(--luxury-muted); }
+    .luxury-breadcrumbs a { color: var(--luxury-muted); text-decoration: none; font-weight: 500; }
+    .luxury-breadcrumbs .separator::after { content: "/"; margin-left: 8px; }
+    .luxury-breadcrumbs .current { color: var(--luxury-dark); font-weight: 600; }
+    .order-header-wrapper { border-bottom: 1px solid var(--luxury-border); padding-bottom: 32px; margin-bottom: 48px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; }
+    .order-title-area h1 { font-family: "Cinzel", serif; font-size: 36px; font-weight: 400; margin: 0 0 12px 0; }
+    .order-meta-info { display: flex; gap: 24px; font-size: 14px; color: var(--luxury-muted); }
+    .status-pill { display: inline-block; padding: 6px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase; border-radius: 20px; border: 1px solid currentColor; }
+    .status-pill.is-pending { background: #FFF8E7; color: #9A7B54; }
+    .status-pill.is-processing, .status-pill.is-completed { background: #E8F5E9; color: #2E7D32; }
     .status-pill.is-shipped { background: #E3F2FD; color: #0D47A1; }
-    .status-pill.is-delivered { background: #E0F2F1; color: #00695C; }
-    .status-pill.is-cancelled,
-    .status-pill.is-failed { background: #FFEBEE; color: #C62828; }
-    .status-pill.is-refunded,
-    .status-pill.is-partially_refunded { background: #FFF8E7; color: #9A7B54; }
-
-    /* Action Buttons */
-    .luxury-btn-group {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .btn-luxury-primary {
-        background-color: var(--luxury-dark);
-        color: #FFFFFF;
-        border: 1px solid var(--luxury-dark);
-        padding: 12px 24px;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-luxury-primary:hover {
-        background-color: var(--luxury-gold);
-        border-color: var(--luxury-gold);
-        color: #FFFFFF;
-    }
-    .btn-luxury-secondary {
-        background-color: transparent;
-        color: var(--luxury-dark);
-        border: 1px solid var(--luxury-border);
-        padding: 12px 24px;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-luxury-secondary:hover {
-        border-color: var(--luxury-dark);
-        background-color: var(--luxury-bg-light);
-    }
-    .btn-luxury-danger {
-        background-color: var(--luxury-pending);
-        color: #FFFFFF;
-        border: 1px solid var(--luxury-pending);
-        padding: 12px 24px;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-luxury-danger:hover {
-        background-color: #B71C1C;
-        border-color: #B71C1C;
-    }
-
-    /* Grid Layout split */
-    .order-content-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 48px;
-        align-items: start;
-    }
-
-    @media (max-width: 1024px) {
-        .order-content-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
-        }
-    }
-
-    /* Luxury Content Sections */
-    .luxury-section-card {
-        background: #FFFFFF;
-        border: 1px solid var(--luxury-border);
-        padding: 32px;
-        margin-bottom: 32px;
-        border-radius: var(--luxury-radius);
-        box-shadow: var(--luxury-shadow);
-    }
-    .luxury-section-title {
-        font-size: 18px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-top: 0;
-        margin-bottom: 24px;
-        border-bottom: 1px solid var(--luxury-border);
-        padding-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    /* Items Architectural Layout */
-    .luxury-order-items {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-    }
-    .luxury-item-row {
-        display: flex;
-        align-items: center;
-        padding-bottom: 24px;
-        border-bottom: 1px solid var(--luxury-border);
-    }
-    .luxury-item-row:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-    .item-image-wrapper {
-        width: 100px;
-        height: 120px;
-        background-color: var(--luxury-bg-light);
-        overflow: hidden;
-        flex-shrink: 0;
-        border: 1px solid var(--luxury-border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .item-image-wrapper img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-    .item-image-wrapper img:hover {
-        transform: scale(1.05);
-    }
-    .item-image-placeholder {
-        font-size: 11px;
-        color: #AAA;
-    }
-    .item-details-wrapper {
-        flex-grow: 1;
-        padding-left: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-    }
-    .item-main-info h4 {
-        margin: 0 0 6px 0;
-        font-size: 16px;
-        font-weight: 500;
-    }
-    .item-main-info h4 a {
-        color: var(--luxury-dark);
-        text-decoration: none;
-    }
-    .item-main-info h4 a:hover {
-        color: var(--luxury-gold);
-    }
-    .item-sku-variant {
-        font-size: 13px;
-        color: var(--luxury-muted);
-        margin-bottom: 4px;
-    }
-    .item-qty-tag {
-        font-size: 13px;
-        color: var(--luxury-dark);
-    }
-    .item-pricing-info {
-        text-align: right;
-        flex-shrink: 0;
-    }
-    .item-total-price {
-        font-size: 16px;
-        font-weight: 500;
-        color: var(--luxury-dark);
-        margin-bottom: 4px;
-    }
-    .item-unit-price {
-        font-size: 13px;
-        color: var(--luxury-muted);
-    }
-    .item-line-meta {
-        font-size: 12px;
-        color: var(--luxury-muted);
-        margin-top: 6px;
-    }
-
-    /* Timeline / History */
-    .timeline-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-    .timeline-item {
-        padding: 12px 0;
-        border-bottom: 1px solid var(--luxury-border);
-    }
-    .timeline-item:last-child {
-        border-bottom: none;
-    }
-    .timeline-item strong {
-        display: block;
-        margin-bottom: 4px;
-    }
-    .timeline-item small {
-        color: var(--luxury-muted);
-    }
-
-    /* Shipment cards */
-    .shipment-card {
-        padding: 16px;
-        border: 1px solid var(--luxury-border);
-        border-radius: var(--luxury-radius);
-        margin-bottom: 12px;
-        background: #FFFFFF;
-    }
-    .shipment-card:last-child { margin-bottom: 0; }
-    .shipment-card h4 {
-        margin: 0 0 8px 0;
-        font-size: 15px;
-        font-weight: 600;
-    }
-    .shipment-card-meta {
-        font-size: 13px;
-        color: var(--luxury-muted);
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    .shipment-card-meta a {
-        color: var(--luxury-gold);
-    }
-
-    /* Refund / Return cards */
-    .refund-card,
-    .return-card {
-        padding: 16px;
-        border: 1px solid var(--luxury-border);
-        border-radius: var(--luxury-radius);
-        margin-bottom: 12px;
-        background: #FFFFFF;
-    }
-    .refund-card:last-child,
-    .return-card:last-child { margin-bottom: 0; }
-
-    /* Summary & Metadata Financial Layout */
-    .financial-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 14px;
-        margin-bottom: 14px;
-        color: var(--luxury-charcoal);
-    }
-    .financial-row.grand-total {
-        border-top: 1px solid var(--luxury-dark);
-        margin-top: 20px;
-        padding-top: 20px;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--luxury-dark);
-    }
-    .financial-row.discount {
-        color: var(--luxury-success);
-    }
-    .address-block {
-        font-size: 14px;
-        line-height: 1.6;
-        color: var(--luxury-charcoal);
-    }
-    .address-block p {
-        margin: 0 0 6px 0;
-    }
-    .address-block .name-line {
-        font-weight: 600;
-    }
-    .address-block .muted {
-        color: var(--luxury-muted);
-        font-size: 13px;
-    }
-
-    /* Messages / alerts */
-    .luxury-alert {
-        padding: 16px 24px;
-        border-radius: var(--luxury-radius);
-        margin-bottom: 16px;
-        font-size: 14px;
-        font-weight: 500;
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    .luxury-alert.success { background: #E8F5E9; color: var(--luxury-success); border: 1px solid rgba(46, 125, 50, 0.2); }
-    .luxury-alert.info { background: #E3F2FD; color: #0D47A1; border: 1px solid rgba(13, 71, 161, 0.2); }
-    .luxury-alert.warning { background: #FFF3E0; color: #E65100; border: 1px solid rgba(230, 81, 0, 0.2); }
-    .luxury-alert.error { background: #FFEBEE; color: var(--luxury-pending); border: 1px solid rgba(198, 40, 40, 0.2); }
-
-    /* Note list */
-    .note-list { list-style: none; margin: 0; padding: 0; }
-    .note-item {
-        padding: 12px 0;
-        border-bottom: 1px solid var(--luxury-border);
-    }
-    .note-item:last-child { border-bottom: none; }
-    .note-item-meta {
-        font-size: 12px;
-        color: var(--luxury-muted);
-        margin-bottom: 4px;
-    }
-
-    /* Attachment list */
-    .attachment-list { list-style: none; margin: 0; padding: 0; }
-    .attachment-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--luxury-border);
-        font-size: 14px;
-    }
-    .attachment-item:last-child { border-bottom: none; }
-
-    /* Empty state */
-    .empty-state {
-        color: var(--luxury-muted);
-        font-size: 13px;
-        font-style: italic;
-    }
-
-    /* Small helpers */
-    .helper-muted { color: var(--luxury-muted); font-size: 12px; }
-    .margin-top-md { margin-top: 24px; }
-    .print-only { display: none; }
-
-    @media print {
-        .luxury-breadcrumbs,
-        .luxury-btn-group,
-        .no-print { display: none !important; }
-        .print-only { display: block; }
-    }
-
-    @media (max-width: 768px) {
-        .premium-order-container { padding: 24px 16px 60px; }
-        .order-title-area h1 { font-size: 28px; }
-        .luxury-section-card { padding: 20px; }
-        .item-details-wrapper { flex-direction: column; }
-        .item-pricing-info { text-align: left; }
-    }
+    .status-pill.is-cancelled { background: #FFEBEE; color: #C62828; }
+    .luxury-btn-group { display: flex; gap: 12px; }
+    .btn-luxury-primary { background: var(--luxury-dark); color: #FFF; padding: 12px 24px; font-size: 14px; text-transform: uppercase; text-decoration: none; border-radius: var(--luxury-radius); }
+    .btn-luxury-secondary { background: transparent; color: var(--luxury-dark); border: 1px solid var(--luxury-border); padding: 12px 24px; font-size: 14px; text-transform: uppercase; text-decoration: none; border-radius: var(--luxury-radius); }
+    .btn-luxury-danger { background: var(--luxury-pending); color: #FFF; padding: 12px 24px; font-size: 14px; text-transform: uppercase; text-decoration: none; border-radius: var(--luxury-radius); }
+    .order-content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 48px; }
+    @media (max-width: 1024px) { .order-content-grid { grid-template-columns: 1fr; } }
+    .luxury-section-card { background: #FFF; border: 1px solid var(--luxury-border); padding: 32px; margin-bottom: 32px; border-radius: var(--luxury-radius); box-shadow: var(--luxury-shadow); }
+    .luxury-section-title { font-size: 18px; font-weight: 600; text-transform: uppercase; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid var(--luxury-border); padding-bottom: 12px; }
+    .luxury-item-row { display: flex; align-items: center; padding-bottom: 24px; border-bottom: 1px solid var(--luxury-border); }
+    .luxury-item-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .item-image-wrapper { width: 100px; height: 120px; background: var(--luxury-bg-light); border: 1px solid var(--luxury-border); overflow: hidden; flex-shrink: 0; }
+    .item-image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+    .item-details-wrapper { flex-grow: 1; padding-left: 24px; display: flex; justify-content: space-between; }
+    .financial-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 14px; }
+    .financial-row.grand-total { border-top: 1px solid var(--luxury-dark); margin-top: 20px; padding-top: 20px; font-size: 18px; font-weight: 600; }
 </style>
 {% endblock %}
 
 {% block content %}
-{% with order=order %}
-<div class="premium-order-container" aria-label="Order Details">
-
+<div class="premium-order-container">
     <nav class="luxury-breadcrumbs" aria-label="Breadcrumb">
-        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a>
-        <span class="separator"></span>
-        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a>
-        <span class="separator"></span>
-        <a href="{% url 'orders:order_list' %}">{% trans "Orders" %}</a>
-        <span class="separator"></span>
-        <a href="{% url 'orders:order_detail' order.id %}">#{{ order.order_number|default:order.id }}</a>
-        <span class="separator"></span>
-        <span class="current" aria-current="page">{% trans "Details" %}</span>
+        <a href="{% url 'foundation:home' %}">{% trans "Home" %}</a><span class="separator"></span>
+        <a href="{% url 'customers:dashboard' %}">{% trans "Dashboard" %}</a><span class="separator"></span>
+        <a href="{% url 'orders:order_list' %}">{% trans "Orders" %}</a><span class="separator"></span>
+        <span class="current">#{{ order.order_number|default:order.id }}</span>
     </nav>
 
     <header class="order-header-wrapper">
@@ -494,454 +65,80 @@
             <div class="order-meta-info">
                 <div>{% trans "Reference" %}: <strong>#{{ order.order_number|default:order.id }}</strong></div>
                 <div>{% trans "Placed on" %}: <strong>{{ order.created_at|date:"F j, Y" }}</strong></div>
-                {% if order.get_status_display %}
-                    <div>
-                        {% trans "Status" %}:
-                        <span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span>
-                    </div>
-                {% endif %}
-                {% if order.get_payment_status_display %}
-                    <div>
-                        {% trans "Payment" %}:
-                        <span class="status-pill is-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span>
-                    </div>
-                {% endif %}
+                <div>{% trans "Status" %}: <span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span></div>
             </div>
         </div>
-
-        <div class="luxury-btn-group no-print">
-            <button type="button" onclick="window.print();" class="btn-luxury-secondary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-                {% trans "Print Details" %}
-            </button>
-            {% if order.invoice_url %}
-                <a href="{{ order.invoice_url }}" class="btn-luxury-primary" download>
-                    {% trans "Download Invoice" %}
-                </a>
-            {% endif %}
+        <div class="luxury-btn-group">
+            <button type="button" onclick="window.print();" class="btn-luxury-secondary">{% trans "Print Details" %}</button>
+            <a href="{% url 'orders:download_invoice' order.id %}" class="btn-luxury-primary">{% trans "Download Invoice" %}</a>
         </div>
     </header>
 
-    {% if messages %}
-        <div class="no-print" role="alert" aria-live="polite">
-            {% for message in messages %}
-                <div class="luxury-alert {{ message.tags|default:'info' }}">
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
     {% if can_cancel %}
-        <div class="luxury-section-card no-print" style="background-color: #FFEBEE; border: 1px dashed var(--luxury-pending); box-shadow: none;">
-            <h3 class="luxury-section-title" style="color: var(--luxury-pending); border-bottom-color: rgba(198, 40, 40, 0.2);">
-                {% trans "Cancellation Available" %}
-            </h3>
-            <p style="margin: 0; font-size: 14px; line-height: 1.6;">
-                {% trans "This order is still cancellable. If your plans have changed, you can request a cancellation directly from this page." %}
-            </p>
-            <div style="margin-top: 16px;">
-                <a href="{% url 'orders:cancel_order' order.id %}" class="btn-luxury-danger">
-                    {% trans "Request Cancellation" %}
-                </a>
-            </div>
+        <div class="luxury-section-card" style="background:#FFEBEE; border:1px dashed var(--luxury-pending);">
+            <h3 class="luxury-section-title" style="color:var(--luxury-pending);">{% trans "Cancellation Available" %}</h3>
+            <p>{% trans "This order is currently pending fulfillment. You may request cancellation if required." %}</p>
+            <a href="{% url 'orders:cancel_order' order.id %}" class="btn-luxury-danger">{% trans "Request Cancellation" %}</a>
         </div>
     {% endif %}
 
     <div class="order-content-grid">
-
         <div class="main-order-left-pane">
             <div class="luxury-section-card">
-                <h3 class="luxury-section-title">{% trans "Your Curated Order" %}</h3>
-
+                <h3 class="luxury-section-title">{% trans "Curated Items" %}</h3>
                 <div class="luxury-order-items">
                     {% for item in items %}
                         <div class="luxury-item-row">
                             <div class="item-image-wrapper">
                                 {% if item.product_image_snapshot_url %}
-                                    <img src="{{ item.product_image_snapshot_url }}" alt="{{ item.product_name_snapshot|default:'Artisan Product' }}">
-                                {% elif item.variant_image_snapshot_url %}
-                                    <img src="{{ item.variant_image_snapshot_url }}" alt="{{ item.product_name_snapshot|default:'Artisan Product' }}">
+                                    <img src="{{ item.product_image_snapshot_url }}" alt="{{ item.product_name_snapshot }}">
                                 {% else %}
-                                    <span class="item-image-placeholder">{% trans "No image" %}</span>
+                                    <div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:10px; color:#AAA;">IMG</div>
                                 {% endif %}
                             </div>
-
                             <div class="item-details-wrapper">
-                                <div class="item-main-info">
-                                    <h4>
-                                        {{ item.product_name_snapshot|default:item.variant_name_snapshot|default:"Artisan Product" }}
-                                        {% if item.variant_name_snapshot and item.product_name_snapshot and item.variant_name_snapshot != item.product_name_snapshot %}
-                                            <span style="color: var(--luxury-muted); font-weight: 400; font-size: 12px;">({{ item.variant_name_snapshot }})</span>
-                                        {% endif %}
-                                    </h4>
-                                    {% if item.product_sku_snapshot or item.variant_sku_snapshot %}
-                                        <div class="item-sku-variant">
-                                            {% trans "SKU" %}: {{ item.variant_sku_snapshot|default:item.product_sku_snapshot|default:"-" }}
-                                        </div>
-                                    {% endif %}
-                                    <div class="item-qty-tag">{% trans "Quantity" %}: {{ item.quantity }}</div>
-                                    {% if item.get_status_display %}
-                                        <div class="item-line-meta">{% trans "Item status" %}: {{ item.get_status_display }}</div>
-                                    {% endif %}
-                                    {% if item.is_gift %}
-                                        <div class="item-line-meta">{% trans "Gift item" %}</div>
-                                    {% endif %}
+                                <div>
+                                    <h4 style="margin:0 0 6px 0;">{{ item.product_name_snapshot|default:"Artisan Product" }}</h4>
+                                    <div style="font-size:13px; color:var(--luxury-muted);">SKU: {{ item.product_sku_snapshot|default:"-" }}</div>
+                                    <div style="font-size:13px;">{% trans "Qty" %}: {{ item.quantity }}</div>
                                 </div>
-
-                                <div class="item-pricing-info">
-                                    <div class="item-total-price">
-                                        {{ order.currency|default:"$" }}{{ item.line_total|floatformat:2 }}
-                                    </div>
-                                    <div class="item-unit-price">
-                                        {% trans "Each" %}: {{ order.currency|default:"$" }}{{ item.unit_price|floatformat:2 }}
-                                    </div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:16px; font-weight:600;">{{ order.currency|default:"$" }}{{ item.line_total|floatformat:2 }}</div>
+                                    <div style="font-size:12px; color:var(--luxury-muted);">{% trans "Each" %}: {{ order.currency|default:"$" }}{{ item.unit_price|floatformat:2 }}</div>
                                 </div>
                             </div>
                         </div>
                     {% empty %}
-                        <p class="empty-state">{% trans "No items found inside this order record." %}</p>
+                        <p>{% trans "No line items found." %}</p>
                     {% endfor %}
                 </div>
             </div>
-
-            {% if shipments %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Shipments" %}</h3>
-                    {% for shipment in shipments %}
-                        <div class="shipment-card">
-                            <h4>
-                                {% trans "Shipment" %} #{{ shipment.shipment_number|default:shipment.id }}
-                                <span class="status-pill is-{{ shipment.status }}" style="margin-left: 8px; font-size: 11px; padding: 3px 10px;">
-                                    {{ shipment.get_status_display }}
-                                </span>
-                            </h4>
-                            <div class="shipment-card-meta">
-                                <div>
-                                    <strong>{% trans "Carrier" %}:</strong> {{ shipment.carrier|default:"-" }}
-                                </div>
-                                {% if shipment.tracking_number %}
-                                    <div>
-                                        <strong>{% trans "Tracking #" %}:</strong> {{ shipment.tracking_number }}
-                                    </div>
-                                {% endif %}
-                                {% if shipment.tracking_url %}
-                                    <div>
-                                        <a href="{{ shipment.tracking_url }}" target="_blank" rel="noopener noreferrer">
-                                            {% trans "Track package live" %} &rarr;
-                                        </a>
-                                    </div>
-                                {% endif %}
-                                {% if shipment.dispatch_date %}
-                                    <div><strong>{% trans "Dispatched" %}:</strong> {{ shipment.dispatch_date|date:"F j, Y H:i" }}</div>
-                                {% endif %}
-                                {% if shipment.delivery_date %}
-                                    <div><strong>{% trans "Delivered" %}:</strong> {{ shipment.delivery_date|date:"F j, Y H:i" }}</div>
-                                {% endif %}
-                                {% if shipment.estimated_delivery_date %}
-                                    <div><strong>{% trans "Estimated delivery" %}:</strong> {{ shipment.estimated_delivery_date|date:"F j, Y" }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            {% if timeline %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Order Timeline" %}</h3>
-                    <ul class="timeline-list">
-                        {% for event in timeline %}
-                            <li class="timeline-item">
-                                <strong>{{ event.title|default:event.get_event_type_display }}</strong>
-                                {% if event.description %}
-                                    <div style="font-size: 13px; color: var(--luxury-charcoal); margin-top: 4px;">
-                                        {{ event.description }}
-                                    </div>
-                                {% endif %}
-                                <small>
-                                    {{ event.occurred_at|date:"F j, Y H:i" }}
-                                    {% if event.is_visible_to_customer %}
-                                        &middot; {% trans "Visible to customer" %}
-                                    {% endif %}
-                                </small>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            {% if status_history %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Status History" %}</h3>
-                    <ul class="timeline-list">
-                        {% for entry in status_history %}
-                            <li class="timeline-item">
-                                <strong>{{ entry.old_status }} &rarr; {{ entry.new_status }}</strong>
-                                {% if entry.remarks %}
-                                    <div style="font-size: 13px; color: var(--luxury-charcoal); margin-top: 4px;">
-                                        {{ entry.remarks }}
-                                    </div>
-                                {% endif %}
-                                <small>{{ entry.created_at|date:"F j, Y H:i" }}</small>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            {% if notes %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Notes" %}</h3>
-                    <ul class="note-list">
-                        {% for note in notes %}
-                            <li class="note-item">
-                                <div class="note-item-meta">
-                                    {{ note.get_note_type_display|default:note.note_type }}
-                                    &middot; {{ note.created_at|date:"F j, Y H:i" }}
-                                    {% if note.author %}
-                                        &middot; {{ note.author.get_full_name|default:note.author.username }}
-                                    {% endif %}
-                                </div>
-                                <div style="font-size: 14px; color: var(--luxury-charcoal); white-space: pre-wrap;">
-                                    {{ note.text }}
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            {% if order.customer_note %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Customer Note" %}</h3>
-                    <div style="font-size: 14px; line-height: 1.6; color: var(--luxury-charcoal); font-style: italic; white-space: pre-wrap;">
-                        {{ order.customer_note }}
-                    </div>
-                </div>
-            {% endif %}
-
-            {% if order.delivery_instructions %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Delivery Instructions" %}</h3>
-                    <div style="font-size: 14px; line-height: 1.6; color: var(--luxury-charcoal); white-space: pre-wrap;">
-                        {{ order.delivery_instructions }}
-                    </div>
-                </div>
-            {% endif %}
-
-            {% if attachments %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Attachments" %}</h3>
-                    <ul class="attachment-list">
-                        {% for attachment in attachments %}
-                            <li class="attachment-item">
-                                <span>
-                                    {{ attachment.original_filename|default:attachment.file.name }}
-                                    <span class="helper-muted">
-                                        ({{ attachment.get_attachment_type_display|default:attachment.attachment_type }})
-                                    </span>
-                                </span>
-                                <a href="{% url 'orders:attachment_download' attachment.id %}" class="btn-luxury-secondary" style="padding: 6px 14px; font-size: 12px;">
-                                    {% trans "Download" %}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
         </div>
 
         <div class="main-order-right-pane">
-
             <div class="luxury-section-card">
-                <h3 class="luxury-section-title">{% trans "Financial Summary" %}</h3>
-
-                <div class="financial-row">
-                    <span>{% trans "Subtotal" %}</span>
-                    <span>{{ order.currency|default:"$" }}{{ order.subtotal|floatformat:2 }}</span>
-                </div>
-
-                {% if order.discount_total %}
-                    <div class="financial-row discount">
-                        <span>
-                            {% trans "Privilege Discount" %}
-                            {% if order.coupon_code %}
-                                ({{ order.coupon_code }})
-                            {% endif %}
-                        </span>
-                        <span>-{{ order.currency|default:"$" }}{{ order.discount_total|floatformat:2 }}</span>
-                    </div>
-                {% endif %}
-
-                <div class="financial-row">
-                    <span>{% trans "Premium Carriage & Delivery" %}</span>
-                    <span>
-                        {% if order.shipping_cost == 0 %}
-                            {% trans "Complimentary" %}
-                        {% else %}
-                            {{ order.currency|default:"$" }}{{ order.shipping_cost|floatformat:2 }}
-                        {% endif %}
-                    </span>
-                </div>
-
-                {% if order.tax_total %}
-                    <div class="financial-row">
-                        <span>{% trans "Integrated Tax" %}</span>
-                        <span>{{ order.currency|default:"$" }}{{ order.tax_total|floatformat:2 }}</span>
-                    </div>
-                {% endif %}
-
-                <div class="financial-row grand-total">
-                    <span>{% trans "Total Valuation" %}</span>
-                    <span>{{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}</span>
-                </div>
+                <h3 class="luxury-section-title">{% trans "Summary" %}</h3>
+                <div class="financial-row"><span>{% trans "Subtotal" %}</span><span>{{ order.currency|default:"$" }}{{ order.subtotal|floatformat:2 }}</span></div>
+                <div class="financial-row"><span>{% trans "Shipping" %}</span><span>{{ order.currency|default:"$" }}{{ order.shipping_cost|floatformat:2 }}</span></div>
+                <div class="financial-row"><span>{% trans "Tax" %}</span><span>{{ order.currency|default:"$" }}{{ order.tax_total|floatformat:2 }}</span></div>
+                <div class="financial-row grand-total"><span>{% trans "Total" %}</span><span>{{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}</span></div>
             </div>
 
             <div class="luxury-section-card">
-                <h3 class="luxury-section-title">{% trans "Account Parameters" %}</h3>
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    {% if order.get_payment_method_display or order.payment_method %}
-                        <div class="financial-row" style="margin-bottom: 0;">
-                            <span>{% trans "Payment Method" %}</span>
-                            <span style="font-weight: 500;">{{ order.get_payment_method_display|default:order.payment_method }}</span>
-                        </div>
-                    {% endif %}
-                    {% if order.transaction_id %}
-                        <div class="financial-row" style="margin-bottom: 0;">
-                            <span>{% trans "Transaction Reference" %}</span>
-                            <span class="helper-muted" style="font-family: monospace;">{{ order.transaction_id }}</span>
-                        </div>
-                    {% endif %}
-                    {% if order.payment_status %}
-                        <div class="financial-row" style="margin-bottom: 0;">
-                            <span>{% trans "Payment Ledger" %}</span>
-                            <span class="status-pill is-{{ order.payment_status }}">{{ order.get_payment_status_display|default:order.payment_status }}</span>
-                        </div>
-                    {% endif %}
-                    {% if order.tracking_number %}
-                        <div class="financial-row" style="margin-bottom: 0;">
-                            <span>{% trans "Order Tracking" %}</span>
-                            <span style="font-weight: 500;">{{ order.tracking_number }}</span>
-                        </div>
-                    {% endif %}
-                    {% if order.expected_delivery_date %}
-                        <div class="financial-row" style="margin-bottom: 0;">
-                            <span>{% trans "Expected Delivery" %}</span>
-                            <span style="font-weight: 500;">{{ order.expected_delivery_date|date:"F j, Y" }}</span>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="luxury-section-card">
-                <h3 class="luxury-section-title">{% trans "Delivery Allocation" %}</h3>
-                <div class="address-block">
-                    {% if order.shipping_address %}
-                        <p class="name-line">
-                            {{ order.shipping_address.full_name|default:order.shipping_address.company|default:"-" }}
-                        </p>
-                        <p>{{ order.shipping_address.address_line_1 }}</p>
-                        {% if order.shipping_address.address_line_2 %}
-                            <p>{{ order.shipping_address.address_line_2 }}</p>
-                        {% endif %}
-                        <p>
-                            {{ order.shipping_address.city }}
-                            {% if order.shipping_address.state_or_province %}, {{ order.shipping_address.state_or_province }}{% endif %}
-                            {% if order.shipping_address.postal_code %} {{ order.shipping_address.postal_code }}{% endif %}
-                        </p>
-                        <p>{{ order.shipping_address.country }}</p>
-                        {% if order.shipping_address.phone_number %}
-                            <p class="muted">{% trans "Phone" %}: {{ order.shipping_address.phone_number }}</p>
-                        {% endif %}
-                        {% if order.shipping_address.delivery_notes %}
-                            <p class="muted" style="margin-top: 8px;">{% trans "Delivery notes" %}: {{ order.shipping_address.delivery_notes }}</p>
-                        {% endif %}
-                    {% else %}
-                        <p class="empty-state">{% trans "No shipping address on record." %}</p>
-                    {% endif %}
-                </div>
-
-                {% if order.billing_address and order.billing_address.pk != order.shipping_address.pk %}
-                    <h3 class="luxury-section-title margin-top-md">{% trans "Billing Reference" %}</h3>
-                    <div class="address-block">
-                        <p class="name-line">
-                            {{ order.billing_address.full_name|default:order.billing_address.company|default:"-" }}
-                        </p>
-                        <p>{{ order.billing_address.address_line_1 }}</p>
-                        {% if order.billing_address.address_line_2 %}
-                            <p>{{ order.billing_address.address_line_2 }}</p>
-                        {% endif %}
-                        <p>
-                            {{ order.billing_address.city }}
-                            {% if order.billing_address.postal_code %} {{ order.billing_address.postal_code }}{% endif %}
-                        </p>
-                        <p>{{ order.billing_address.country }}</p>
-                    </div>
+                <h3 class="luxury-section-title">{% trans "Shipping Address" %}</h3>
+                {% if order.shipping_address %}
+                    <p style="margin:0; line-height:1.6; font-size:14px;">
+                        <strong>{{ order.shipping_address.full_name }}</strong><br>
+                        {{ order.shipping_address.address_line_1 }}<br>
+                        {% if order.shipping_address.address_line_2 %}{{ order.shipping_address.address_line_2 }}<br>{% endif %}
+                        {{ order.shipping_address.city }}, {{ order.shipping_address.state_or_province }} {{ order.shipping_address.postal_code }}<br>
+                        {{ order.shipping_address.country }}
+                    </p>
+                {% else %}
+                    <p>{% trans "No shipping address record." %}</p>
                 {% endif %}
             </div>
-
-            {% if refunds %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Refunds" %}</h3>
-                    {% for refund in refunds %}
-                        <div class="refund-card">
-                            <h4>
-                                {% trans "Refund" %} #{{ refund.id }}
-                                <span class="status-pill is-{{ refund.status }}" style="margin-left: 8px; font-size: 11px; padding: 3px 10px;">
-                                    {{ refund.get_status_display|default:refund.status }}
-                                </span>
-                            </h4>
-                            <div class="shipment-card-meta">
-                                <div><strong>{% trans "Amount" %}:</strong> {{ order.currency|default:"$" }}{{ refund.amount|floatformat:2 }}</div>
-                                {% if refund.get_refund_method_display %}
-                                    <div><strong>{% trans "Method" %}:</strong> {{ refund.get_refund_method_display }}</div>
-                                {% endif %}
-                                {% if refund.gateway_refund_id %}
-                                    <div><strong>{% trans "Gateway Refund ID" %}:</strong> {{ refund.gateway_refund_id }}</div>
-                                {% endif %}
-                                <div><strong>{% trans "Reason" %}:</strong> {{ refund.reason|default:"-" }}</div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            {% if returns %}
-                <div class="luxury-section-card">
-                    <h3 class="luxury-section-title">{% trans "Return Requests" %}</h3>
-                    {% for return_request in returns %}
-                        <div class="return-card">
-                            <h4>
-                                {% trans "Return" %} #{{ return_request.return_number|default:return_request.id }}
-                                <span class="status-pill is-{{ return_request.status }}" style="margin-left: 8px; font-size: 11px; padding: 3px 10px;">
-                                    {{ return_request.get_status_display|default:return_request.status }}
-                                </span>
-                            </h4>
-                            <div class="shipment-card-meta">
-                                <div><strong>{% trans "Type" %}:</strong> {{ return_request.get_return_type_display|default:return_request.return_type }}</div>
-                                <div><strong>{% trans "Reason category" %}:</strong> {{ return_request.get_reason_category_display|default:return_request.reason_category }}</div>
-                                {% if return_request.reason_text %}
-                                    <div><strong>{% trans "Details" %}:</strong> {{ return_request.reason_text }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <div class="luxury-section-card" style="background-color: var(--luxury-bg-light); border: 1px dashed var(--luxury-border);">
-                <h4 style="margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--luxury-dark);">{% trans "Concierge Assistance" %}</h4>
-                <p style="font-size: 13px; line-height: 1.5; color: var(--luxury-muted); margin-bottom: 16px;">
-                    {% trans "Every artifact curated possesses unique properties. If you require specialized assistance regarding maintenance, presentation, or delivery parameters, consult our luxury experts." %}
-                </p>
-                <a href="{% url 'contact' %}" class="btn-luxury-secondary" style="width: 100%; box-sizing: border-box; text-align: center; font-size: 12px; padding: 10px 0;">
-                    {% trans "Contact Concierge Desk" %}
-                </a>
-            </div>
-
         </div>
     </div>
 </div>
-{% endwith %}
 {% endblock %}

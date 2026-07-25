@@ -10,28 +10,52 @@ handler404 = "apps.foundation.views.page_not_found_view"
 handler500 = "apps.foundation.views.server_error_view"
 
 urlpatterns = [
-    # Django Admin Panel
+    # 1. Django Admin Panel
     path("admin/", admin.site.urls),
 
-    # Foundation app (Global utilities, auth fallbacks, and specific endpoints)
+    # 2. Django Allauth Google OAuth & Social Authentication Pipeline
+    path("accounts/", include("allauth.urls")),
+
+    # 3. Core Foundation App (Global utilities, auth fallbacks, store locator, track order)
     path("foundation/", include("apps.foundation.urls")),
 
-    # Orders app (Explicitly mapped to match account navigation references)
-    path("account/orders/", include("apps.orders.urls")),
-
-    # Customers app (Authentication, Dashboard, Profiles, Addresses, Wishlist, Carts, Orders)
-    path("", include("apps.customers.urls")),
-
-    # Homepage app (CMS Driven Dynamic Homepage mapped to the root)
-    path("", include("apps.homepage.urls")),
-
-    # Catalog app (Makers, categories, products)
-    path("", include("apps.catalog.urls")),
-
-    # CART APP - NEW ENTERPRISE-GRADE INTEGRATION
+    # 4. Cart & Checkout Pipeline
     path("cart/", include("apps.cart.urls")),
 
-    # Foundation root-level general pages (Policies, care guides, etc.)
+    # 5. Promotions & Coupons Engine
+    path("coupons/", include("apps.coupons.urls")),
+
+    # 6. Global Tax & Compliance Engine
+    path("tax/", include("apps.tax.urls")),
+
+    # 7. Inventory & Multi-Warehouse Management
+    path("inventory/", include("apps.inventory.urls")),
+
+    # 8. Shipping, Carrier & Fulfillment Engine
+    path("shipping/", include("apps.shipping.urls")),
+
+    # 9. Payment Gateways (eSewa, Khalti, Stripe, COD, Bank Transfer)
+    path("payments/", include("apps.payments.urls")),
+
+    # 10. Multi-Channel Notifications & Communication Center
+    path("notifications/", include("apps.notifications.urls")),
+
+    # 11. System Audit Logs & Compliance Audit Engine
+    path("audit/", include("apps.audit.urls")),
+
+    # 12. Order Management System (Single Canonical Namespace Source)
+    path("orders/", include("apps.orders.urls")),
+
+    # 13. Customer Management (Authentication, Dashboard, Profiles, Addresses, Wishlists, Saved Carts, B2B)
+    path("", include("apps.customers.urls")),
+
+    # 14. Homepage App (CMS-driven dynamic modules on the root URL)
+    path("", include("apps.homepage.urls")),
+
+    # 15. Catalog App (Masterpieces, artisans, categories, PLP/PDP, filters)
+    path("", include("apps.catalog.urls")),
+
+    # 16. Foundation Root Pages (Policies, care guides, bespoke request forms, contact)
     path("", include("apps.foundation.urls_root")),
 ]
 

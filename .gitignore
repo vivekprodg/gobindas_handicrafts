@@ -1,17 +1,37 @@
+# Virtual Environment
 .venv/
+venv/
+env/
+
+# Environment variables (NEVER commit secrets to GitHub)
 .env
+.env.local
+
+# Python cache & compiled files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Django Static & Media uploads
 media/
 staticfiles/
+
+# Database files & SQL dumps
+db.sqlite3
+db.sqlite3-journal
+*.dump
+*.sql
+*.json
+*.txt
+
+# IDEs & Editors
+.idea/
+.vscode/
+.continue/
+*.swp
+*.swo
+
+# Testing & Coverage
 .coverage
 .pytest_cache/
 .mypy_cache/
-.idea/
-.vscode/
-db.sqlite3
-.continue/
-backup_before_orders_migration.dump
-before_orders_0002_backup.sql
-orders_backup.json
-tables.txt

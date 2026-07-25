@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Payment Confirmed | Gobindas Handicrafts{% endblock %}
+
+{% block content %}
+<div class="payment-status-wrapper">
+    <div style="color: #2E7D32; font-size: 3rem; margin-bottom: 1rem;">&#10004;</div>
+    <h1 style="font-family: 'Cinzel', serif; margin-bottom: 0.5rem;">Payment Confirmed</h1>
+    <p style="color: #7A726A; margin-bottom: 2rem;">Thank you! Payment of <strong>NPR {{ transaction.amount|floatformat:2|intcomma }}</strong> for Order <strong>#{{ order.order_number }}</strong> was received.</p>
+
+    <a href="{% url 'orders:order_detail' order.id %}" class="btn-primary">View Order Details</a>
+</div>
+{% endblock %}

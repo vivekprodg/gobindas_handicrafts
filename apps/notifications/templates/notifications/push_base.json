@@ -1,0 +1,6 @@
+{
+  "title": "{{ title|default:'Gobindas Handicrafts' }}",
+  "body": "{{ body_text|default:'' }}",
+  "icon": "/static/images/logo.png",
+  "click_action": "{{ action_url|default:'/' }}"
+}

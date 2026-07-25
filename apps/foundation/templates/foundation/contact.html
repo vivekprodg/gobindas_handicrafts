@@ -10,127 +10,14 @@
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'foundation/css/foundation-pages.css' %}">
 <style>
-    /* ==========================================================================
-       FOUNDATION VARIABLES & RESET
-       ========================================================================== */
-    :root {
-        --brand-gold: #B88A44;
-        --brand-gold-dark: #91682B;
-        --brand-gold-light: #F8F3E9;
-        --brand-dark: #2A2621;
-        --brand-light: #FFFFFF;
-        --brand-gold-hover: #D4A963;
-        --text-muted: #A39B8E;
-        --border-light: rgba(184, 138, 68, 0.2);
-        --font-brand: 'Cinzel', serif;
-        --font-ui: 'Inter', sans-serif;
-        --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    }
-
-    /* ==========================================================================
-       FOUNDATION COMPONENTS (Forms, Buttons, Typography)
-       ========================================================================== */
-    .page-title {
-        font-family: var(--font-brand);
-        color: var(--brand-gold-dark);
-        font-size: 2.5rem;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 1rem;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-    }
-
-    .page-subtitle {
-        text-align: center;
-        color: var(--text-muted);
-        font-size: 1.1rem;
-        max-width: 600px;
-        margin: 0 auto 4rem auto;
-        font-weight: 300;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .form-label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--brand-dark);
-        margin-bottom: 0.5rem;
-    }
-
-    .form-input, .form-textarea {
-        width: 100%;
-        padding: 0.8rem 1rem;
-        border: 1px solid var(--border-light);
-        border-radius: 4px;
-        font-size: 0.95rem;
-        color: var(--brand-dark);
-        transition: var(--transition-smooth);
-        background: #fafafa;
-        font-family: var(--font-ui);
-    }
-
-    .form-textarea {
-        resize: vertical;
-        min-height: 120px;
-    }
-
-    .form-input:focus, .form-textarea:focus {
-        outline: none;
-        border-color: var(--brand-gold);
-        background: #ffffff;
-        box-shadow: 0 0 0 3px rgba(184, 138, 68, 0.15);
-    }
-
-    .btn-primary {
-        width: 100%;
-        padding: 1rem;
-        background-color: var(--brand-gold);
-        color: #ffffff;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        cursor: pointer;
-        transition: var(--transition-smooth);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .btn-primary:hover {
-        background-color: var(--brand-gold-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(184, 138, 68, 0.2);
-    }
-
-    .form-error-text {
-        color: #d9534f;
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
-        font-weight: 500;
-    }
-
-    /* ==========================================================================
-       CONTACT PAGE SPECIFIC LAYOUT
-       ========================================================================== */
     .contact-layout {
         max-width: 1400px;
         margin: 0 auto;
         padding: 4rem 2rem 6rem;
     }
 
-    /* Dynamic Hero Banner Style */
     .contact-hero-banner {
         position: relative;
         width: 100%;
@@ -145,7 +32,7 @@
         text-align: center;
         padding: 3rem;
         overflow: hidden;
-        border: 1px solid var(--border-light);
+        border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
     }
 
     .contact-hero-banner::before {
@@ -164,7 +51,7 @@
     }
 
     .banner-title {
-        font-family: var(--font-brand);
+        font-family: var(--font-brand, 'Cinzel', serif);
         font-size: 3rem;
         font-weight: 700;
         letter-spacing: 0.05em;
@@ -174,7 +61,7 @@
     }
 
     .banner-subtitle {
-        font-family: var(--font-ui);
+        font-family: var(--font-ui, 'Inter', sans-serif);
         font-size: 1.2rem;
         font-weight: 300;
         line-height: 1.6;
@@ -182,7 +69,7 @@
     }
 
     .banner-description {
-        font-family: var(--font-ui);
+        font-family: var(--font-ui, 'Inter', sans-serif);
         font-size: 0.95rem;
         font-weight: 300;
         margin-top: 1rem;
@@ -197,14 +84,12 @@
         margin-bottom: 6rem;
     }
 
-    /* Left Side Centering if Left Side is completely empty */
     .contact-grid.full-width-form {
         grid-template-columns: 1fr;
         max-width: 850px;
         margin: 0 auto 6rem;
     }
 
-    /* Left Side: Information Cards */
     .contact-info-wrapper {
         display: flex;
         flex-direction: column;
@@ -215,64 +100,54 @@
         display: flex;
         align-items: flex-start;
         padding: 2rem;
-        border: 1px solid var(--border-light);
+        border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
         border-radius: 6px;
         background: #ffffff;
-        transition: var(--transition-smooth);
+        transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
     }
 
     .info-card:hover {
-        border-color: var(--brand-gold);
-        background-color: var(--brand-gold-light);
+        border-color: var(--brand-gold, #B88A44);
+        background-color: var(--brand-gold-light, #F8F3E9);
         box-shadow: 0 10px 30px rgba(184, 138, 68, 0.05);
         transform: translateY(-3px);
     }
 
-    /* Dynamic visual adjustment for social links when header icon is omitted */
-    .info-card.social-links-card {
-        padding: 2rem;
-    }
-
-    /* Modern parent-detection selector to auto-hide card if all links are omitted */
-    .info-card.social-links-card:not(:has(.social-badge)) {
-        display: none !important;
-    }
-
     .info-icon {
-        color: var(--brand-gold);
+        color: var(--brand-gold, #B88A44);
         margin-right: 1.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--brand-gold-light);
+        background: var(--brand-gold-light, #F8F3E9);
         padding: 1rem;
         border-radius: 50%;
         flex-shrink: 0;
     }
 
     .info-content h3 {
-        font-family: var(--font-brand);
-        color: var(--brand-gold-dark);
+        font-family: var(--font-brand, 'Cinzel', serif);
+        color: var(--brand-gold-dark, #91682B);
         font-size: 1.25rem;
         margin-bottom: 0.5rem;
     }
 
     .info-content p {
-        color: var(--text-muted);
+        color: var(--text-muted, #A39B8E);
         font-size: 0.95rem;
         line-height: 1.6;
     }
 
     .info-content a {
-        color: var(--brand-dark);
+        color: var(--brand-dark, #2A2621);
         font-weight: 500;
+        text-decoration: none;
     }
 
     .info-content a:hover {
-        color: var(--brand-gold);
+        color: var(--brand-gold, #B88A44);
     }
 
-    /* Social Link Icons Grid */
     .social-links-container {
         display: flex;
         flex-wrap: wrap;
@@ -288,30 +163,21 @@
         height: 40px;
         padding: 0 0.5rem;
         border-radius: 20px;
-        background-color: var(--brand-gold-light);
-        color: var(--brand-gold-dark);
-        transition: var(--transition-smooth);
+        background-color: var(--brand-gold-light, #F8F3E9);
+        color: var(--brand-gold-dark, #91682B);
+        transition: var(--transition-smooth, all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1));
         text-decoration: none;
     }
 
     .social-badge:hover {
-        background-color: var(--brand-gold);
+        background-color: var(--brand-gold, #B88A44);
         color: #ffffff;
         transform: translateY(-2px);
     }
 
-    .social-badge i {
-        font-size: 1.2rem;
-        line-height: 1;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* Right Side: Contact Form */
     .contact-form-card {
         background: #ffffff;
-        border: 1px solid var(--border-light);
+        border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
         box-shadow: 0 10px 40px rgba(184, 138, 68, 0.06);
         border-radius: 8px;
         padding: 3.5rem;
@@ -326,7 +192,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, var(--brand-gold), var(--brand-gold-hover), var(--brand-gold));
+        background: linear-gradient(90deg, var(--brand-gold, #B88A44), var(--brand-gold-hover, #D4A963), var(--brand-gold, #B88A44));
     }
 
     .form-row {
@@ -335,11 +201,10 @@
         gap: 1.5rem;
     }
 
-    /* Map Section */
     .map-section {
         height: 500px;
         background-color: #f0f0f0;
-        border: 1px solid var(--border-light);
+        border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
         border-radius: 8px;
         display: flex;
         justify-content: center;
@@ -359,94 +224,10 @@
         z-index: 1;
     }
 
-    .map-overlay {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 2.5rem;
-        border-radius: 6px;
-        border: 1px solid var(--border-light);
-        box-shadow: 0 10px 30px rgba(184, 138, 68, 0.08);
-        backdrop-filter: blur(10px);
-        max-width: 90%;
-    }
-
-    .map-overlay h3 {
-        font-family: var(--font-brand);
-        color: var(--brand-dark);
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .map-overlay p {
-        color: var(--text-muted);
-        font-size: 0.95rem;
-    }
-
-    /* FAQ / Trust Section */
-    .trust-section {
-        text-align: center;
-        padding: 4rem 2rem;
-        background-color: var(--brand-gold-light);
-        border-radius: 8px;
-        border: 1px solid var(--border-light);
-    }
-
-    .trust-section h2 {
-        font-family: var(--font-brand);
-        color: var(--brand-gold-dark);
-        font-size: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .trust-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 2rem;
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-
-    .trust-item {
-        padding: 1.5rem;
-    }
-
-    .trust-item svg {
-        color: var(--brand-gold);
-        margin-bottom: 1rem;
-    }
-
-    .trust-item h4 {
-        font-family: var(--font-brand);
-        color: var(--brand-dark);
-        margin-bottom: 0.75rem;
-        font-size: 1.1rem;
-    }
-
-    .trust-item p {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-    }
-
-    /* Animations */
-    .fade-up {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: opacity 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
-    }
-
-    .fade-up.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* Responsive */
     @media (max-width: 992px) {
         .contact-grid {
             grid-template-columns: 1fr;
         }
-        
         .contact-form-card {
             padding: 2.5rem;
         }
@@ -457,15 +238,9 @@
             grid-template-columns: 1fr;
             gap: 0;
         }
-        
         .contact-layout {
             padding: 3rem 1.5rem;
         }
-
-        .page-title {
-            font-size: 2rem;
-        }
-        
         .banner-title {
             font-size: 2.2rem;
         }
@@ -476,9 +251,8 @@
 {% block content %}
 <main class="contact-layout">
 
-    <!-- Hero / Header Section -->
     {% if contact_data.hero_image_url %}
-    <div class="contact-hero-banner fade-up" style="background-image: url('{{ contact_data.hero_image_url }}');">
+    <div class="contact-hero-banner">
         <div class="hero-banner-content">
             {% if contact_data.hero_title %}
                 <h1 class="banner-title">{{ contact_data.hero_title }}</h1>
@@ -493,15 +267,15 @@
     </div>
     {% else %}
         {% if contact_data.hero_title or contact_data.hero_subtitle or contact_data.hero_description %}
-        <header class="fade-up">
+        <header style="text-align: center; margin-bottom: 3rem;">
             {% if contact_data.hero_title %}
                 <h1 class="page-title">{{ contact_data.hero_title }}</h1>
             {% endif %}
             {% if contact_data.hero_subtitle %}
-                <p class="page-subtitle" style="margin-bottom: 0.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-gold);">{{ contact_data.hero_subtitle }}</p>
+                <p style="text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-gold, #B88A44); font-weight: 600;">{{ contact_data.hero_subtitle }}</p>
             {% endif %}
             {% if contact_data.hero_description %}
-                <p class="page-subtitle">{{ contact_data.hero_description }}</p>
+                <p style="color: var(--text-muted, #A39B8E); max-width: 600px; margin: 0.5rem auto 0;">{{ contact_data.hero_description }}</p>
             {% endif %}
         </header>
         {% endif %}
@@ -510,10 +284,8 @@
     {% if contact_data.physical_address or contact_data.phones or contact_data.emails or contact_data.office_hours or contact_data.social_links or form %}
     <div class="contact-grid {% if not contact_data.physical_address and not contact_data.phones and not contact_data.emails and not contact_data.office_hours and not contact_data.social_links %}full-width-form{% endif %}">
         
-        <!-- Left Side: Dynamic Contact Information -->
-        <div class="contact-info-wrapper fade-up" style="transition-delay: 0.1s;">
+        <div class="contact-info-wrapper">
             
-            <!-- Physical Address Card -->
             {% if contact_data.physical_address %}
             <div class="info-card">
                 <div class="info-icon">
@@ -531,7 +303,6 @@
             </div>
             {% endif %}
 
-            <!-- Phones Card -->
             {% if contact_data.phones %}
             <div class="info-card">
                 <div class="info-icon">
@@ -543,9 +314,6 @@
                     {% if contact_data.intro_heading %}
                         <h3>{{ contact_data.intro_heading }}</h3>
                     {% endif %}
-                    {% if contact_data.intro_text %}
-                        <p style="margin-bottom: 0.5rem; font-style: italic;">{{ contact_data.intro_text }}</p>
-                    {% endif %}
                     {% for phone in contact_data.phones %}
                         <p>
                             {% if phone.label %}<strong>{{ phone.label }}:</strong><br>{% endif %}
@@ -556,7 +324,6 @@
             </div>
             {% endif %}
 
-            <!-- Emails Card -->
             {% if contact_data.emails %}
             <div class="info-card">
                 <div class="info-icon">
@@ -579,7 +346,6 @@
             </div>
             {% endif %}
 
-            <!-- Office Hours Card -->
             {% if contact_data.office_hours or contact_data.hours_description %}
             <div class="info-card">
                 <div class="info-icon">
@@ -591,9 +357,6 @@
                 <div class="info-content">
                     {% if contact_data.hours_heading %}
                         <h3>{{ contact_data.hours_heading }}</h3>
-                    {% endif %}
-                    {% if contact_data.hours_description %}
-                        <p style="margin-bottom: 0.5rem; font-style: italic;">{{ contact_data.hours_description }}</p>
                     {% endif %}
                     {% for hr in contact_data.office_hours %}
                         <p>
@@ -609,10 +372,9 @@
             </div>
             {% endif %}
 
-            <!-- Social Links Card (100% Dynamic CMS-driven implementation) -->
             {% if contact_data.social_links %}
-            <div class="info-card social-links-card">
-                <div class="info-content">
+            <div class="info-card">
+                <div class="info-content" style="width: 100%;">
                     {% if contact_data.social_heading %}
                         <h3>{{ contact_data.social_heading }}</h3>
                     {% endif %}
@@ -623,9 +385,7 @@
                                 {% if link.icon_class %}
                                     <i class="{{ link.icon_class }}"></i>
                                 {% else %}
-                                    {% if link.platform %}
-                                        <span style="font-size: 0.85rem; font-weight: 600; font-family: var(--font-ui);">{{ link.platform }}</span>
-                                    {% endif %}
+                                    <span style="font-size: 0.85rem; font-weight: 600;">{{ link.platform }}</span>
                                 {% endif %}
                             </a>
                             {% endif %}
@@ -637,24 +397,23 @@
 
         </div>
 
-        <!-- Right Side: Contact Form -->
         {% if form %}
-        <div class="contact-form-card fade-up" style="transition-delay: 0.2s;">
+        <div class="contact-form-card">
             {% if form_submitted %}
-                <div id="formSuccess" style="text-align: center; color: var(--brand-gold-dark); font-weight: 500; padding: 2rem 0;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--brand-gold)" stroke-width="1.5" style="margin-bottom: 1.5rem;">
+                <div style="text-align: center; color: var(--brand-gold-dark, #91682B); padding: 2rem 0;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--brand-gold, #B88A44)" stroke-width="1.5" style="margin-bottom: 1.5rem;">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                         <polyline points="22 4 12 14.01 9 11.01"/>
                     </svg>
-                    <h3 style="font-family: var(--font-brand); font-size: 1.75rem; margin-bottom: 1rem;">{{ contact_data.form_success_heading|default:"Inquiry Received" }}</h3>
+                    <h3 style="font-family: var(--font-brand, 'Cinzel', serif); font-size: 1.75rem; margin-bottom: 1rem;">{{ contact_data.form_success_heading|default:"Inquiry Received" }}</h3>
                     <p>{{ contact_data.form_success_message|default:"Thank you. Your message has been received. Our concierge will be in touch shortly." }}</p>
                 </div>
             {% else %}
                 {% if contact_data.form_heading %}
-                    <h2 style="font-family: var(--font-brand); color: var(--brand-gold-dark); font-size: 1.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">{{ contact_data.form_heading }}</h2>
+                    <h2 style="font-family: var(--font-brand, 'Cinzel', serif); color: var(--brand-gold-dark, #91682B); font-size: 1.75rem; margin-bottom: 0.5rem; text-transform: uppercase;">{{ contact_data.form_heading }}</h2>
                 {% endif %}
                 {% if contact_data.form_subheading %}
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; font-weight: 300;">{{ contact_data.form_subheading }}</p>
+                    <p style="color: var(--text-muted, #A39B8E); font-size: 0.95rem; margin-bottom: 2rem;">{{ contact_data.form_subheading }}</p>
                 {% endif %}
 
                 <form method="post" id="premiumContactForm" action=".">
@@ -669,14 +428,14 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                            <input type="text" name="name" id="{{ form.name.id_for_label }}" class="form-input" placeholder="{{ form.name.field.widget.attrs.placeholder|default:'' }}" value="{{ form.name.value|default:'' }}" required>
+                            <input type="text" name="name" id="{{ form.name.id_for_label }}" class="form-input" placeholder="Your Name" value="{{ form.name.value|default:'' }}" required>
                             {% if form.name.errors %}
                                 <div class="form-error-text">{{ form.name.errors.0 }}</div>
                             {% endif %}
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                            <input type="email" name="email" id="{{ form.email.id_for_label }}" class="form-input" placeholder="{{ form.email.field.widget.attrs.placeholder|default:'' }}" value="{{ form.email.value|default:'' }}" required>
+                            <input type="email" name="email" id="{{ form.email.id_for_label }}" class="form-input" placeholder="Your Email Address" value="{{ form.email.value|default:'' }}" required>
                             {% if form.email.errors %}
                                 <div class="form-error-text">{{ form.email.errors.0 }}</div>
                             {% endif %}
@@ -685,7 +444,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
-                        <input type="text" name="subject" id="{{ form.subject.id_for_label }}" class="form-input" placeholder="{{ form.subject.field.widget.attrs.placeholder|default:'' }}" value="{{ form.subject.value|default:'' }}">
+                        <input type="text" name="subject" id="{{ form.subject.id_for_label }}" class="form-input" placeholder="Subject" value="{{ form.subject.value|default:'' }}">
                         {% if form.subject.errors %}
                             <div class="form-error-text">{{ form.subject.errors.0 }}</div>
                         {% endif %}
@@ -693,7 +452,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
-                        <textarea name="message" id="{{ form.message.id_for_label }}" class="form-textarea" placeholder="{{ form.message.field.widget.attrs.placeholder|default:'' }}" required>{{ form.message.value|default:'' }}</textarea>
+                        <textarea name="message" id="{{ form.message.id_for_label }}" class="form-textarea" placeholder="How can we help you?" required>{{ form.message.value|default:'' }}</textarea>
                         {% if form.message.errors %}
                             <div class="form-error-text">{{ form.message.errors.0 }}</div>
                         {% endif %}
@@ -710,89 +469,11 @@
     </div>
     {% endif %}
 
-    <!-- Google Map Section -->
     {% if contact_data.map_embed_url %}
-    <div class="map-section fade-up">
+    <div class="map-section">
         <iframe src="{{ contact_data.map_embed_url }}" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        
-        {% if contact_data.map_heading or contact_data.physical_address or contact_data.map_directions_url or contact_data.directions_url %}
-        <div class="map-overlay">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--brand-gold)" stroke-width="1.5" style="margin-bottom: 1rem;">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-            </svg>
-            
-            {% if contact_data.map_heading %}
-                <h3>{{ contact_data.map_heading }}</h3>
-            {% endif %}
-            
-            {% if contact_data.physical_address %}
-                <p>{{ contact_data.physical_address|truncatewords:10 }}</p>
-            {% endif %}
-            
-            {% with directions_link=contact_data.map_directions_url|default:contact_data.directions_url %}
-                {% if directions_link %}
-                    <a href="{{ directions_link }}" target="_blank" rel="noopener noreferrer" style="display: inline-block; margin-top: 1rem; color: var(--brand-gold); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">Get Directions &rarr;</a>
-                {% endif %}
-            {% endwith %}
-        </div>
-        {% endif %}
     </div>
     {% endif %}
-
-    <!-- FAQ / Trust Section -->
-    {% with badges=contact_data.trust_badges|default:footer_data.trust_badges %}
-        {% if badges or contact_data.trust_heading %}
-        <div class="trust-section fade-up">
-            {% if contact_data.trust_heading %}
-                <h2>{{ contact_data.trust_heading }}</h2>
-            {% endif %}
-            
-            {% if badges %}
-            <div class="trust-grid">
-                {% for badge in badges %}
-                    {% if badge.is_visible|default:True %}
-                    <div class="trust-item">
-                        {% if badge.icon_key %}
-                            {% if badge.icon_key == 'authenticity' or badge.icon_key == 'shield' or badge.icon_key == 'fair-trade' %}
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                    <polyline points="22 4 12 14.01 9 11.01"/>
-                                </svg>
-                            {% elif badge.icon_key == 'shipping' or badge.icon_key == 'globe' or badge.icon_key == 'climate-neutral' %}
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                                    <path d="M2 12h20"/>
-                                </svg>
-                            {% elif badge.icon_key == 'bespoke' or badge.icon_key == 'tag' or badge.icon_key == 'custom' %}
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                                    <line x1="7" y1="7" x2="7.01" y2="7"/>
-                                </svg>
-                            {% else %}
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                    <polyline points="22 4 12 14.01 9 11.01"/>
-                                </svg>
-                            {% endif %}
-                        {% endif %}
-                        
-                        {% if badge.badge_name %}
-                            <h4>{{ badge.badge_name }}</h4>
-                        {% endif %}
-                        
-                        {% if badge.description %}
-                            <p>{{ badge.description }}</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-    {% endwith %}
 
 </main>
 {% endblock %}
@@ -800,36 +481,15 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Form submission loading state management
         const form = document.getElementById('premiumContactForm');
         const submitBtn = document.getElementById('submitBtn');
 
-        if(form && submitBtn) {
+        if (form && submitBtn) {
             form.addEventListener('submit', () => {
                 submitBtn.style.opacity = '0.5';
                 submitBtn.innerText = 'Sending...';
             });
         }
-
-        // Scroll animations for premium look
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.1
-        };
-
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.fade-up').forEach((el) => {
-            observer.observe(el);
-        });
     });
 </script>
 {% endblock %}

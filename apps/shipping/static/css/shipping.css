@@ -1,0 +1,44 @@
+/* Shipping & Tracking Component Styles */
+.shipping-options-card {
+    background: #FFFFFF;
+    border: 1px solid #EAE5E0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.shipping-method-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border: 1px solid #EAE5E0;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shipping-method-option:hover,
+.shipping-method-option.active {
+    border-color: #C5A880;
+    background: #FCFAF8;
+}
+
+.tracking-timeline-wrapper {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #FFFFFF;
+    border: 1px solid #EAE5E0;
+    border-radius: 8px;
+}
+
+.printable-label {
+    width: 4in;
+    height: 6in;
+    border: 2px solid #000000;
+    padding: 0.25in;
+    font-family: monospace;
+    background: #FFFFFF;
+}
