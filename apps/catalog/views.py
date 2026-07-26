@@ -45,6 +45,7 @@ from apps.catalog.models import (
     Material,
     Product,
     ProductCollection,
+    ProductFAQ,
     ProductGalleryImage,
     ProductImage,
     ProductSchema,
@@ -638,7 +639,7 @@ class CategoryListingView(TemplateView):
             {
                 "category": category,
                 "title": category.seo_title or category.name,
-                "description": category.seo_description or category.description,
+                "description": category.seo_description or category.description or "",
                 "products": paginated_products,
                 "total_products": products_qs.count(),
                 "breadcrumbs": breadcrumbs,
@@ -660,6 +661,12 @@ class CategoryListingView(TemplateView):
                     "current_formatted": f"{current_val:,.0f}",
                 },
                 "current_sort": params["sort_by"],
+                "selected_min_price": str(params["min_price"]) if params["min_price"] is not None else "",
+                "selected_max_price": str(params["max_price"]) if params["max_price"] is not None else "",
+                "in_stock_only": params["in_stock_only"],
+                "selected_rating": str(params["min_rating"]) if params["min_rating"] else "",
+                "on_sale_only": params["on_sale_only"],
+                "search_query": params["search_query"] or "",
             }
         )
         return context
@@ -829,7 +836,7 @@ class ProductDetailView(DetailView):
         context.update(
             {
                 "title": seo_title,
-                "description": seo_desc,
+                "description": seo_desc or "",
                 "breadcrumbs": breadcrumbs,
                 "related_products": related_products,
                 "variants": variants,
@@ -984,6 +991,11 @@ class ProductSearchView(ListView):
                 "facets": facet_metadata,
                 "active_filter_chips": active_chips,
                 "current_sort": params["sort_by"],
+                "selected_min_price": str(params["min_price"]) if params["min_price"] is not None else "",
+                "selected_max_price": str(params["max_price"]) if params["max_price"] is not None else "",
+                "in_stock_only": params["in_stock_only"],
+                "selected_rating": str(params["min_rating"]) if params["min_rating"] else "",
+                "on_sale_only": params["on_sale_only"],
             }
         )
         return context
@@ -1028,10 +1040,15 @@ class CollectionView(DetailView):
             {
                 "products": products,
                 "title": collection.name,
-                "description": collection.description,
+                "description": collection.description or "",
                 "facets": facet_metadata,
                 "active_filter_chips": _build_active_filter_chips(params),
                 "current_sort": params["sort_by"],
+                "selected_min_price": str(params["min_price"]) if params["min_price"] is not None else "",
+                "selected_max_price": str(params["max_price"]) if params["max_price"] is not None else "",
+                "in_stock_only": params["in_stock_only"],
+                "selected_rating": str(params["min_rating"]) if params["min_rating"] else "",
+                "on_sale_only": params["on_sale_only"],
                 "breadcrumbs": [
                     (
                         "Collections",
@@ -1090,6 +1107,11 @@ class MaterialView(DetailView):
                 "facets": facet_metadata,
                 "active_filter_chips": _build_active_filter_chips(params),
                 "current_sort": params["sort_by"],
+                "selected_min_price": str(params["min_price"]) if params["min_price"] is not None else "",
+                "selected_max_price": str(params["max_price"]) if params["max_price"] is not None else "",
+                "in_stock_only": params["in_stock_only"],
+                "selected_rating": str(params["min_rating"]) if params["min_rating"] else "",
+                "on_sale_only": params["on_sale_only"],
                 "breadcrumbs": [
                     ("Materials", ""),
                     (material.name, ""),

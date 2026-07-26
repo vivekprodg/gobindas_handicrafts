@@ -14,7 +14,7 @@
         </div>
         <div class="coupon-savings-info">
             <span class="savings-label">Saved</span>
-            <strong class="savings-amount">{{ cart.currency|default:'NPR' }} {{ cart.coupon_discount_amount|floatformat:2|intcomma }}</strong>
+            <strong class="savings-amount">{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ cart.coupon_discount_amount|floatformat:2|intcomma }}</strong>
         </div>
         <form method="post" action="{% url 'coupons:remove_coupon' %}" class="remove-coupon-form" data-remove-coupon-form>
             {% csrf_token %}
@@ -79,7 +79,7 @@
                     <strong class="voucher-code-title">{{ coupon.code }}</strong>
                     <p class="voucher-headline">{{ coupon.title }}</p>
                     {% if coupon.min_subtotal > 0 %}
-                        <span class="voucher-min-spend">Min. spend: NPR {{ coupon.min_subtotal|floatformat:0|intcomma }}</span>
+                        <span class="voucher-min-spend">Min. spend: {{ catalog_settings.default_currency|default:'USD' }} {{ coupon.min_subtotal|floatformat:0|intcomma }}</span>
                     {% endif %}
                 </div>
                 <div class="voucher-right">

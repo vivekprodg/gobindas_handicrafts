@@ -34,11 +34,11 @@
                     {% for signal in module.parameters.signals %}
                         <div class="trust-item">
                             {% if signal.icon == 'fair-trade' %}
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             {% elif signal.icon == 'shipping' %}
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><circle cx="8" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                             {% elif signal.icon == 'artisan' %}
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1 0 7.75"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             {% endif %}
                             {% if signal.text %}<span>{{ signal.text }}</span>{% endif %}
                         </div>
@@ -52,10 +52,17 @@
                 {% if module.parameters.heading %}<h2 class="section-title">{{ module.parameters.heading }}</h2>{% endif %}
                 <div class="discovery-grid">
                     {% for category in module.parameters.categories %}
-                        <a href="{{ category.link }}" class="category-card">
-                            {% if category.image %}<img src="{{ category.image }}" alt="{{ category.name }}">{% endif %}
-                            <div class="category-overlay">
-                                {% if category.name %}<h3>{{ category.name }}</h3>{% endif %}
+                        <a href="{{ category.link }}" class="category-card" aria-label="{{ category.name }}">
+                            <div class="category-card-media">
+                                {% if category.image %}
+                                    <img src="{{ category.image }}" alt="{{ category.name }}" loading="lazy" decoding="async">
+                                {% else %}
+                                    <div class="category-no-image"><span>{{ category.name }}</span></div>
+                                {% endif %}
+                            </div>
+                            <div class="category-card-details">
+                                {% if category.name %}<h3 class="category-card-title">{{ category.name }}</h3>{% endif %}
+                                <span class="category-card-action">Explore Collection &rarr;</span>
                             </div>
                         </a>
                     {% endfor %}
@@ -71,7 +78,7 @@
                         <div class="product-card">
                             <div class="product-img-wrapper">
                                 {% if item.badge %}<div class="badge">{{ item.badge }}</div>{% endif %}
-                                {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}" style="width:100%; height:100%; object-fit:cover;">{% endif %}
+                                {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}" loading="lazy" decoding="async">{% endif %}
                             </div>
                             <div class="product-info">
                                 {% if item.title %}<h4 class="product-title">{{ item.title }}</h4>{% endif %}
@@ -86,7 +93,11 @@
         {% elif module.type == "story_split" %}
             <section class="module-maker">
                 <div class="maker-split">
-                    {% if module.parameters.image %}<img src="{{ module.parameters.image }}" alt="{{ module.parameters.artisan_name }}" class="maker-image">{% endif %}
+                    <div class="maker-image-frame">
+                        {% if module.parameters.image %}
+                            <img src="{{ module.parameters.image }}" alt="{{ module.parameters.artisan_name }}" class="maker-image" loading="lazy" decoding="async">
+                        {% endif %}
+                    </div>
                     <div class="maker-content">
                         {% if module.parameters.quote %}<h3 class="maker-quote">{{ module.parameters.quote }}</h3>{% endif %}
                         {% if module.parameters.bio %}<p class="maker-bio">{{ module.parameters.bio }}</p>{% endif %}
@@ -104,7 +115,7 @@
                 <div class="ugc-grid">
                     {% for img_url in module.parameters.images %}
                         <div class="ugc-item">
-                            <img src="{{ img_url }}" alt="User generated content">
+                            <img src="{{ img_url }}" alt="Artisan masterpiece in customer home" loading="lazy" decoding="async">
                             <div class="ugc-icon">
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                             </div>

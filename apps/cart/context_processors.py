@@ -18,7 +18,7 @@ from .services import CartInventoryService, CartService
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_CURRENCY = "NPR"
+_DEFAULT_CURRENCY = "USD"
 _MINI_CART_LIMIT = 5
 
 def _safe_reverse(url_name: str, **kwargs: Any) -> str:
@@ -61,7 +61,7 @@ def _serialize_item(item: CartItem) -> Dict[str, Any]:
         "variant_name": item.variant_name_snapshot or "",
         "unit_price": str(item.unit_price_snapshot or Decimal("0.00")),
         "line_subtotal": str(item.line_subtotal),
-        "currency": item.currency_snapshot or "NPR",
+        "currency": item.currency_snapshot or "USD",
         "image_url": image_url,
         "product_url": item_url,
     }

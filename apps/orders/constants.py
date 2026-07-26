@@ -273,9 +273,9 @@ class ReturnStatus:
     COMPLETABLE_FROM: Final[FrozenSet[str]] = frozenset({RECEIVED, INSPECTING})
 
 class Currency:
-    DEFAULT_CODE: Final[str] = "NPR"
-    DEFAULT_SYMBOL: Final[str] = "NPR"
-    DEFAULT_BASE: Final[str] = "NPR"
+    DEFAULT_CODE: Final[str] = "USD"
+    DEFAULT_SYMBOL: Final[str] = "$"
+    DEFAULT_BASE: Final[str] = "USD"
 
 class DecimalPrecision:
     ORDER_MONEY: Final[Tuple[int, int]] = (14, 2)

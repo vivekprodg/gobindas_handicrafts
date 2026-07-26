@@ -14,7 +14,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-DEFAULT_CURRENCY_CODE: str = "NPR"
+DEFAULT_CURRENCY_CODE: str = "USD"
 DEFAULT_LOW_STOCK_THRESHOLD: int = 5
 DEFAULT_ORDER_PAGE_SIZE: int = 25
 DEFAULT_PAYMENT_METHOD: str = "manual"

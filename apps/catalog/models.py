@@ -26,7 +26,7 @@ from apps.foundation.services import optimize_uploaded_image
 DEFAULT_CATALOG_PAGE_SIZE: int = 12
 MIN_RATING: int = 1
 MAX_RATING: int = 5
-DEFAULT_CURRENCY: str = "NPR"
+DEFAULT_CURRENCY: str = "USD"
 DEFAULT_WEIGHT_UNIT: str = "kg"
 DEFAULT_DIMENSION_UNIT: str = "cm"
 
@@ -137,10 +137,6 @@ class ProductQuerySet(models.QuerySet["Product"]):
         return self
 
     def in_stock_only(self) -> ProductQuerySet:
-        """
-        Filters products that have available stock >= 1 either on product-level inventory
-        or on active product variants.
-        """
         return self.filter(
             Q(inventory_records__is_active=True, inventory_records__available_quantity__gt=F("inventory_records__reserved_quantity"))
             | Q(variants__is_active=True, variants__inventory_records__is_active=True, variants__inventory_records__available_quantity__gt=F("variants__inventory_records__reserved_quantity"))
@@ -175,9 +171,6 @@ class ProductQuerySet(models.QuerySet["Product"]):
             min_pct = Decimal(str(min_discount_pct))
             if min_pct <= Decimal("0"):
                 return self.on_sale()
-            # Formula: ((original_price - price) / original_price) * 100 >= min_pct
-            # => original_price - price >= (min_pct * original_price) / 100
-            # => price <= original_price * (1 - min_pct / 100)
             multiplier = Decimal("1.00") - (min_pct / Decimal("100.00"))
             return self.filter(
                 original_price__isnull=False,
@@ -221,7 +214,6 @@ class ProductQuerySet(models.QuerySet["Product"]):
             if not values:
                 continue
             
-            # JSONField key lookup for variant attributes (e.g. attributes__size__in=['L', 'XL'])
             filter_kwargs = {f"variants__attributes__{attr_key}__in": values, "variants__is_active": True}
             qs = qs.filter(**filter_kwargs)
             
@@ -375,16 +367,16 @@ class CatalogSettings(SingletonCMSModel):
         verbose_name=_("Default Items Per Page"),
     )
     price_filter_min = models.PositiveIntegerField(
-        default=500,
+        default=5,
         blank=True,
         null=True,
-        verbose_name=_("Price Filter Minimum (NPR)"),
+        verbose_name=_("Price Filter Minimum"),
     )
     price_filter_max = models.PositiveIntegerField(
-        default=100000,
+        default=5000,
         blank=True,
         null=True,
-        verbose_name=_("Price Filter Maximum (NPR)"),
+        verbose_name=_("Price Filter Maximum"),
     )
     show_stock_warning_threshold = models.PositiveIntegerField(
         default=5,
@@ -397,7 +389,8 @@ class CatalogSettings(SingletonCMSModel):
         default=DEFAULT_CURRENCY,
         blank=True,
         null=True,
-        verbose_name=_("Default Currency"),
+        verbose_name=_("Default Currency Code"),
+        help_text=_("System default currency code (e.g., USD, NPR, EUR, GBP). Modifying this in CMS changes the display currency across storefront and checkout."),
     )
     default_weight_unit = models.CharField(
         max_length=10,
@@ -1265,28 +1258,28 @@ class Product(CMSBaseModel):
         decimal_places=2,
         blank=True,
         null=True,
-        verbose_name=_("Current Price (NPR)"),
+        verbose_name=_("Current Price"),
     )
     original_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         blank=True,
         null=True,
-        verbose_name=_("Original Price (NPR)"),
+        verbose_name=_("Original Price"),
     )
     cost_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         blank=True,
         null=True,
-        verbose_name=_("Cost Price (NPR)"),
+        verbose_name=_("Cost Price"),
     )
     currency = models.CharField(
         max_length=10,
         default=DEFAULT_CURRENCY,
         blank=True,
         null=True,
-        verbose_name=_("Currency"),
+        verbose_name=_("Currency Code"),
     )
     tax_class = models.CharField(
         max_length=100,

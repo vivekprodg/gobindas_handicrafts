@@ -50,7 +50,7 @@
                                 <p class="cart-item-variant">{{ item.variant_name }}</p>
                             {% endif %}
                             <p class="cart-item-unit-price">
-                                Unit Price: <strong>{{ item.currency|default:'NPR' }} {{ item.unit_price|floatformat:2|intcomma }}</strong>
+                                Unit Price: <strong>{{ item.currency|default:catalog_settings.default_currency|default:'USD' }} {{ item.unit_price|floatformat:2|intcomma }}</strong>
                             </p>
                         </div>
 
@@ -71,7 +71,7 @@
                             </form>
 
                             <p class="cart-line-subtotal" data-line-subtotal>
-                                {{ item.currency|default:'NPR' }} {{ item.line_subtotal|floatformat:2|intcomma }}
+                                {{ item.currency|default:catalog_settings.default_currency|default:'USD' }} {{ item.line_subtotal|floatformat:2|intcomma }}
                             </p>
 
                             <div class="cart-item-controls">
@@ -109,7 +109,7 @@
                             <h3 class="cart-item-title">
                                 <a href="{{ item.product_url|default:'#' }}">{{ item.product_name|default:'Untitled Product' }}</a>
                             </h3>
-                            <p class="cart-item-unit-price">{{ item.currency|default:'NPR' }} {{ item.unit_price|floatformat:2|intcomma }}</p>
+                            <p class="cart-item-unit-price">{{ item.currency|default:catalog_settings.default_currency|default:'USD' }} {{ item.unit_price|floatformat:2|intcomma }}</p>
                         </div>
                         <div class="cart-item-actions">
                             <form method="post" action="{% url 'cart:cart_move_to_cart' item_id=item.id %}" class="cart-move-to-cart-form">

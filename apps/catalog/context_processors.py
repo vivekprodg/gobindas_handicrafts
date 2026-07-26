@@ -1,7 +1,7 @@
 """
 Global Context Processor for the Catalog application.
 Exposes root category trees, top search filter tags, global price boundaries,
-and active query parameters globally to all Django templates.
+catalog settings, and default currency globally to all Django templates.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def catalog_context(request: HttpRequest) -> Dict[str, Any]:
     """
-    Injects catalog metadata into every template context.
+    Injects catalog metadata and CMS default currency into every template context.
     """
     try:
         categories_hierarchy = cache.get_or_set(
@@ -40,9 +40,12 @@ def catalog_context(request: HttpRequest) -> Dict[str, Any]:
             CATALOG_CACHE_TIMEOUT,
         )
 
+        default_curr = catalog_settings.default_currency if (catalog_settings and catalog_settings.default_currency) else "USD"
+
         return {
             "global_categories": categories_hierarchy,
             "catalog_settings": catalog_settings,
+            "default_currency": default_curr,
             "current_search_query": request.GET.get("q", "").strip(),
             "has_active_filters": any(
                 k in request.GET
@@ -67,6 +70,7 @@ def catalog_context(request: HttpRequest) -> Dict[str, Any]:
         return {
             "global_categories": [],
             "catalog_settings": None,
+            "default_currency": "USD",
             "current_search_query": "",
             "has_active_filters": False,
         }

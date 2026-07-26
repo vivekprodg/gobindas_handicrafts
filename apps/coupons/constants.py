@@ -4,7 +4,7 @@ Domain constants, choices, cache keys, and defaults for the Coupons app.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Final, FrozenSet, Tuple
+from typing import Final, Tuple
 
 class DiscountType:
     PERCENTAGE: Final[str] = "percentage"
@@ -54,7 +54,7 @@ CACHE_KEY_CMS_SETTINGS: Final[str] = "{ns}:cms_settings:v1"
 CACHE_KEY_COUPON_DETAIL: Final[str] = "{ns}:code:{code}"
 CACHE_TIMEOUT_PUBLIC: Final[int] = 1800  # 30 Minutes
 
-DEFAULT_CURRENCY_CODE: Final[str] = "NPR"
+DEFAULT_CURRENCY_CODE: Final[str] = "USD"
 ZERO_DECIMAL: Final[Decimal] = Decimal("0.00")
 MAX_DISCOUNT_PERCENTAGE: Final[Decimal] = Decimal("100.00")
 

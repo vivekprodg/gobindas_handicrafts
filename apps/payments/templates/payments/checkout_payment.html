@@ -6,7 +6,10 @@
 {% block content %}
 <div class="payment-gateways-container">
     <h2 style="font-family: 'Cinzel', serif; margin-bottom: 0.5rem;">Select Payment Method</h2>
-    <p style="color: #7A726A; margin-bottom: 2rem;">Order Reference: <strong>#{{ order.order_number }}</strong> | Total: <strong>NPR {{ order.grand_total|floatformat:2|intcomma }}</strong></p>
+    <p style="color: #7A726A; margin-bottom: 2rem;">
+        Order Reference: <strong>#{{ order.order_number }}</strong> | 
+        Total: <strong>{{ order.currency|default:catalog_settings.default_currency|default:'USD' }} {{ order.grand_total|floatformat:2|intcomma }}</strong>
+    </p>
 
     <form method="post" action="{% url 'payments:checkout' order_id=order.id %}">
         {% csrf_token %}

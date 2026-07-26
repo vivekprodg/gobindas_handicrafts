@@ -466,7 +466,7 @@
                                 <span style="font-size: 0.8rem; color: var(--checkout-muted);">{% trans "Qty" %}: {{ item.quantity }}</span>
                             </div>
                             <div style="font-weight: 600; font-size: 0.9rem;">
-                                {{ cart.currency|default:'NPR' }} {{ item.line_subtotal|floatformat:2|intcomma }}
+                                {{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ item.line_subtotal|floatformat:2|intcomma }}
                             </div>
                         </li>
                         {% endfor %}
@@ -474,26 +474,26 @@
 
                     <div class="summary-financial-row">
                         <span>{% trans "Subtotal" %}</span>
-                        <strong>{{ cart.currency|default:'NPR' }} {{ totals.subtotal|floatformat:2|intcomma }}</strong>
+                        <strong>{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ totals.subtotal|floatformat:2|intcomma }}</strong>
                     </div>
 
                     {% if totals.discount > 0 %}
                     <div class="summary-financial-row discount">
                         <span>{% trans "Coupon Discount" %} ({{ cart.coupon_code }})</span>
-                        <strong>&minus; {{ cart.currency|default:'NPR' }} {{ totals.discount|floatformat:2|intcomma }}</strong>
+                        <strong>&minus; {{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ totals.discount|floatformat:2|intcomma }}</strong>
                     </div>
                     {% endif %}
 
                     <div class="summary-financial-row">
                         <span>{% trans "Estimated Tax" %}</span>
-                        <strong>{{ cart.currency|default:'NPR' }} {{ totals.tax|floatformat:2|intcomma }}</strong>
+                        <strong>{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ totals.tax|floatformat:2|intcomma }}</strong>
                     </div>
 
                     <div class="summary-financial-row">
                         <span>{% trans "Shipping Fee" %}</span>
                         <strong>
                             {% if totals.shipping > 0 %}
-                                {{ cart.currency|default:'NPR' }} {{ totals.shipping|floatformat:2|intcomma }}
+                                {{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ totals.shipping|floatformat:2|intcomma }}
                             {% else %}
                                 {% trans "Calculated at Next Step" %}
                             {% endif %}
@@ -502,7 +502,7 @@
 
                     <div class="summary-financial-row grand-total">
                         <span>{% trans "Estimated Total" %}</span>
-                        <strong>{{ cart.currency|default:'NPR' }} {{ totals.grand_total|floatformat:2|intcomma }}</strong>
+                        <strong>{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ totals.grand_total|floatformat:2|intcomma }}</strong>
                     </div>
 
                     <button type="submit" class="btn-checkout-submit">

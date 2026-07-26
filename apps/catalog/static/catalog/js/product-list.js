@@ -1,10 +1,11 @@
 /**
  * Gobindas Handicrafts - Advanced Product Discovery & Filtering Engine
- * Powers real-time product discovery, multi-value array parameter serialization,
+ * ============================================================================
+ * Powers real-time product discovery, dual price range synchronization,
  * progressive AJAX filtering, URL state mapping, accessible accordions, and active chip management.
  * 
  * @module GobindasPLPEngine
- * @version 3.1.0
+ * @version 3.2.0
  */
 
 (function () {
@@ -13,8 +14,11 @@
     const CONFIG = {
         selectors: {
             form: '#catalog-filter-form',
-            priceMinInput: '#minPriceInput, #searchMinPrice',
-            priceMaxInput: '#maxPriceInput, #searchMaxPrice',
+            priceMinInput: '#minPriceInput',
+            priceMaxInput: '#maxPriceInput',
+            sliderMin: '#priceSliderMin',
+            sliderMax: '#priceSliderMax',
+            sliderTrack: '#priceSliderTrack',
             accordionTrigger: '.filter-node-trigger',
             accordionNode: '.filter-accordion-node',
             productGallery: '#main-product-gallery, .product-showcase-matrix',
@@ -44,6 +48,7 @@
 
         init() {
             this.initializeAccordions();
+            this.initializePriceSliders();
             this.initializeFormInterception();
             this.initializeHistoryMapping();
             this.initializeChipHandlers();
@@ -69,6 +74,67 @@
                     trigger.setAttribute('aria-expanded', 'true');
                 }
             });
+        }
+
+        initializePriceSliders() {
+            const sliderMin = document.querySelector(CONFIG.selectors.sliderMin);
+            const sliderMax = document.querySelector(CONFIG.selectors.sliderMax);
+            const minInput = document.querySelector(CONFIG.selectors.priceMinInput);
+            const maxInput = document.querySelector(CONFIG.selectors.priceMaxInput);
+            const track = document.querySelector(CONFIG.selectors.sliderTrack);
+
+            if (!sliderMin || !sliderMax || !track) return;
+
+            const updateTrack = (event) => {
+                let minVal = parseInt(sliderMin.value, 10);
+                let maxVal = parseInt(sliderMax.value, 10);
+                const minRange = parseInt(sliderMin.min, 10) || 0;
+                const maxRange = parseInt(sliderMin.max, 10) || 100000;
+
+                if (maxVal - minVal < 1000) {
+                    if (event && event.target === sliderMin) {
+                        sliderMin.value = maxVal - 1000;
+                        minVal = maxVal - 1000;
+                    } else if (event && event.target === sliderMax) {
+                        sliderMax.value = minVal + 1000;
+                        maxVal = minVal + 1000;
+                    }
+                }
+
+                if (minInput) minInput.value = minVal;
+                if (maxInput) maxInput.value = maxVal;
+
+                const percentMin = ((minVal - minRange) / (maxRange - minRange)) * 100;
+                const percentMax = ((maxVal - minRange) / (maxRange - minRange)) * 100;
+
+                track.style.left = `${percentMin}%`;
+                track.style.right = `${100 - percentMax}%`;
+            };
+
+            sliderMin.addEventListener('input', (e) => updateTrack(e));
+            sliderMax.addEventListener('input', (e) => updateTrack(e));
+
+            sliderMin.addEventListener('change', () => {
+                if (this.ajaxEnabled && this.form) this.applyFiltersAjax();
+            });
+            sliderMax.addEventListener('change', () => {
+                if (this.ajaxEnabled && this.form) this.applyFiltersAjax();
+            });
+
+            if (minInput) {
+                minInput.addEventListener('change', () => {
+                    sliderMin.value = minInput.value;
+                    updateTrack();
+                });
+            }
+            if (maxInput) {
+                maxInput.addEventListener('change', () => {
+                    sliderMax.value = maxInput.value;
+                    updateTrack();
+                });
+            }
+
+            updateTrack();
         }
 
         initializeChipHandlers() {
@@ -150,7 +216,6 @@
             const formData = new FormData(this.form);
             const params = new URLSearchParams();
 
-            // Preserve search query if present
             const currentUrlParams = new URLSearchParams(window.location.search);
             if (currentUrlParams.has('q')) {
                 params.set('q', currentUrlParams.get('q'));
@@ -159,7 +224,6 @@
             for (const [key, value] of formData.entries()) {
                 if (!value || value === '') continue;
 
-                // Handle multi-value fields cleanly
                 if (params.has(key)) {
                     params.append(key, value);
                 } else {
@@ -262,8 +326,8 @@
                 }
             });
 
-            // Re-bind form pointer if form was replaced
             this.form = document.querySelector(CONFIG.selectors.form);
+            this.initializePriceSliders();
 
             if (window.GobindasProductCardEngine && typeof window.GobindasProductCardEngine.refreshAllCards === 'function') {
                 window.GobindasProductCardEngine.refreshAllCards();

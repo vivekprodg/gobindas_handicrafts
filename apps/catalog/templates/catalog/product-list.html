@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static humanize currency_tags inventory_tags catalog_tags %}
+{% load static humanize catalog_tags %}
 
 {% block title %}
     {% if title %}{{ title }}{% else %}{{ category.name|default:'Catalog' }} | Gobindas Handicrafts{% endif %}
@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="#main-product-gallery" class="plp-skip-link">Skip to products</a>
+<a href="#main-product-gallery" class="plp-skip-link"></a>
 
 <div class="plp-wrapper"
      data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
@@ -45,7 +45,7 @@
 
     <header class="category-hero-section">
         <h1 class="category-title">
-            {{ category.name|default:collection.name|default:material.name|default:title|default:'Catalog' }}
+            {{ title|default:category.name|default:'Catalog' }}
         </h1>
         {% if category.description or description %}
             <p class="category-description">
@@ -93,25 +93,35 @@
                 <a href="?{% remove_filter_param chip.param chip.key %}" class="chip-remove-btn" title="Remove {{ chip.label }}" aria-label="Remove filter {{ chip.label }}">&times;</a>
             </span>
         {% endfor %}
-        <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}" class="clear-all-filters-btn">Clear All</a>
+        <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" class="clear-all-filters-btn">Clear All</a>
     </div>
     {% endif %}
 
     <div class="catalog-layout-grid">
-        <!-- Interactive Sidebar Filter Form -->
+        <!-- Interactive Luxury Sidebar Filter Form -->
         <form method="GET" action="" id="catalog-filter-form" class="filter-sidebar-panel" aria-label="Product filters">
             <input type="hidden" name="sort" value="{{ current_sort|default:'featured' }}">
             {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
 
-            <h2 class="sidebar-panel-header">Refine Collection</h2>
+            <!-- Filter Panel Header -->
+            <div class="sidebar-panel-header">
+                <h2>Refine Collection</h2>
+                <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" class="btn-clear-all-filters" aria-label="Clear all active filters">Clear All</a>
+            </div>
 
             <!-- 1. Stock Availability Toggle -->
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Availability</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Availability</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
-                    <label class="toggle-switch-label">
-                        <input type="checkbox" name="in_stock_only" value="true" {% if request.GET.in_stock_only == 'true' or request.GET.in_stock == '1' %}checked{% endif %} onchange="this.form.submit();">
-                        <span class="toggle-switch-text">Ready to Ship / In Stock Only</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="in_stock_only" value="true" {% if request.GET.in_stock_only == 'true' or request.GET.in_stock == '1' %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">Ready to Ship / In Stock Only</span>
                         {% if facets.in_stock_count is not None %}
                             <span class="facet-count-badge">{{ facets.in_stock_count|format_facet_count }}</span>
                         {% endif %}
@@ -119,33 +129,53 @@
                 </div>
             </fieldset>
 
-            <!-- 2. Dual Price Range Filter -->
+            <!-- 2. Dual Price Range Valuation Filter -->
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Price Valuation (NPR)</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Price Valuation (NPR)</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
+                    <!-- Dual Interactive Range Slider Track -->
+                    <div class="price-slider-widget">
+                        <div class="range-slider-track-bar" id="priceSliderTrack"></div>
+                        <input type="range" id="priceSliderMin" min="{{ filter_price.min|default:0 }}" max="{{ filter_price.max|default:100000 }}" value="{{ request.GET.min_price|default:filter_price.min|default:0 }}" step="500">
+                        <input type="range" id="priceSliderMax" min="{{ filter_price.min|default:0 }}" max="{{ filter_price.max|default:100000 }}" value="{{ request.GET.price_max|default:filter_price.max|default:100000 }}" step="500">
+                    </div>
+
+                    <!-- Dual Numeric Input Fields -->
                     <div class="dual-price-range-inputs">
-                        <div class="price-input-group">
-                            <label for="minPriceInput">Min</label>
+                        <div class="price-input-box">
+                            <span class="currency-prefix">MIN</span>
                             <input type="number" id="minPriceInput" name="min_price" value="{{ request.GET.min_price|default:'' }}" placeholder="{{ filter_price.min|default:0 }}" min="0" class="price-number-input">
                         </div>
                         <span class="price-range-dash">&ndash;</span>
-                        <div class="price-input-group">
-                            <label for="maxPriceInput">Max</label>
-                            <input type="number" id="maxPriceInput" name="price_max" value="{{ request.GET.price_max|default:request.GET.max_price|default:'' }}" placeholder="{{ filter_price.max|default:100000 }}" min="0" class="price-number-input">
+                        <div class="price-input-box">
+                            <span class="currency-prefix">MAX</span>
+                            <input type="number" id="maxPriceInput" name="price_max" value="{{ request.GET.price_max|default:'' }}" placeholder="{{ filter_price.max|default:100000 }}" min="0" class="price-number-input">
                         </div>
                         <button type="submit" class="btn-price-apply" aria-label="Apply price filter">Go</button>
                     </div>
                 </div>
             </fieldset>
 
-            <!-- 3. Minimum Star Rating -->
+            <!-- 3. Minimum Star Rating Filter -->
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Customer Rating</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Customer Rating</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for r, count in facets.rating_counts.items %}
-                    <label class="filter-list-option rating-filter-row">
-                        <input type="radio" name="min_rating" value="{{ r }}" {% if request.GET.min_rating == r|stringformat:'d' or request.GET.rating == r|stringformat:'d' %}checked{% endif %} onchange="this.form.submit();">
-                        <span class="star-rating-display">{{ r|render_star_rating }} &amp; Above</span>
+                    <label class="luxury-rating-option">
+                        <span class="custom-radio-wrapper">
+                            <input type="radio" name="min_rating" value="{{ r }}" {% if request.GET.min_rating == r|stringformat:'d' or request.GET.rating == r|stringformat:'d' %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="radiomark"></span>
+                        </span>
+                        <div class="star-rating-display">
+                            <span class="stars-gold">{{ r|render_star_rating }}</span>
+                            <span class="rating-text">&amp; Above</span>
+                        </div>
                         <span class="facet-count-badge">{{ count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
@@ -155,14 +185,20 @@
             <!-- 4. Category Hierarchy -->
             {% if filter_categories %}
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Category Hierarchy</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Category Hierarchy</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for cat in filter_categories %}
-                        <label class="filter-list-option">
-                            <input type="checkbox" {% if cat.slug == category.slug or cat.slug == category.parent.slug %}checked{% endif %} onclick="if(this.checked){window.location.href='/category/{{ cat.slug|escapejs }}/';}else{window.location.href='?';}">
-                            <a href="/category/{{ cat.slug|escape }}/" style="color: inherit; text-decoration: none; flex: 1;">{{ cat.name|default:'' }}</a>
-                            <span class="facet-count-badge">{{ cat.count|format_facet_count }}</span>
-                        </label>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" {% if cat.slug == category.slug or category.parent and cat.slug == category.parent.slug %}checked{% endif %} onclick="if(this.checked){window.location.href='/category/{{ cat.slug|escapejs }}/';}else{window.location.href='?';}">
+                            <span class="checkmark"></span>
+                        </span>
+                        <a href="/category/{{ cat.slug|escape }}/" class="category-link">{{ cat.name|default:'' }}</a>
+                        <span class="facet-count-badge">{{ cat.count|format_facet_count }}</span>
+                    </label>
                     {% endfor %}
                 </div>
             </fieldset>
@@ -171,12 +207,18 @@
             <!-- 5. Master Craftsmen / Artisans -->
             {% if filter_craftsmen %}
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Master Craftsmen</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Master Craftsmen</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for art in filter_craftsmen %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="artisan" value="{{ art.slug|escape }}" {% if art.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span style="flex: 1;">Master {{ art.name|default:'' }}</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="artisan" value="{{ art.slug|escape }}" {% if art.checked %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">Master {{ art.name|default:'' }}</span>
                         <span class="facet-count-badge">{{ art.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
@@ -187,12 +229,18 @@
             <!-- 6. Provenance / Origin Region -->
             {% if filter_provenance %}
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Origin &amp; Region</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Origin &amp; Region</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for orig in filter_provenance %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="origin" value="{{ orig.name|escape }}" {% if orig.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span style="flex: 1;">{{ orig.name|default:'' }}</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="origin" value="{{ orig.name|escape }}" {% if orig.checked %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">{{ orig.name|default:'' }}</span>
                         <span class="facet-count-badge">{{ orig.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
@@ -203,12 +251,18 @@
             <!-- 7. Material Configuration -->
             {% if filter_materials %}
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Material</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Material</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for mat in filter_materials %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="material" value="{{ mat.name|escape }}" {% if mat.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span style="flex: 1;">{{ mat.name|default:'' }}</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="material" value="{{ mat.name|escape }}" {% if mat.checked %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">{{ mat.name|default:'' }}</span>
                         <span class="facet-count-badge">{{ mat.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
@@ -219,7 +273,10 @@
             <!-- 8. Hue / Color Aesthetics -->
             {% if filter_hues %}
             <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Hue Aesthetic</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="true">
+                    <span>Hue Aesthetic</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content color-swatches-grid">
                     {% for hue in filter_hues %}
                     <label class="color-swatch-bubble-label" title="{{ hue.name }}">
@@ -235,12 +292,18 @@
             <!-- 9. Ethical Standards -->
             {% if filter_ethical %}
             <fieldset class="filter-accordion-node">
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Ethical Standards</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">
+                    <span>Ethical Standards</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for eth in filter_ethical %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="ethical" value="{{ eth.name|escape }}" {% if eth.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span style="flex: 1;">{{ eth.name|default:'' }}</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="ethical" value="{{ eth.name|escape }}" {% if eth.checked %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">{{ eth.name|default:'' }}</span>
                         <span class="facet-count-badge">{{ eth.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
@@ -251,7 +314,10 @@
             <!-- 10. Product Tags Matrix -->
             {% if filter_tags %}
             <fieldset class="filter-accordion-node">
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Product Tags</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">
+                    <span>Product Tags</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content tag-cloud-matrix">
                     {% for tag in filter_tags %}
                     <label class="filter-chip-item">
@@ -266,12 +332,18 @@
             <!-- 11. Craft Collections -->
             {% if filter_collections %}
             <fieldset class="filter-accordion-node">
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Collections</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">
+                    <span>Collections</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
                     {% for col in filter_collections %}
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="collection" value="{{ col.slug|escape }}" {% if col.checked %}checked{% endif %} onchange="this.form.submit();">
-                        <span style="flex: 1;">{{ col.name|default:'' }}</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="collection" value="{{ col.slug|escape }}" {% if col.checked %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">{{ col.name|default:'' }}</span>
                         <span class="facet-count-badge">{{ col.count|format_facet_count }}</span>
                     </label>
                     {% endfor %}
@@ -279,13 +351,19 @@
             </fieldset>
             {% endif %}
 
-            <!-- 12. Special Offers & Sales -->
+            <!-- 12. Promotions & Sales -->
             <fieldset class="filter-accordion-node">
-                <button type="button" class="filter-node-trigger" aria-expanded="false">Promotions &amp; Sales</button>
+                <button type="button" class="filter-node-trigger" aria-expanded="false">
+                    <span>Promotions &amp; Sales</span>
+                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <div class="filter-node-content">
-                    <label class="filter-list-option">
-                        <input type="checkbox" name="on_sale" value="true" {% if request.GET.on_sale == 'true' %}checked{% endif %} onchange="this.form.submit();">
-                        <span style="flex: 1;">Special Offer / On Sale</span>
+                    <label class="luxury-checkbox-option">
+                        <span class="custom-checkbox-wrapper">
+                            <input type="checkbox" name="on_sale" value="true" {% if request.GET.on_sale == 'true' %}checked{% endif %} onchange="this.form.submit();">
+                            <span class="checkmark"></span>
+                        </span>
+                        <span class="option-text">Special Offer / On Sale</span>
                         {% if facets.on_sale_count is not None %}
                             <span class="facet-count-badge">{{ facets.on_sale_count|format_facet_count }}</span>
                         {% endif %}

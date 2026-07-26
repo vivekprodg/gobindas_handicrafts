@@ -125,8 +125,8 @@ class Cart(models.Model):
         EXPIRED = "expired", _("Expired")
 
     class CurrencyChoices(models.TextChoices):
-        NPR = "NPR", _("Nepalese Rupee")
         USD = "USD", _("US Dollar")
+        NPR = "NPR", _("Nepalese Rupee")
         EUR = "EUR", _("Euro")
         GBP = "GBP", _("British Pound")
         INR = "INR", _("Indian Rupee")
@@ -167,7 +167,7 @@ class Cart(models.Model):
     currency = models.CharField(
         max_length=8,
         choices=CurrencyChoices.choices,
-        default=CurrencyChoices.NPR,
+        default=CurrencyChoices.USD,
         verbose_name=_("Currency"),
     )
     coupon_code = models.CharField(
@@ -314,13 +314,13 @@ class Cart(models.Model):
 
     @property
     def estimated_tax(self) -> Decimal:
-        rate = getattr(settings, "DEFAULT_TAX_RATE", Decimal("0.13"))
+        rate = getattr(settings, "DEFAULT_TAX_RATE", Decimal("0.00"))
         try:
             rate = Decimal(str(rate))
             if rate < 0:
                 rate = Decimal("0")
         except Exception:
-            rate = Decimal("0.13")
+            rate = Decimal("0.00")
         return (self.subtotal * rate).quantize(Decimal("0.01"))
 
     @property
@@ -420,7 +420,7 @@ class CartItem(models.Model):
         max_digits=12, decimal_places=2, null=True, blank=True, verbose_name=_("Compare At Price (Snapshot)")
     )
     currency_snapshot = models.CharField(
-        max_length=8, default="NPR", blank=True, null=True, verbose_name=_("Currency (Snapshot)")
+        max_length=8, default="USD", blank=True, null=True, verbose_name=_("Currency (Snapshot)")
     )
     quantity = models.PositiveIntegerField(
         default=1, validators=[MinValueValidator(1)], verbose_name=_("Quantity")
@@ -632,78 +632,6 @@ class CartItem(models.Model):
             raise ValidationError({"quantity": _("Quantity must be at least 1.")})
         self.quantity = int(quantity)
         self.save(update_fields=["quantity", "updated_at"])
-
-    def mark_reservation(
-        self,
-        *,
-        reserved_until: Optional[Any] = None,
-        reservation_token: Optional[str] = None,
-        reservation_status: Optional[str] = None,
-        reservation_quantity: Optional[Any] = None,
-        reservation_expires_at: Optional[Any] = None,
-        reservation_source: Optional[str] = None,
-        reservation_metadata: Optional[dict] = None,
-        reservation_notes: Optional[str] = None,
-        reservation_version: Optional[int] = None,
-    ) -> None:
-        update_fields = ["updated_at"]
-        if reserved_until is not None:
-            self.reserved_until = reserved_until
-            update_fields.append("reserved_until")
-        if reservation_token is not None:
-            self.reservation_token = reservation_token
-            update_fields.append("reservation_token")
-        if reservation_status is not None:
-            self.reservation_status = reservation_status
-            update_fields.append("reservation_status")
-        if reservation_quantity is not None:
-            self.reservation_quantity = reservation_quantity
-            update_fields.append("reservation_quantity")
-        if reservation_expires_at is not None:
-            self.reservation_expires_at = reservation_expires_at
-            update_fields.append("reservation_expires_at")
-        if reservation_source is not None:
-            self.reservation_source = reservation_source
-            update_fields.append("reservation_source")
-        if reservation_metadata is not None:
-            self.reservation_metadata = reservation_metadata
-            update_fields.append("reservation_metadata")
-        if reservation_notes is not None:
-            self.reservation_notes = reservation_notes
-            update_fields.append("reservation_notes")
-        if reservation_version is not None:
-            self.reservation_version = int(reservation_version)
-            update_fields.append("reservation_version")
-
-        self.reservation_version = (self.reservation_version or 0) + 1
-        if "reservation_version" not in update_fields:
-            update_fields.append("reservation_version")
-        self.save(update_fields=update_fields)
-
-    def clear_reservation(self) -> None:
-        self.reserved_until = None
-        self.reservation_token = None
-        self.reservation_status = None
-        self.reservation_quantity = None
-        self.reservation_expires_at = None
-        self.reservation_source = None
-        self.reservation_metadata = {}
-        self.reservation_notes = None
-        self.reservation_version = (self.reservation_version or 0) + 1
-        self.save(
-            update_fields=[
-                "reserved_until",
-                "reservation_token",
-                "reservation_status",
-                "reservation_quantity",
-                "reservation_expires_at",
-                "reservation_source",
-                "reservation_metadata",
-                "reservation_notes",
-                "reservation_version",
-                "updated_at",
-            ]
-        )
 
 def get_default_reservation_minutes() -> int:
     return getattr(settings, "CART_DEFAULT_RESERVATION_MINUTES", DEFAULT_CART_RESERVATION_MINUTES)

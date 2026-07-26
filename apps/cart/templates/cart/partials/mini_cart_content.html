@@ -25,7 +25,7 @@
                 {% endif %}
                 <div class="mini-cart-item-bottom">
                     <span class="mini-cart-item-qty">Qty: {{ item.quantity }}</span>
-                    <span class="mini-cart-item-price">{{ item.currency|default:'NPR' }} {{ item.line_subtotal|floatformat:2|intcomma }}</span>
+                    <span class="mini-cart-item-price">{{ item.currency|default:catalog_settings.default_currency|default:'USD' }} {{ item.line_subtotal|floatformat:2|intcomma }}</span>
                 </div>
             </div>
         </div>

@@ -28,7 +28,7 @@ def cart_decimal_filter(value: Any) -> str:
 
 @register.filter(name="cart_currency")
 def cart_currency_filter(value: Any) -> str:
-    curr = getattr(settings, "CART_DEFAULT_CURRENCY", "NPR")
+    curr = getattr(settings, "CART_DEFAULT_CURRENCY", "USD")
     return f"{curr} {_format_decimal(value)}"
 
 @register.filter(name="multiply")
@@ -83,7 +83,7 @@ def cart_summary(context: Dict[str, Any]) -> Dict[str, Any]:
             "tax": Decimal("0.00"),
             "shipping": Decimal("0.00"),
             "grand_total": Decimal("0.00"),
-            "currency": "NPR",
+            "currency": "USD",
             "item_count": 0,
             "is_empty": True,
         }

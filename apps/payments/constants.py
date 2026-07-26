@@ -42,5 +42,5 @@ CACHE_NAMESPACE: Final[str] = "payments"
 CACHE_KEY_GATEWAY_SETTINGS: Final[str] = "{ns}:gateway_settings:v1"
 CACHE_TIMEOUT_PAYMENTS: Final[int] = 1800  # 30 Minutes
 
-DEFAULT_CURRENCY: Final[str] = "NPR"
+DEFAULT_CURRENCY: Final[str] = "USD"
 ZERO_DECIMAL: Final[Decimal] = Decimal("0.00")

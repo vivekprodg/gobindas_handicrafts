@@ -43,7 +43,7 @@ CACHE_KEY_TAX_CLASSES: Final[str] = "{ns}:tax_classes:v1"
 CACHE_KEY_TAX_ZONES: Final[str] = "{ns}:tax_zones:v1"
 CACHE_TIMEOUT_TAX_CONFIG: Final[int] = 3600  # 30 Minutes
 
-DEFAULT_TAX_CURRENCY: Final[str] = "NPR"
+DEFAULT_TAX_CURRENCY: Final[str] = "USD"
 DEFAULT_NEPAL_VAT_RATE: Final[Decimal] = Decimal("13.00")
 ZERO_DECIMAL: Final[Decimal] = Decimal("0.00")
 MAX_TAX_RATE_PERCENTAGE: Final[Decimal] = Decimal("100.00")

@@ -30,7 +30,6 @@ def seed():
     print("Seeding foundation CMS data...")
 
     # 1. SiteSettings
-    # Get or create the singleton SiteSettings record.
     ss = SiteSettings.objects.first()
     if ss:
         ss.brand_title = "GOBINDAS"
@@ -49,7 +48,6 @@ def seed():
         ss.sender_email_address = "noreply@gobindashandicrafts.com"
         ss.sender_display_name = "Gobindas Handicrafts"
         
-        # Download and save default featured image if missing
         if not ss.default_featured_image:
             try:
                 print("Downloading default mega menu featured image...")
@@ -68,7 +66,7 @@ def seed():
     # 2. HeaderBar
     HeaderBar.objects.all().delete()
     hb = HeaderBar.objects.create(
-        currency_label="NPR",
+        currency_label="USD",
         language_label="EN",
         announcement_messages=[
             "Celebrating World Fair Trade Day: Free shipping on hand-woven textiles.",
@@ -89,8 +87,8 @@ def seed():
     HeaderAnnouncement.objects.create(header_bar=hb, text="Join the Artisan Club for 15% off your first handcrafted order.", position=3, is_visible=True)
 
     # Seed Currencies
-    HeaderCurrency.objects.create(header_bar=hb, label="Nepalese Rupee", code="NPR", symbol="NPR", position=1, is_visible=True)
-    HeaderCurrency.objects.create(header_bar=hb, label="US Dollar", code="USD", symbol="$", position=2, is_visible=True)
+    HeaderCurrency.objects.create(header_bar=hb, label="US Dollar", code="USD", symbol="$", position=1, is_visible=True)
+    HeaderCurrency.objects.create(header_bar=hb, label="Nepalese Rupee", code="NPR", symbol="NPR", position=2, is_visible=True)
     HeaderCurrency.objects.create(header_bar=hb, label="Euro", code="EUR", symbol="€", position=3, is_visible=True)
 
     # Seed Languages
@@ -106,7 +104,6 @@ def seed():
     # 3. NavbarItems
     NavbarItem.objects.all().delete()
     
-    # Shop Craft (Mega Menu parent)
     shop_craft = NavbarItem.objects.create(
         label="Shop Craft",
         menu_type=NavbarItem.MenuType.MEGA_MENU,
@@ -116,7 +113,6 @@ def seed():
         featured_text="Explore the workshop lineages of Nepal."
     )
 
-    # Seed Mega Menu Columns and Links
     col1 = NavbarMegaMenuColumn.objects.create(parent_item=shop_craft, heading="Raw Materials", position=1)
     NavbarMegaMenuLink.objects.create(parent_column=col1, label="Organic Cotton", link_url="/material/cotton/", position=1)
     NavbarMegaMenuLink.objects.create(parent_column=col1, label="Reclaimed Wood", link_url="/material/wood/", position=2)
@@ -128,7 +124,6 @@ def seed():
     NavbarMegaMenuLink.objects.create(parent_column=col2, label="Sanctuary & Bath", link_url="#", position=2)
     NavbarMegaMenuLink.objects.create(parent_column=col2, label="Kitchen & Dining", link_url="#", position=3)
     
-    # Artisans (Simple link)
     NavbarItem.objects.create(
         label="Artisans",
         menu_type=NavbarItem.MenuType.LINK,
@@ -137,7 +132,6 @@ def seed():
         visibility_scope=NavbarItem.VisibilityScope.ALL
     )
     
-    # Sustainability (Link with badge)
     NavbarItem.objects.create(
         label="Sustainability",
         menu_type=NavbarItem.MenuType.LINK,
@@ -166,20 +160,17 @@ def seed():
     FooterSection.objects.all().delete()
     FooterLink.objects.all().delete()
 
-    # Section 1
     sec1 = FooterSection.objects.create(title="Shop Craft", position=1)
     FooterLink.objects.create(section=sec1, label="Ceramics & Pottery", route="/category/ceramics/", link_type="internal_route", position=1)
     FooterLink.objects.create(section=sec1, label="Handwoven Textiles", route="/category/textiles/", link_type="internal_route", position=2)
     FooterLink.objects.create(section=sec1, label="Reclaimed Wood", route="/category/wood/", link_type="internal_route", position=3)
     FooterLink.objects.create(section=sec1, label="Artisan Jewelry", route="/category/jewelry/", link_type="internal_route", position=4)
 
-    # Section 2
     sec2 = FooterSection.objects.create(title="Care & Heritage", position=2)
     FooterLink.objects.create(section=sec2, label="Material Care Guides", route="/care-guides/", link_type="internal_route", position=1)
     FooterLink.objects.create(section=sec2, label="Meet the Artisans", route="/artisans/", link_type="internal_route", position=2)
     FooterLink.objects.create(section=sec2, label="Traceability Reports", route="/traceability/", link_type="internal_route", position=3)
 
-    # Section 3
     sec3 = FooterSection.objects.create(title="Client Care", position=3)
     FooterLink.objects.create(section=sec3, label="Shipping & Origins", route="/policies/shipping/", link_type="internal_route", position=1)
     FooterLink.objects.create(section=sec3, label="Bespoke Orders", route="/custom-orders/", link_type="internal_route", position=2)
@@ -204,7 +195,6 @@ def seed():
     FooterTrustBadge.objects.create(badge_name="climate neutral", icon_key="climate-neutral", position=2)
     print("-> Created FooterTrustBadges.")
 
-    # Clean cache
     from apps.foundation.services import invalidate_foundation_cms_cache
     invalidate_foundation_cms_cache()
     print("-> Cleared foundation CMS caches.")

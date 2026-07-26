@@ -1013,6 +1013,27 @@ class BreadcrumbService:
             )
         return breadcrumbs
 
+    @classmethod
+    def build_for_product(cls, product: Product) -> List[Dict[str, str]]:
+        if product is None:
+            return cls.build_for_home()
+
+        if getattr(product, "category", None):
+            breadcrumbs = cls.build_for_category(product.category)
+        else:
+            breadcrumbs = cls.build_for_home()
+            breadcrumbs.append({"label": "Handicrafts", "url": "#"})
+
+        breadcrumbs.append(
+            {
+                "label": getattr(product, "title", "Product") or "Product",
+                "url": f"/product/{product.slug}/"
+                if getattr(product, "slug", None)
+                else "#",
+            }
+        )
+        return breadcrumbs
+
 class SearchService:
     """
     Service facade orchestrating product queries, multi-criteria filtering, and facet generation.

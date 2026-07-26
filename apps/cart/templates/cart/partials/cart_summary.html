@@ -9,17 +9,17 @@
     <div class="cart-summary-body">
         <div class="cart-summary-row">
             <span>Subtotal</span>
-            <strong data-cart-subtotal>{{ cart.currency|default:'NPR' }} {{ cart.subtotal|floatformat:2|intcomma }}</strong>
+            <strong data-cart-subtotal>{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ cart.subtotal|floatformat:2|intcomma }}</strong>
         </div>
         {% if cart.coupon_discount_amount > 0 %}
         <div class="cart-summary-row cart-summary-discount">
             <span>Discount ({{ cart.coupon_code }})</span>
-            <strong data-cart-discount>&minus; {{ cart.currency|default:'NPR' }} {{ cart.coupon_discount_amount|floatformat:2|intcomma }}</strong>
+            <strong data-cart-discount>&minus; {{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ cart.coupon_discount_amount|floatformat:2|intcomma }}</strong>
         </div>
         {% endif %}
         <div class="cart-summary-row">
             <span>Estimated Tax</span>
-            <strong data-cart-tax>{{ cart.currency|default:'NPR' }} {{ cart.estimated_tax|floatformat:2|intcomma }}</strong>
+            <strong data-cart-tax>{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ cart.estimated_tax|floatformat:2|intcomma }}</strong>
         </div>
         <div class="cart-summary-row">
             <span>Shipping</span>
@@ -27,7 +27,7 @@
         </div>
         <div class="cart-summary-row cart-summary-grand">
             <span>Estimated Total</span>
-            <strong data-cart-grand-total>{{ cart.currency|default:'NPR' }} {{ cart.grand_total|floatformat:2|intcomma }}</strong>
+            <strong data-cart-grand-total>{{ cart.currency|default:catalog_settings.default_currency|default:'USD' }} {{ cart.grand_total|floatformat:2|intcomma }}</strong>
         </div>
     </div>
 

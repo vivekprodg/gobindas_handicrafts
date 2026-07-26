@@ -1,20 +1,24 @@
-/* =========================================
-   1. HOMEPAGE DESIGN TOKENS & SCOPED VARIABLES
-   ========================================= */
+/* ==========================================================================
+   Gobindas Handicrafts - Enterprise Homepage Stylesheet
+   ========================================================================== */
+
 #homepage-root {
     --brand-gold: #B88A44;
-    --brand-gold-light: #F2E8D7;
+    --brand-gold-hover: #D4A963;
+    --brand-gold-light: #F8F3E9;
+    --brand-gold-dark: #91682B;
     --brand-dark: #1A1815;
     --brand-light: #FFFFFF;
     --bg-canvas: #FCFAF8;
     --text-muted: #6B655C;
+    --border-light: rgba(184, 138, 68, 0.2);
     
     --font-brand: 'Cinzel', serif;
     --font-ui: 'Inter', sans-serif;
     
-    --spacing-section: 6rem;
-    --spacing-module: 4rem;
-    --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --spacing-section: 4.5rem;
+    --spacing-module: 3rem;
+    --transition-smooth: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
 
     font-family: var(--font-ui);
     background-color: var(--bg-canvas);
@@ -23,11 +27,12 @@
     -webkit-font-smoothing: antialiased;
 }
 
-/* Base Scoped Typography & Resets */
+/* Base Typography & Resets */
 #homepage-root :is(h1, h2, h3, h4) { 
     font-family: var(--font-brand); 
     font-weight: 600; 
     line-height: 1.2; 
+    margin: 0;
 }
 
 #homepage-root img { 
@@ -42,23 +47,29 @@
 }
 
 .section-title { 
-    font-size: 2.5rem; 
+    font-size: 2.25rem; 
     text-align: center; 
-    margin-bottom: 3rem; 
+    margin-bottom: 2.5rem; 
     color: var(--brand-dark); 
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* Button UI Components */
 .btn {
-    display: inline-block;
-    padding: 1rem 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem 2.25rem;
+    font-family: var(--font-ui);
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     border: 1px solid transparent;
-    transition: var(--transition);
+    border-radius: 4px;
+    transition: var(--transition-smooth);
 }
 
 .btn-primary { 
@@ -68,6 +79,8 @@
 
 .btn-primary:hover { 
     background: var(--brand-dark); 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .btn-outline { 
@@ -78,14 +91,16 @@
 .btn-outline:hover { 
     background: var(--brand-light); 
     color: var(--brand-dark); 
+    transform: translateY(-2px);
 }
 
-/* =========================================
-   2. MODULE: DYNAMIC HERO
-   ========================================= */
+/* ==========================================================================
+   MODULE 1: DYNAMIC HERO
+   ========================================================================== */
 .module-hero {
     position: relative;
-    min-height: 85vh;
+    max-height: 700px;
+    min-height: 60vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -93,13 +108,15 @@
     padding: 4rem 2rem;
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
 }
 
 .module-hero::before {
     content: ''; 
     position: absolute; 
     inset: 0;
-    background: linear-gradient(to bottom, rgba(26,24,21,0.3), rgba(26,24,21,0.7));
+    background: linear-gradient(to bottom, rgba(26,24,21,0.35), rgba(26,24,21,0.75));
     z-index: 1;
 }
 
@@ -112,38 +129,41 @@
 
 .hero-subtitle {
     font-size: 0.9rem; 
-    letter-spacing: 0.2em; 
+    letter-spacing: 0.25em; 
     text-transform: uppercase;
-    margin-bottom: 1.5rem; 
+    margin-bottom: 1.25rem; 
     color: var(--brand-gold);
+    font-weight: 600;
 }
 
 .hero-title { 
-    font-size: 4rem; 
+    font-size: 3.5rem; 
     margin-bottom: 2rem; 
+    font-weight: 700;
 }
 
 .hero-ctas { 
     display: flex; 
-    gap: 1rem; 
+    gap: 1.25rem; 
     justify-content: center; 
     flex-wrap: wrap; 
 }
 
-/* =========================================
-   3. MODULE: TRUST BAR
-   ========================================= */
+/* ==========================================================================
+   MODULE 2: TRUST BAR
+   ========================================================================== */
 .module-trustbar {
     background-color: var(--brand-dark);
     color: var(--brand-gold);
-    padding: 1.5rem 2rem;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .trustbar-grid {
     max-width: 1400px; 
     margin: 0 auto;
     display: flex; 
-    justify-content: space-between; 
+    justify-content: space-around; 
     flex-wrap: wrap; 
     gap: 1.5rem;
 }
@@ -152,17 +172,15 @@
     display: flex; 
     align-items: center; 
     gap: 0.75rem; 
-    font-size: 0.85rem;
-    letter-spacing: 0.05em; 
+    font-size: 0.8rem;
+    letter-spacing: 0.08em; 
     text-transform: uppercase; 
-    flex: 1; 
-    min-width: 200px; 
-    justify-content: center;
+    font-weight: 600;
 }
 
-/* =========================================
-   4. MODULE: VISUAL DISCOVERY (CATEGORIES)
-   ========================================= */
+/* ==========================================================================
+   MODULE 3: VISUAL DISCOVERY (FULL-BLEED ZERO-GAP CATEGORY CARDS)
+   ========================================================================== */
 .module-discovery { 
     padding: var(--spacing-section) 2rem; 
     max-width: 1400px; 
@@ -171,45 +189,110 @@
 
 .discovery-grid {
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 350px)); 
+    justify-content: center;
+    gap: 2.5rem;
 }
 
 .category-card {
     position: relative; 
     overflow: hidden; 
-    aspect-ratio: 4/5; 
+    border-radius: 8px;
+    border: 1px solid var(--border-light, rgba(184, 138, 68, 0.2));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    background-color: #FFFFFF;
+    transition: var(--transition-smooth);
+    text-decoration: none;
 }
 
-.category-card img {
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-    transition: transform 0.8s ease;
+.category-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(44, 37, 32, 0.12);
+    border-color: var(--brand-gold);
 }
 
-.category-card:hover img { 
-    transform: scale(1.05); 
+/* Media Frame: Guaranteed 100% full-bleed image cover with ZERO grey background gaps */
+.category-card-media {
+    position: relative;
+    width: 100%;
+    height: 260px; /* Bounded optimal height */
+    overflow: hidden;
+    background-color: #FFFFFF;
+    padding: 0;
+    margin: 0;
 }
 
-.category-overlay {
-    position: absolute; 
-    inset: 0; 
-    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-    display: flex; 
-    align-items: flex-end; 
-    padding: 2rem;
+.category-card-media img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* Forces photo to fill 100% of the box regardless of upload size */
+    object-position: center 20% !important; /* Focuses on statue crown & face */
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.category-overlay h3 { 
-    color: var(--brand-light); 
-    font-size: 1.5rem; 
+.category-card:hover .category-card-media img { 
+    transform: scale(1.06); 
 }
 
-/* =========================================
-   5. MODULE: MERCHANDISING (CAROUSEL)
-   ========================================= */
+.category-no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted, #6B655C);
+    font-family: var(--font-brand, 'Cinzel', serif);
+    font-size: 1.1rem;
+}
+
+/* Details Footer - Sits directly below the full-bleed image */
+.category-card-details {
+    padding: 1.25rem 1.5rem;
+    background-color: #FFFFFF;
+    border-top: 1px solid var(--border-light, rgba(184, 138, 68, 0.15));
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-align: left;
+}
+
+.category-card-title { 
+    color: var(--brand-dark, #1A1815); 
+    font-family: var(--font-brand, 'Cinzel', serif);
+    font-size: 1.25rem; 
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+}
+
+.category-card:hover .category-card-title {
+    color: var(--brand-gold, #B88A44);
+}
+
+.category-card-action {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted, #6B655C);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.category-card:hover .category-card-action {
+    color: var(--brand-gold-dark, #91682B);
+    transform: translateX(4px);
+}
+
+/* ==========================================================================
+   MODULE 4: MERCHANDISING CAROUSEL
+   ========================================================================== */
 .module-merch { 
     padding: var(--spacing-module) 0 var(--spacing-section); 
     overflow: hidden; 
@@ -219,9 +302,11 @@
     display: flex; 
     gap: 2rem; 
     overflow-x: auto; 
-    padding: 0 2rem 2rem;
+    padding: 0 2rem 1.5rem;
     scroll-snap-type: x mandatory; 
     scrollbar-width: none;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .merch-carousel::-webkit-scrollbar { 
@@ -229,51 +314,73 @@
 }
 
 .product-card {
-    min-width: 300px; 
+    min-width: 280px; 
+    max-width: 320px;
     scroll-snap-align: start; 
     position: relative;
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .product-img-wrapper {
     position: relative; 
-    aspect-ratio: 3/4; 
+    aspect-ratio: 1 / 1; 
+    max-height: 320px;
     overflow: hidden; 
-    background: #EEE; 
-    margin-bottom: 1rem;
+    background: #F5F1ED; 
+}
+
+.product-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .badge {
     position: absolute; 
-    top: 1rem; 
-    left: 1rem; 
+    top: 0.85rem; 
+    left: 0.85rem; 
     background: var(--brand-gold);
     color: var(--brand-light); 
-    font-size: 0.7rem; 
+    font-size: 0.65rem; 
+    font-weight: 700;
     padding: 0.3rem 0.6rem;
     text-transform: uppercase; 
     letter-spacing: 0.1em; 
+    border-radius: 2px;
     z-index: 2;
 }
 
 .product-info { 
+    padding: 1.25rem;
     text-align: center; 
 }
 
 .product-title { 
     font-size: 1rem; 
     color: var(--brand-dark); 
-    margin-bottom: 0.5rem; 
+    margin-bottom: 0.4rem; 
 }
 
 .product-price { 
-    font-family: var(--font-ui); 
-    color: var(--text-muted); 
-    font-size: 0.95rem; 
+    font-family: var(--font-brand); 
+    color: var(--brand-gold-dark); 
+    font-size: 1.1rem; 
+    font-weight: 700;
 }
 
-/* =========================================
-   6. MODULE: MEET THE MAKER
-   ========================================= */
+/* ==========================================================================
+   MODULE 5: MEET THE MAKER
+   ========================================================================== */
 .module-maker { 
     background-color: var(--brand-dark); 
     color: var(--brand-light); 
@@ -282,11 +389,21 @@
 .maker-split { 
     display: grid; 
     grid-template-columns: 1fr 1fr; 
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: center;
+}
+
+.maker-image-frame {
+    width: 100%;
+    height: 100%;
+    max-height: 550px;
+    overflow: hidden;
 }
 
 .maker-image { 
-    aspect-ratio: 1/1; 
     object-fit: cover; 
+    object-position: center;
     width: 100%; 
     height: 100%; 
 }
@@ -300,21 +417,22 @@
 
 .maker-quote { 
     font-family: var(--font-brand); 
-    font-size: 2rem; 
+    font-size: 1.75rem; 
     color: var(--brand-gold); 
-    margin-bottom: 2rem; 
-    line-height: 1.3; 
+    margin-bottom: 1.5rem; 
+    line-height: 1.35; 
 }
 
 .maker-bio { 
     color: #A39B8E; 
     margin-bottom: 2rem; 
-    font-size: 1.1rem; 
+    font-size: 1rem; 
+    line-height: 1.7;
 }
 
-/* =========================================
-   7. MODULE: UGC GALLERY
-   ========================================= */
+/* ==========================================================================
+   MODULE 6: SOCIAL PROOF
+   ========================================================================== */
 .module-ugc { 
     padding: var(--spacing-section) 0; 
 }
@@ -323,24 +441,28 @@
     display: grid; 
     grid-template-columns: repeat(4, 1fr); 
     gap: 0; 
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .ugc-item { 
-    aspect-ratio: 1/1; 
+    aspect-ratio: 1 / 1; 
+    max-height: 350px;
     overflow: hidden; 
     position: relative; 
+    background-color: #F5F1ED;
 }
 
 .ugc-item img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
-    transition: opacity 0.3s; 
+    transition: transform 0.4s ease, opacity 0.3s ease; 
 }
 
 .ugc-item:hover img { 
-    opacity: 0.8; 
-    cursor: pointer; 
+    transform: scale(1.05);
+    opacity: 0.85; 
 }
 
 .ugc-icon {
@@ -350,16 +472,15 @@
     transform: translate(-50%, -50%);
     color: var(--brand-light); 
     opacity: 0; 
-    transition: opacity 0.3s;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .ugc-item:hover .ugc-icon { 
     opacity: 1; 
 }
 
-/* =========================================
-   8. RESPONSIVE BREAKPOINTS
-   ========================================= */
+/* Responsive Breakpoints */
 @media (max-width: 900px) {
     .hero-title { 
         font-size: 2.5rem; 
@@ -369,12 +490,12 @@
         grid-template-columns: 1fr; 
     }
     
-    .maker-image { 
-        aspect-ratio: 16/9; 
+    .maker-image-frame { 
+        max-height: 380px; 
     }
     
     .maker-content { 
-        padding: 3rem 2rem; 
+        padding: 2.5rem 1.5rem; 
     }
     
     .ugc-grid { 
@@ -383,11 +504,12 @@
 }
 
 @media (max-width: 600px) {
+    .discovery-grid { 
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+    }
+
     .trust-item { 
         flex: 100%; 
-    }
-    
-    .discovery-grid { 
-        grid-template-columns: 1fr; 
+        justify-content: center;
     }
 }

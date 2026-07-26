@@ -1,4 +1,4 @@
-{% load static humanize currency_tags inventory_tags %}
+{% load static humanize %}
 
 <article class="gobindas-product-card {% if product.status == 'draft' %}is-draft{% elif product.status == 'archived' %}is-archived{% endif %}"
          data-product-id="{{ product.id|default:'' }}"

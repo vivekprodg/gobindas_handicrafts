@@ -39,6 +39,6 @@ CACHE_KEY_GLOBAL_SETTINGS: Final[str] = "{ns}:global_settings:v1"
 CACHE_KEY_SHIPPING_METHODS: Final[str] = "{ns}:methods_list:v1"
 CACHE_TIMEOUT_SHIPPING: Final[int] = 1800  # 30 Minutes
 
-DEFAULT_SHIPPING_CURRENCY: Final[str] = "NPR"
+DEFAULT_SHIPPING_CURRENCY: Final[str] = "USD"
 DEFAULT_WEIGHT_UNIT: Final[str] = "kg"
 ZERO_DECIMAL: Final[Decimal] = Decimal("0.00")

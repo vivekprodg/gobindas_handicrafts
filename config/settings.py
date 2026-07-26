@@ -5,11 +5,12 @@ Configured with Google OAuth Social Authentication & Dynamic Admin SMTP Engine.
 
 from pathlib import Path
 import os
-
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -29,12 +30,18 @@ def env_list(name: str, default=None):
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-i&9i2v+&ue56se#a8h7&)ex*v*pq9t297-8acatxhntw+9(rhc",
-)
-
 DEBUG = env_bool("DJANGO_DEBUG", True)
+
+# Strictly load DJANGO_SECRET_KEY from .env
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-dev-only-key-do-not-use-in-production"
+    else:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY is missing from .env file! Please set DJANGO_SECRET_KEY in environment variables."
+        )
 
 ALLOWED_HOSTS = env_list(
     "DJANGO_ALLOWED_HOSTS",
@@ -53,6 +60,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.contrib.humanize",
     
     # Third-Party Utilities
     "nested_admin",
