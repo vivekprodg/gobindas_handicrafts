@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title|default:"Digital Business Card | Gobindas Handicrafts" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .digital-card-page {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        background-color: var(--bg-canvas, #FCFAF8);
+    }
+
+    .card-mobile-container {
+        width: 100%;
+        max-width: 460px;
+        background: #FFFFFF;
+        border: 1px solid var(--border-light, rgba(184, 138, 68, 0.25));
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(26, 21, 18, 0.08);
+        overflow: hidden;
+        text-align: center;
+        font-family: var(--font-ui, 'Inter', sans-serif);
+    }
+
+    .card-header-banner {
+        background: #1A1512;
+        padding: 2.5rem 1.5rem 2rem;
+        color: #FFFFFF;
+        position: relative;
+    }
+
+    .card-brand-sub {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+        color: var(--brand-gold, #C5A880);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .card-avatar-wrapper {
+        width: 110px;
+        height: 110px;
+        margin: 0 auto -55px auto;
+        border-radius: 50%;
+        border: 4px solid #FFFFFF;
+        background: var(--brand-gold, #C5A880);
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .card-avatar-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #FFFFFF;
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 2.75rem;
+        font-weight: bold;
+    }
+
+    .card-body {
+        padding: 4.5rem 1.75rem 2.5rem;
+    }
+
+    .card-name {
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 1.75rem;
+        color: var(--brand-dark, #1A1512);
+        margin: 0 0 0.35rem 0;
+        font-weight: 600;
+    }
+
+    .card-role {
+        font-size: 0.85rem;
+        color: var(--brand-gold-dark, #9A7B54);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-company {
+        font-size: 0.95rem;
+        color: var(--text-muted, #7A726A);
+        margin-bottom: 1.5rem;
+    }
+
+    .card-bio {
+        font-size: 0.85rem;
+        color: var(--text-muted, #7A726A);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+    }
+
+    .card-actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-card-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition-smooth, all 0.3s ease);
+        box-sizing: border-box;
+    }
+
+    .btn-call {
+        background: #1A1512;
+        color: #FFFFFF;
+    }
+
+    .btn-call:hover {
+        background: #2C2520;
+    }
+
+    .btn-whatsapp {
+        background: #25D366;
+        color: #FFFFFF;
+    }
+
+    .btn-whatsapp:hover {
+        background: #20BA5A;
+    }
+
+    .btn-save-contact {
+        grid-column: span 2;
+        background: var(--brand-gold, #C5A880);
+        color: #FFFFFF;
+        font-family: var(--font-brand, 'Cinzel', serif);
+        font-size: 0.95rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .btn-save-contact:hover {
+        background: var(--brand-dark, #1A1512);
+    }
+
+    .card-details-list {
+        text-align: left;
+        border-top: 1px solid var(--border-light, #EAE5E0);
+        padding-top: 1.75rem;
+        margin-top: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+        font-size: 0.9rem;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        color: var(--brand-dark, #2C2520);
+        line-height: 1.4;
+    }
+
+    .detail-icon {
+        color: var(--brand-gold, #C5A880);
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+
+    .card-social-row {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px dashed var(--border-light, #EAE5E0);
+    }
+
+    .social-icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #F8F3E9;
+        color: #9A7B54;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+
+    .social-icon-btn:hover {
+        background: #C5A880;
+        color: #FFFFFF;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="digital-card-page">
+    <div class="card-mobile-container">
+        <div class="card-header-banner">
+            <div class="card-brand-sub">{{ site_settings.brand_title|default:"GOBINDAS HANDICRAFTS" }}</div>
+        </div>
+
+        <div class="card-avatar-wrapper">
+            {% if card.avatar %}
+                <img src="{{ card.avatar.url }}" alt="{{ card.full_name }}">
+            {% else %}
+                <div class="avatar-placeholder">{{ card.full_name|slice:":1"|upper }}</div>
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+            <h1 class="card-name">{{ card.full_name }}</h1>
+            {% if card.title_or_role %}<div class="card-role">{{ card.title_or_role }}</div>{% endif %}
+            <div class="card-company">{{ card.company_name }}</div>
+
+            {% if card.bio %}
+                <p class="card-bio">{{ card.bio }}</p>
+            {% endif %}
+
+            <div class="card-actions-grid">
+                {% if card.phone_number %}
+                    <a href="tel:{{ card.phone_number }}" class="btn-card-action btn-call">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        Call Direct
+                    </a>
+                {% endif %}
+                
+                {% if card.whatsapp_number %}
+                    <a href="https://wa.me/{{ card.whatsapp_number|cut:' ' }}" target="_blank" rel="noopener noreferrer" class="btn-card-action btn-whatsapp">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                        WhatsApp
+                    </a>
+                {% endif %}
+
+                <a href="{% url 'export_vcard' slug=card.slug %}" class="btn-card-action btn-save-contact">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save Contact to Phone
+                </a>
+            </div>
+
+            <div class="card-details-list">
+                {% if card.email %}
+                <div class="detail-item">
+                    <span class="detail-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </span>
+                    <a href="mailto:{{ card.email }}" style="color: inherit; text-decoration: none;">{{ card.email }}</a>
+                </div>
+                {% endif %}
+
+                {% if card.website %}
+                <div class="detail-item">
+                    <span class="detail-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    </span>
+                    <a href="{{ card.website }}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">{{ card.website }}</a>
+                </div>
+                {% endif %}
+
+                {% if card.address %}
+                <div class="detail-item">
+                    <span class="detail-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </span>
+                    <span>{{ card.address|linebreaksbr }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if card.facebook_url or card.instagram_url or card.linkedin_url %}
+            <div class="card-social-row">
+                {% if card.instagram_url %}
+                    <a href="{{ card.instagram_url }}" target="_blank" rel="noopener noreferrer" class="social-icon-btn" title="Instagram">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    </a>
+                {% endif %}
+
+                {% if card.facebook_url %}
+                    <a href="{{ card.facebook_url }}" target="_blank" rel="noopener noreferrer" class="social-icon-btn" title="Facebook">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    </a>
+                {% endif %}
+
+                {% if card.linkedin_url %}
+                    <a href="{{ card.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="social-icon-btn" title="LinkedIn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

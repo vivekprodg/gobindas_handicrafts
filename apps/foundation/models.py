@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import io
 import uuid
 from pathlib import Path
 from typing import Any
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
+from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
 
 def _upload_to_site_logo(instance, filename: str) -> str:
@@ -21,6 +26,15 @@ def _upload_to_navbar_media(instance, filename: str) -> str:
 def _upload_to_contact_media(instance, filename: str) -> str:
     suffix = Path(filename).suffix.lower() or ".png"
     return f"foundation/contact/media/{uuid.uuid4().hex}{suffix}"
+
+
+def _upload_to_qr_codes(instance, filename: str) -> str:
+    return f"foundation/qr_codes/{instance.slug}.png"
+
+
+def _upload_to_card_avatars(instance, filename: str) -> str:
+    suffix = Path(filename).suffix.lower() or ".jpg"
+    return f"foundation/card_avatars/{instance.slug}/{uuid.uuid4().hex}{suffix}"
 
 
 def _validate_json_structure(value: tuple | list | dict | None, field_name: str, expected_types: tuple[type, ...]) -> None:
@@ -210,28 +224,28 @@ class SiteSettings(SingletonCMSModel):
             raise ValidationError({"logo": "Logo upload is required."})
 
     def save(self, *args: Any, **kwargs: Any):
-        if self.logo and not getattr(self.logo, "_committed", True):
+        if self.logo:
             from .services import prepare_transparent_logo_upload
             try:
                 result = prepare_transparent_logo_upload(
                     self.logo.file,
-                    target_max_bytes=800 * 1024,
-                    max_width=1600,
-                    min_width=300,
+                    target_max_bytes=500 * 1024,
+                    max_width=1200,
+                    min_width=200,
                     filename_prefix="foundation/site-settings/logo",
                 )
                 self.logo.save(result.filename, result.file, save=False)
             except Exception:
                 pass
 
-        if self.mobile_logo and not getattr(self.mobile_logo, "_committed", True):
+        if self.mobile_logo:
             from .services import prepare_transparent_logo_upload
             try:
                 result = prepare_transparent_logo_upload(
                     self.mobile_logo.file,
-                    target_max_bytes=800 * 1024,
-                    max_width=1600,
-                    min_width=300,
+                    target_max_bytes=500 * 1024,
+                    max_width=1200,
+                    min_width=200,
                     filename_prefix="foundation/site-settings/logo",
                 )
                 self.mobile_logo.save(result.filename, result.file, save=False)
@@ -494,14 +508,14 @@ class FooterSettings(SingletonCMSModel):
         verbose_name_plural = "Footer Settings"
 
     def save(self, *args: Any, **kwargs: Any):
-        if self.logo and not getattr(self.logo, "_committed", True):
+        if self.logo:
             from .services import prepare_transparent_logo_upload
             try:
                 result = prepare_transparent_logo_upload(
                     self.logo.file,
-                    target_max_bytes=800 * 1024,
-                    max_width=1600,
-                    min_width=300,
+                    target_max_bytes=500 * 1024,
+                    max_width=1200,
+                    min_width=200,
                     filename_prefix="foundation/footer/logo",
                 )
                 self.logo.save(result.filename, result.file, save=False)
@@ -694,3 +708,73 @@ class ContactOfficeHour(CMSBaseModel):
 
     def __str__(self) -> str:
         return f"{self.day or 'Schedule'}: {self.opening_time or ''} - {self.closing_time or ''}"
+
+class DigitalBusinessCard(CMSBaseModel):
+    """
+    Client / Master Artisan / Representative Digital Business Card profile
+    with automated QR code generation for physical visiting cards.
+    """
+    full_name = models.CharField(max_length=150, verbose_name=_("Full Name"))
+    title_or_role = models.CharField(max_length=150, blank=True, null=True, verbose_name=_("Title / Designation"))
+    company_name = models.CharField(max_length=200, default="Gobindas Handicrafts", verbose_name=_("Company Name"))
+    slug = models.SlugField(max_length=200, unique=True, db_index=True, help_text=_("URL identifier (e.g., 'rajesh-shrestha')"))
+    
+    avatar = models.ImageField(upload_to=_upload_to_card_avatars, blank=True, null=True, verbose_name=_("Profile Photo / Company Logo"))
+    phone_number = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Phone Number"))
+    whatsapp_number = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("WhatsApp Number"))
+    email = models.EmailField(blank=True, null=True, verbose_name=_("Email Address"))
+    website = models.URLField(blank=True, null=True, verbose_name=_("Website URL"))
+    
+    address = models.TextField(blank=True, null=True, verbose_name=_("Physical Address"))
+    bio = models.TextField(blank=True, null=True, verbose_name=_("Short Bio / Description"))
+    
+    facebook_url = models.URLField(blank=True, null=True, verbose_name=_("Facebook URL"))
+    instagram_url = models.URLField(blank=True, null=True, verbose_name=_("Instagram URL"))
+    linkedin_url = models.URLField(blank=True, null=True, verbose_name=_("LinkedIn URL"))
+    
+    qr_code_image = models.ImageField(upload_to=_upload_to_qr_codes, blank=True, null=True, verbose_name=_("Generated QR Code PNG"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Is Card Active"))
+
+    class Meta:
+        verbose_name = _("Digital Business Card")
+        verbose_name_plural = _("Digital Business Cards")
+        ordering = ["full_name"]
+
+    def __str__(self) -> str:
+        return f"{self.full_name} - {self.company_name}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.full_name)
+        
+        super().save(*args, **kwargs)
+        self.generate_qr_code()
+
+    def generate_qr_code(self):
+        """Generates a high-resolution PNG QR Code pointing to the public card page."""
+        try:
+            import qrcode
+        except ImportError:
+            return
+
+        site_domain = getattr(settings, "SITE_DOMAIN", "https://gobindashandicraft.com")
+        card_url = f"{site_domain}/card/{self.slug}/"
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=12,
+            border=2,
+        )
+        qr.add_data(card_url)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="#1A1512", back_color="#FFFFFF")
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        
+        file_name = f"qr_{self.slug}.png"
+        
+        DigitalBusinessCard.objects.filter(pk=self.pk).update(qr_code_image=None)
+        self.qr_code_image.save(file_name, ContentFile(buffer.getvalue()), save=False)
+        DigitalBusinessCard.objects.filter(pk=self.pk).update(qr_code_image=self.qr_code_image.name)

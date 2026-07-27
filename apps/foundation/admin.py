@@ -5,6 +5,7 @@ from typing import Any, List, Optional, Tuple, Type
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
+from django.db.models.signals import post_delete, post_save
 from django.http import HttpRequest
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -17,6 +18,7 @@ from .models import (
     ContactPage,
     ContactPhone,
     ContactSocialLink,
+    DigitalBusinessCard,
     FooterLink,
     FooterPaymentMethod,
     FooterSection,
@@ -42,14 +44,14 @@ def _render_image_preview(
     image: Any,
     *,
     max_height: str = "90px",
-    max_width: str = "180px",
+    max_width: str = "160px",
     object_fit: str = "contain",
-    padding: str = "6px",
+    padding: str = "4px",
     placeholder: str = "-",
 ) -> Any:
     """
-    Renders admin preview thumbnails with transparent checkerboard backing.
-    Guarantees white logos or transparent PNGs/SVGs remain clearly visible in Django Admin.
+    Renders image preview thumbnails with an alpha-transparency checkered pattern,
+    ensuring transparent PNGs and WEBPs do not appear to have solid white background boxes.
     """
     try:
         if not image:
@@ -58,7 +60,7 @@ def _render_image_preview(
         if not url:
             return placeholder
         return format_html(
-            '<div style="display: inline-block; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 10px 10px; background-position: 0 0, 0 5px, 5px -5px, -5px 0px; background-color: #333; border: 1px solid #777; border-radius: 4px; padding: {};"><img src="{}" style="max-height: {}; max-width: {}; object-fit: {}; display: block;" /></div>',
+            '<div style="display: inline-block; background-image: linear-gradient(45deg, #eAEAEA 25%, transparent 25%), linear-gradient(-45deg, #eAEAEA 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eAEAEA 75%), linear-gradient(-45deg, transparent 75%, #eAEAEA 75%); background-size: 12px 12px; background-position: 0 0, 0 6px, 6px -6px, -6px 0px; background-color: #ffffff; border: 1px solid #ccc; border-radius: 4px; padding: {};"><img src="{}" style="max-height: {}; max-width: {}; object-fit: {}; display: block;" /></div>',
             padding, url, max_height, max_width, object_fit,
         )
     except Exception:
@@ -67,9 +69,9 @@ def _render_image_preview(
 class CMSImagePreviewMixin:
     image_preview_field: str = "logo"
     image_preview_max_height: str = "90px"
-    image_preview_max_width: str = "180px"
+    image_preview_max_width: str = "160px"
     image_preview_object_fit: str = "contain"
-    image_preview_padding: str = "6px"
+    image_preview_padding: str = "4px"
     image_preview_placeholder: str = "-"
 
     def get_image_preview(self, obj: Any) -> Any:
@@ -342,7 +344,7 @@ class HeaderBarAdmin(CacheInvalidationMixin, CMSSingletonMixin, admin.ModelAdmin
 
 @admin.register(FooterSettings)
 class FooterSettingsAdmin(CacheInvalidationMixin, CMSSingletonMixin, admin.ModelAdmin):
-    list_display = ("id", "brand_name", "newsletter_heading", "copyright_template", "logo_preview", "updated_at")
+    list_display = ("id", "brand_name", "newsletter_heading", "copyright_template", "updated_at")
     readonly_fields = ("logo_preview", "created_at", "updated_at")
     search_fields = ("brand_name", "newsletter_heading", "copyright_template")
     singleton_model = FooterSettings
@@ -420,12 +422,73 @@ class ContactPageAdmin(CacheInvalidationMixin, CMSSingletonMixin, admin.ModelAdm
     def hero_image_preview(self, obj: Any) -> Any:
         return _render_image_preview(getattr(obj, "hero_image", None) if obj else None, max_width="160px", object_fit="cover", padding="4px")
 
+@admin.register(DigitalBusinessCard)
+class DigitalBusinessCardAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "company_name", "phone_number", "email", "qr_code_preview", "download_qr_link", "is_active")
+    list_filter = ("is_active", "company_name")
+    search_fields = ("full_name", "company_name", "phone_number", "email", "slug")
+    prepopulated_fields = {"slug": ("full_name",)}
+    readonly_fields = ("qr_code_preview_large", "public_url_display", "created_at", "updated_at")
+
+    fieldsets = (
+        (_("Card Owner Identification"), {
+            "fields": ("full_name", "title_or_role", "company_name", "slug", "avatar", "is_active")
+        }),
+        (_("Contact Information"), {
+            "fields": ("phone_number", "whatsapp_number", "email", "website", "address", "bio")
+        }),
+        (_("Social Links"), {
+            "fields": ("facebook_url", "instagram_url", "linkedin_url"),
+            "classes": ("collapse",)
+        }),
+        (_("QR Code & Links"), {
+            "fields": ("public_url_display", "qr_code_preview_large")
+        }),
+    )
+
+    actions = ["regenerate_qr_codes_action"]
+
+    def qr_code_preview(self, obj):
+        if obj.qr_code_image:
+            return format_html('<img src="{}" style="height: 50px; width: 50px;" />', obj.qr_code_image.url)
+        return "-"
+    qr_code_preview.short_description = _("QR Code")
+
+    def qr_code_preview_large(self, obj):
+        if obj.qr_code_image:
+            return format_html('<img src="{}" style="height: 200px; width: 200px; border: 1px solid #ccc; padding: 5px;" />', obj.qr_code_image.url)
+        return _("Save to generate QR Code")
+    qr_code_preview_large.short_description = _("Generated QR Code Image")
+
+    def download_qr_link(self, obj):
+        if obj.qr_code_image:
+            return format_html(
+                '<a class="button" href="{}" download="{}_qr.png" style="background:#B88A44; color:#fff; font-weight:bold; padding: 6px 12px; border-radius: 4px; text-decoration: none;">Download PNG</a>',
+                obj.qr_code_image.url,
+                obj.slug
+            )
+        return "-"
+    download_qr_link.short_description = _("Visiting Card PNG")
+
+    def public_url_display(self, obj):
+        if obj.slug:
+            url = f"/card/{obj.slug}/"
+            return format_html('<a href="{}" target="_blank">{}</a>', url, url)
+        return "-"
+    public_url_display.short_description = _("Public Card URL")
+
+    @admin.action(description=_("Regenerate QR Codes for Selected Cards"))
+    def regenerate_qr_codes_action(self, request, queryset):
+        for card in queryset:
+            card.generate_qr_code()
+        self.message_user(request, _("QR Codes regenerated successfully."))
+
 CMS_MODELS: List[Type[Model]] = [
     ContactEmail, ContactOfficeHour, ContactPage, ContactPhone, ContactSocialLink,
-    FooterLink, FooterPaymentMethod, FooterSection, FooterSettings, FooterSocialLink,
-    FooterTrustBadge, HeaderBar, HeaderAnnouncement, HeaderCountry, HeaderCurrency,
-    HeaderLanguage, HeaderUtilityLink, NavbarItem, NavbarMegaMenuColumn, NavbarMegaMenuLink,
-    NavbarSettings, SiteSettings,
+    DigitalBusinessCard, FooterLink, FooterPaymentMethod, FooterSection, FooterSettings,
+    FooterSocialLink, FooterTrustBadge, HeaderBar, HeaderAnnouncement, HeaderCountry,
+    HeaderCurrency, HeaderLanguage, HeaderUtilityLink, NavbarItem, NavbarMegaMenuColumn,
+    NavbarMegaMenuLink, NavbarSettings, SiteSettings,
 ]
 
 __all__ = [
@@ -437,5 +500,5 @@ __all__ = [
     "ContactSocialLinkInline", "ContactOfficeHourInline", "SiteSettingsAdmin", "NavbarSettingsAdmin",
     "NavbarItemAdmin", "HeaderBarAdmin", "FooterSettingsAdmin", "FooterSectionAdmin",
     "FooterLinkAdmin", "FooterSocialLinkAdmin", "FooterPaymentMethodAdmin", "FooterTrustBadgeAdmin",
-    "ContactPageAdmin", "CMS_MODELS",
+    "ContactPageAdmin", "DigitalBusinessCardAdmin", "CMS_MODELS",
 ]

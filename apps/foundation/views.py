@@ -8,12 +8,14 @@ from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView, LogoutView, PasswordResetConfirmView, PasswordResetView
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import CreateView, FormView, TemplateView
 
+from .models import DigitalBusinessCard
 from .services import get_foundation_cms_payload
 
 class HomePageView(TemplateView):
@@ -258,6 +260,51 @@ class ContactPageView(FormView):
 
 class ContactPlaceholderView(ContactPageView):
     pass
+
+class DigitalBusinessCardView(View):
+    """
+    Renders a mobile-first digital business card when scanned via QR code.
+    """
+    template_name = "foundation/digital_card.html"
+
+    def get(self, request: HttpRequest, slug: str, *args: Any, **kwargs: Any) -> HttpResponse:
+        card = get_object_or_404(DigitalBusinessCard, slug=slug, is_active=True)
+        cms_payload = get_foundation_cms_payload(use_cache=True)
+        return render(request, self.template_name, {
+            "card": card,
+            "page_title": f"{card.full_name} - {card.company_name}",
+            "site_settings": cms_payload["site_settings"],
+            "header_bar": cms_payload["header_bar"],
+            "navbar_items": cms_payload["navbar_items"],
+            "footer_data": cms_payload["footer"],
+            "footer_logo": cms_payload["footer"]["brand"]["logo_url"] if cms_payload["footer"] and cms_payload["footer"].get("brand") else None,
+        })
+
+class ExportVCardView(View):
+    """
+    Generates a .vcf contact file so smartphone users can save contact details directly.
+    """
+    def get(self, request: HttpRequest, slug: str, *args: Any, **kwargs: Any) -> HttpResponse:
+        card = get_object_or_404(DigitalBusinessCard, slug=slug, is_active=True)
+
+        vcard_content = [
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            f"N:{card.full_name};;;",
+            f"FN:{card.full_name}",
+            f"ORG:{card.company_name}",
+            f"TITLE:{card.title_or_role or ''}",
+            f"TEL;TYPE=CELL:{card.phone_number or ''}",
+            f"EMAIL:{card.email or ''}",
+            f"URL:{card.website or ''}",
+            f"ADR;TYPE=WORK:;;{card.address or ''};;;;",
+            f"NOTE:{card.bio or ''}",
+            "END:VCARD"
+        ]
+
+        response = HttpResponse("\n".join(vcard_content), content_type="text/vcard; charset=utf-8")
+        response['Content-Disposition'] = f'attachment; filename="{card.slug}.vcf"'
+        return response
 
 def bad_request_view(request: HttpRequest, exception: Any = None) -> HttpResponse:
     try:
