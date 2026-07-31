@@ -61,7 +61,7 @@
                         <div style="font-size:11px; color:var(--luxury-muted); text-transform:uppercase;">{% trans "Placed On" %}</div>
                         <div style="font-size:14px; margin-bottom:16px;">{{ order.created_at|date:"F j, Y" }}</div>
                         <div style="font-size:11px; color:var(--luxury-muted); text-transform:uppercase;">{% trans "Valuation" %}</div>
-                        <div style="font-size:20px; font-weight:600;">{{ order.currency|default:"$" }}{{ order.grand_total|floatformat:2 }}</div>
+                        <div style="font-size:20px; font-weight:600;">{{ order.currency|default:"US$" }} {{ order.grand_total|floatformat:2 }}</div>
                         <div style="margin-top:16px;"><span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span></div>
                     </div>
                     <div class="luxury-order-card-right">

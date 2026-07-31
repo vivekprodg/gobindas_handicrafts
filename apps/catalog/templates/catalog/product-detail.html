@@ -19,7 +19,7 @@
     {% endif %}
     <meta property="og:site_name" content="Gobindas Handicrafts">
     <meta property="product:price:amount" content="{{ product.price|default:'0.00' }}">
-    <meta property="product:price:currency" content="{{ product.currency|default:'NPR' }}">
+    <meta property="product:price:currency" content="{{ product.currency|default:'USD' }}">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
@@ -42,7 +42,7 @@
       "offers": {
         "@type": "Offer",
         "url": "{{ request.build_absolute_uri|escapejs }}",
-        "priceCurrency": "{{ product.currency|default:'NPR'|escapejs }}",
+        "priceCurrency": "{{ product.currency|default:'USD'|escapejs }}",
         "price": "{{ product.price|default:'0.00'|escapejs }}",
         "itemCondition": "https://schema.org/NewCondition",
         "availability": "{% if inventory.is_out_of_stock %}https://schema.org/OutOfStock{% else %}https://schema.org/InStock{% endif %}"
@@ -667,9 +667,9 @@
 
                 <div class="luxury-purchase-box">
                     <div class="price-structure-box">
-                        <span class="price-current-large">{{ product.currency|default:'NPR' }} {{ product.price|default:0|floatformat:0|intcomma }}</span>
+                        <span class="price-current-large">{{ product.currency|default:'US$' }} {{ product.price|default:0|floatformat:2|intcomma }}</span>
                         {% if product.original_price and product.price and product.original_price > product.price %}
-                        <span class="price-original-large">{{ product.currency|default:'NPR' }} {{ product.original_price|floatformat:0|intcomma }}</span>
+                        <span class="price-original-large">{{ product.currency|default:'US$' }} {{ product.original_price|floatformat:2|intcomma }}</span>
                         <span class="discount-percentage-pill">Exclusive Collection Price</span>
                         {% endif %}
                     </div>
@@ -909,7 +909,7 @@
     <div class="sticky-action-mobile-bar" role="region" aria-label="Quick purchase actions">
         <div class="sticky-mobile-details">
             <span class="sticky-mobile-title">{{ product.title|default:'Product' }}</span>
-            <span class="sticky-mobile-price">{{ product.currency|default:'NPR' }} {{ product.price|default:0|floatformat:0|intcomma }}</span>
+            <span class="sticky-mobile-price">{{ product.currency|default:'US$' }} {{ product.price|default:0|floatformat:2|intcomma }}</span>
         </div>
         <div class="sticky-mobile-ctas">
             {% if not inventory.is_out_of_stock %}

@@ -36,7 +36,7 @@
                             {% if signal.icon == 'fair-trade' %}
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             {% elif signal.icon == 'shipping' %}
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                             {% elif signal.icon == 'artisan' %}
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             {% endif %}
@@ -69,23 +69,36 @@
                 </div>
             </section>
 
-        {# 4. MERCHANDISING CAROUSEL MODULE #}
+        {# 4. MERCHANDISING CAROUSEL MODULE WITH ARROW NAVIGATION #}
         {% elif module.type == "merchandising_carousel" %}
             <section class="module-merch">
                 {% if module.parameters.heading %}<h2 class="section-title">{{ module.parameters.heading }}</h2>{% endif %}
-                <div class="merch-carousel">
-                    {% for item in module.parameters.items %}
-                        <div class="product-card">
-                            <div class="product-img-wrapper">
-                                {% if item.badge %}<div class="badge">{{ item.badge }}</div>{% endif %}
-                                {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}" loading="lazy" decoding="async">{% endif %}
+                <div class="merch-carousel-wrapper">
+                    <!-- Rewind Arrow Button -->
+                    <button type="button" class="carousel-nav-btn prev-btn" aria-label="Previous Featured Products">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+
+                    <!-- Carousel Product Container -->
+                    <div class="merch-carousel">
+                        {% for item in module.parameters.items %}
+                            <div class="product-card">
+                                <div class="product-img-wrapper">
+                                    {% if item.badge %}<div class="badge">{{ item.badge }}</div>{% endif %}
+                                    {% if item.image %}<img src="{{ item.image }}" alt="{{ item.title }}" loading="lazy" decoding="async">{% endif %}
+                                </div>
+                                <div class="product-info">
+                                    {% if item.title %}<h4 class="product-title">{{ item.title }}</h4>{% endif %}
+                                    {% if item.price %}<div class="product-price">{{ item.price }}</div>{% endif %}
+                                </div>
                             </div>
-                            <div class="product-info">
-                                {% if item.title %}<h4 class="product-title">{{ item.title }}</h4>{% endif %}
-                                {% if item.price %}<div class="product-price">{{ item.price }}</div>{% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Forward Arrow Button -->
+                    <button type="button" class="carousel-nav-btn next-btn" aria-label="Next Featured Products">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
                 </div>
             </section>
 

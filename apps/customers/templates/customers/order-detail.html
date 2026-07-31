@@ -91,7 +91,7 @@
                         {% if item.variant %}<small style="color: #7A726A;">Variant: {{ item.variant }}</small>{% endif %}
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-weight: 600;">NPR {{ item.unit_price|default:item.price|floatformat:2 }}</div>
+                        <div style="font-weight: 600;">{{ order.currency|default:"US$" }} {{ item.unit_price|default:item.price|floatformat:2 }}</div>
                         <small style="color: #7A726A;">Qty: {{ item.quantity|default:1 }}</small>
                     </div>
                 </div>
@@ -101,7 +101,7 @@
 
             <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #EAE5E0; font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between;">
                 <span>Total Amount:</span>
-                <span>{% if order.currency %}{{ order.currency }}{% else %}NPR{% endif %} {{ order.total|default:order.grand_total|floatformat:2 }}</span>
+                <span>{{ order.currency|default:"US$" }} {{ order.total|default:order.grand_total|floatformat:2 }}</span>
             </div>
         </section>
 

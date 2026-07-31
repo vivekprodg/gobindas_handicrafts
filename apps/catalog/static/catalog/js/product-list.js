@@ -33,8 +33,8 @@
             loading: 'catalog-loading',
             disabled: 'disabled'
         },
-        locale: 'en-NP',
-        currencySymbol: 'NPR'
+        locale: 'en-US',
+        currencySymbol: 'US$'
     };
 
     class ProductDiscoveryEngine {

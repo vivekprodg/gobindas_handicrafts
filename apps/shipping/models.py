@@ -28,9 +28,9 @@ class ShippingSettings(SingletonCMSModel):
     default_fallback_rate = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=Decimal("150.00"),
+        default=Decimal("15.00"),
         validators=[MinValueValidator(ZERO_DECIMAL)],
-        verbose_name=_("Fallback Delivery Rate (NPR)"),
+        verbose_name=_("Fallback Delivery Rate (US$)"),
         help_text=_("Applied if no matching zone or shipping method is configured."),
     )
     free_shipping_subtotal_threshold = models.DecimalField(
@@ -39,7 +39,7 @@ class ShippingSettings(SingletonCMSModel):
         blank=True,
         null=True,
         validators=[MinValueValidator(ZERO_DECIMAL)],
-        verbose_name=_("Global Free Shipping Threshold (NPR)"),
+        verbose_name=_("Global Free Shipping Threshold (US$)"),
         help_text=_("Cart subtotal amount at which standard shipping becomes free storewide."),
     )
     default_weight_unit = models.CharField(
@@ -164,7 +164,7 @@ class ShippingMethod(CMSBaseModel):
         decimal_places=2,
         default=ZERO_DECIMAL,
         validators=[MinValueValidator(ZERO_DECIMAL)],
-        verbose_name=_("Flat Rate Base Amount (NPR)"),
+        verbose_name=_("Flat Rate Base Amount (US$)"),
     )
     min_order_subtotal = models.DecimalField(
         max_digits=12,
@@ -260,7 +260,7 @@ class WeightTierRate(CMSBaseModel):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(ZERO_DECIMAL)],
-        verbose_name=_("Tier Delivery Fee (NPR)"),
+        verbose_name=_("Tier Delivery Fee (US$)"),
     )
 
     class Meta:
@@ -278,7 +278,7 @@ class WeightTierRate(CMSBaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.shipping_method.name}: {self.min_weight_kg}kg - {self.max_weight_kg}kg -> NPR {self.rate_amount}"
+        return f"{self.shipping_method.name}: {self.min_weight_kg}kg - {self.max_weight_kg}kg -> US$ {self.rate_amount}"
 
 class ShipmentTrackingRecord(CMSBaseModel):
     """

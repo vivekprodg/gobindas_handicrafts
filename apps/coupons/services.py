@@ -82,7 +82,7 @@ class CouponValidationService:
         if cart_subtotal < coupon.min_subtotal:
             raise CouponMinSubtotalNotMet(
                 message=str(
-                    _("Cart subtotal of NPR %(subtotal)s is below the minimum required NPR %(min)s for coupon '%(code)s'.")
+                    _("Cart subtotal of US$ %(subtotal)s is below the minimum required US$ %(min)s for coupon '%(code)s'.")
                     % {"subtotal": cart_subtotal, "min": coupon.min_subtotal, "code": coupon.code}
                 )
             )

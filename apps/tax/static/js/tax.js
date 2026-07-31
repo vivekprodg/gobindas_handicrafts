@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 const taxDisplay = document.querySelector('[data-cart-tax]');
                 if (taxDisplay) {
-                    taxDisplay.textContent = `NPR ${data.tax_total}`;
+                    taxDisplay.textContent = `US$ ${data.tax_total}`;
                 }
             }
         } catch (err) {

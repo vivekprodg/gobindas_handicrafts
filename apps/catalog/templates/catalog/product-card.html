@@ -151,9 +151,9 @@
         <div class="product-bottom-meta">
             <div class="price-structure">
                 {% if product.original_price and product.price and product.original_price > product.price %}
-                    <span class="price-original" data-compare-price data-currency="{{ product.currency|default:'NPR' }}">{{ product.currency|default:'NPR' }} {{ product.original_price|floatformat:0|intcomma }}</span>
+                    <span class="price-original" data-compare-price data-currency="{{ product.currency|default:'USD' }}">{{ product.currency|default:'US$' }} {{ product.original_price|floatformat:2|intcomma }}</span>
                 {% endif %}
-                <span class="price-current" data-price-display data-currency="{{ product.currency|default:'NPR' }}">{{ product.currency|default:'NPR' }} {{ product.price|default:0|floatformat:0|intcomma }}</span>
+                <span class="price-current" data-price-display data-currency="{{ product.currency|default:'USD' }}">{{ product.currency|default:'US$' }} {{ product.price|default:0|floatformat:2|intcomma }}</span>
             </div>
 
             <div class="product-card-status-stack">

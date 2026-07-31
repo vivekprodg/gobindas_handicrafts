@@ -149,7 +149,7 @@
                 <p style="margin: 0.25rem 0;"><strong>{% trans "Notification Email" %}:</strong> {{ order.email }}</p>
             </div>
             <div>
-                <p style="margin: 0.25rem 0;"><strong>{% trans "Total Valuation" %}:</strong> {{ order.currency|default:'NPR' }} {{ order.total|floatformat:2|intcomma }}</p>
+                <p style="margin: 0.25rem 0;"><strong>{% trans "Total Valuation" %}:</strong> {{ order.currency|default:'US$' }} {{ order.total|floatformat:2|intcomma }}</p>
                 <p style="margin: 0.25rem 0;"><strong>{% trans "Status" %}:</strong> {{ order.get_status_display }}</p>
             </div>
         </div>

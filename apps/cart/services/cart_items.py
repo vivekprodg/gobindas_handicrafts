@@ -64,7 +64,7 @@ def _serialize_cart_item(item: Optional[CartItem]) -> Dict[str, Any]:
         "status": str(getattr(item, "status", "")),
         "saved_reason": str(getattr(item, "saved_reason", "") or ""),
         "unit_price_snapshot": str(getattr(item, "unit_price_snapshot", Decimal("0.00"))),
-        "currency_snapshot": str(getattr(item, "currency_snapshot", "NPR")),
+        "currency_snapshot": str(getattr(item, "currency_snapshot", "USD")),
         "line_subtotal": str(getattr(item, "line_subtotal", Decimal("0.00"))),
     }
 
@@ -209,7 +209,7 @@ class CartItemService:
                         product_name_snapshot=getattr(product, "title", "") if product else "",
                         product_sku_snapshot=getattr(variant or product, "sku", "") or "",
                         variant_name_snapshot=getattr(variant, "name", "") if variant else "",
-                        currency_snapshot=currency or cart.currency or "NPR",
+                        currency_snapshot=currency or cart.currency or "USD",
                         status=CartItem.ItemStatus.ACTIVE,
                         personalization=personalization or {},
                     )

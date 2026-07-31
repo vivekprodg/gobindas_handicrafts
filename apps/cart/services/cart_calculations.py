@@ -128,7 +128,7 @@ class CartCalculationsService:
             "tax": tax,
             "shipping": shipping,
             "grand_total": grand_total,
-            "currency": cart.currency if cart else "NPR",
+            "currency": cart.currency if cart else "USD",
             "item_count": cart.total_items_count if cart else 0,
             "unique_item_count": cart.unique_items_count if cart else 0,
         }

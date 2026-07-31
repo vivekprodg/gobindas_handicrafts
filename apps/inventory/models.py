@@ -513,7 +513,7 @@ class InventoryTransaction(CMSBaseModel):
         max_length=10,
         blank=True,
         null=True,
-        default="NPR",
+        default="USD",
         verbose_name=_("Currency"),
     )
 

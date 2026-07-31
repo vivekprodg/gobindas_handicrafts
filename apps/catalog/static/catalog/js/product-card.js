@@ -729,14 +729,14 @@
         }
         const priceEl = card.querySelector(CONFIG.selectors.priceDisplay);
         if (priceEl && variant.price !== undefined && variant.price !== null) {
-            const currency = priceEl.dataset.currency || variant.currency || 'NPR';
+            const currency = priceEl.dataset.currency || variant.currency || 'US$';
             priceEl.textContent = currency + ' ' + String(variant.price);
         }
         const compareEl = card.querySelector(CONFIG.selectors.comparePriceDisplay);
         if (compareEl) {
             const compareVal = variant.compare_at_price || variant.compare_price;
             if (compareVal !== undefined && compareVal !== null && compareVal !== '') {
-                const currency = compareEl.dataset.currency || variant.currency || 'NPR';
+                const currency = compareEl.dataset.currency || variant.currency || 'US$';
                 compareEl.textContent = currency + ' ' + String(compareVal);
                 compareEl.style.display = '';
             } else {

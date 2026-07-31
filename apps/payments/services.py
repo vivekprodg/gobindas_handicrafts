@@ -115,7 +115,7 @@ class KhaltiService:
         payload = {
             "return_url": return_url,
             "website_url": request.build_absolute_uri("/"),
-            "amount": int(txn.amount * Decimal("100")),  # Convert NPR to paisa
+            "amount": int(txn.amount * Decimal("100")),
             "purchase_order_id": txn.transaction_id,
             "purchase_order_name": f"Order #{txn.order.order_number}",
             "customer_info": {

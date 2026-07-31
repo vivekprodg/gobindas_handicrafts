@@ -497,7 +497,7 @@ def _build_active_filter_chips(params: Dict[str, Any]) -> List[Dict[str, str]]:
     chips: List[Dict[str, str]] = []
     
     if params.get("min_price") is not None or params.get("max_price") is not None:
-        label = f"Price: NPR {params.get('min_price', 0) or 0:,.0f} - {params.get('max_price', 'Max')}"
+        label = f"Price: US$ {params.get('min_price', 0) or 0:,.0f} - {params.get('max_price', 'Max')}"
         chips.append({"param": "price", "key": "price", "label": label})
         
     if params.get("in_stock_only"):

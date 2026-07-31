@@ -128,7 +128,7 @@
                             </span>
                         </div>
                         <div style="font-weight: 600; font-size: 1.1rem; text-align: right;">
-                            {% if order.currency %}{{ order.currency }}{% else %}NPR{% endif %} {{ order.total|default:order.grand_total|floatformat:2 }}
+                            {{ order.currency|default:"US$" }} {{ order.total|default:order.grand_total|floatformat:2 }}
                         </div>
                         <div style="text-align: right;">
                             <a href="{% url 'customers:order_detail' order.id %}" class="btn-view">Details</a>

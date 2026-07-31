@@ -110,7 +110,7 @@
                         <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                             <div>
                                 <h4 style="margin: 0 0 0.5rem 0;">{{ item.product.title }}</h4>
-                                <div style="font-weight: 600; color: var(--dash-gold);">NPR {{ item.product.price|floatformat:2 }}</div>
+                                <div style="font-weight: 600; color: var(--dash-gold);">{{ item.product.currency|default:"US$" }} {{ item.product.price|floatformat:2 }}</div>
                             </div>
                             <form action="{% url 'customers:wishlist_remove' item.pk %}" method="post" style="margin-top: 1.5rem;">
                                 {% csrf_token %}

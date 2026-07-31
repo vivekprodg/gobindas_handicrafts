@@ -4,7 +4,7 @@
     {% for line in tax_lines %}
     <li style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.85rem;">
         <span>{{ line.name }}</span>
-        <strong>NPR {{ line.tax_amount|floatformat:2|intcomma }}</strong>
+        <strong>US$ {{ line.tax_amount|floatformat:2|intcomma }}</strong>
     </li>
     {% endfor %}
 </ul>

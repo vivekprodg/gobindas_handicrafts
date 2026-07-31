@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success && data.selected_method) {
                 const shippingDisplay = document.querySelector('[data-cart-shipping]');
                 if (shippingDisplay) {
-                    shippingDisplay.textContent = `NPR ${data.shipping_fee}`;
+                    shippingDisplay.textContent = `US$ ${data.shipping_fee}`;
                 }
             }
         } catch (err) {

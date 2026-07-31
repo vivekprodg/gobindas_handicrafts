@@ -136,7 +136,7 @@ class Coupon(CMSBaseModel):
         blank=True,
         null=True,
         validators=[MinValueValidator(c.ZERO_DECIMAL)],
-        verbose_name=_("Maximum Discount Cap (NPR)"),
+        verbose_name=_("Maximum Discount Cap (US$)"),
         help_text=_("Optional cap for percentage discounts.")
     )
     min_subtotal = models.DecimalField(
@@ -144,7 +144,7 @@ class Coupon(CMSBaseModel):
         decimal_places=2,
         default=c.ZERO_DECIMAL,
         validators=[MinValueValidator(c.ZERO_DECIMAL)],
-        verbose_name=_("Minimum Order Subtotal (NPR)")
+        verbose_name=_("Minimum Order Subtotal (US$)")
     )
 
     target_scope = models.CharField(
@@ -343,7 +343,7 @@ class CouponUsageRecord(CMSBaseModel):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(c.ZERO_DECIMAL)],
-        verbose_name=_("Discount Amount Applied (NPR)")
+        verbose_name=_("Discount Amount Applied (US$)")
     )
     used_at = models.DateTimeField(
         default=timezone.now,

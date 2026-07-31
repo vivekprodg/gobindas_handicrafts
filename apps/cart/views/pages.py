@@ -151,7 +151,7 @@ def _serialize_cart_item(item: CartItem, warehouse: Optional[Any] = None) -> Dic
         "quantity": int(item.quantity or 0),
         "status": _safe_str(item.status),
         "unit_price": str(item.unit_price_snapshot or Decimal("0.00")),
-        "currency": _safe_str(item.currency_snapshot) or "NPR",
+        "currency": _safe_str(item.currency_snapshot) or "USD",
         "line_subtotal": str(item.line_subtotal),
         "product_name": _safe_str(item.product_name_snapshot) or getattr(item.product, "title", "Product"),
         "product_sku": _safe_str(item.product_sku_snapshot) or getattr(item.product, "sku", ""),
@@ -171,7 +171,7 @@ def _serialize_cart(cart: Optional[Cart]) -> Dict[str, Any]:
     return {
         "id": cart.pk,
         "status": _safe_str(cart.status),
-        "currency": _safe_str(cart.currency) or "NPR",
+        "currency": _safe_str(cart.currency) or "USD",
         "subtotal": str(totals.get("subtotal", "0.00")),
         "tax": str(totals.get("tax", "0.00")),
         "shipping": str(totals.get("shipping", "0.00")),
