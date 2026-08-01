@@ -2,7 +2,7 @@
  * Gobindas Handicrafts - Enterprise Product Card Discovery & Interaction Engine
  * ============================================================================
  * Powers dynamic product actions, wishlist toggles, cart dispatching,
- * generic multi-attribute variant resolution, and contextual pricing matrices.
+ * generic multi-attribute variant resolution, and contextual metadata.
  * 
  * @module GobindasProductCardEngine
  * @version 3.0.0
@@ -18,8 +18,6 @@
             wishlistCounter: '.wishlist-count, .wishlist-badge-count, [data-wishlist-count]',
             cartBtn: '.btn-card-add-cart, .card-add-to-cart, [data-card-add-to-cart]',
             variantInput: '[data-variant-input], .variant-selector, .swatch-input, select[name="variant-option"]',
-            priceDisplay: '.price-current, .current-price, [data-price-display]',
-            comparePriceDisplay: '.price-original, .compare-price, [data-compare-price]',
             stockDisplay: '.stock-indicator, .stock-status, [data-stock-display]',
             stockMessage: '[data-stock-message]',
             stockIcon: '[data-stock-icon]',
@@ -726,22 +724,6 @@
         }
         if (variant.id || variant.sku) {
             card.dataset.selectedVariantId = String(variant.id || variant.sku || '');
-        }
-        const priceEl = card.querySelector(CONFIG.selectors.priceDisplay);
-        if (priceEl && variant.price !== undefined && variant.price !== null) {
-            const currency = priceEl.dataset.currency || variant.currency || 'US$';
-            priceEl.textContent = currency + ' ' + String(variant.price);
-        }
-        const compareEl = card.querySelector(CONFIG.selectors.comparePriceDisplay);
-        if (compareEl) {
-            const compareVal = variant.compare_at_price || variant.compare_price;
-            if (compareVal !== undefined && compareVal !== null && compareVal !== '') {
-                const currency = compareEl.dataset.currency || variant.currency || 'US$';
-                compareEl.textContent = currency + ' ' + String(compareVal);
-                compareEl.style.display = '';
-            } else {
-                compareEl.style.display = 'none';
-            }
         }
         const primaryImg = card.querySelector(CONFIG.selectors.imagePrimary);
         if (primaryImg && (variant.image || variant.featured_image)) {

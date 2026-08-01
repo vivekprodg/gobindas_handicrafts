@@ -352,6 +352,9 @@ class ProductIconForm(forms.ModelForm):
         ]
 
 class ProductForm(forms.ModelForm):
+    price = forms.DecimalField(required=False, max_digits=12, decimal_places=2, label=_("Current Price"))
+    original_price = forms.DecimalField(required=False, max_digits=12, decimal_places=2, label=_("Original Price"))
+
     class Meta:
         model = Product
         fields = [
@@ -986,8 +989,6 @@ class ProductFilterForm(forms.Form):
             ("featured", _("Featured Collection")),
             ("newest", _("Newest Arrivals")),
             ("oldest", _("Oldest First")),
-            ("price-low", _("Price: Low to High")),
-            ("price-high", _("Price: High to Low")),
             ("rating", _("Highest Rated")),
             ("popularity", _("Most Popular")),
             ("name-asc", _("Name: A to Z")),

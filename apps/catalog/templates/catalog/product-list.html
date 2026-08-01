@@ -72,8 +72,6 @@
                     <option value="featured" {% if current_sort == 'featured' or not current_sort %}selected{% endif %}>Featured Collection</option>
                     <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
                     <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
-                    <option value="price-low" {% if current_sort == 'price-low' or current_sort == 'price_low' or current_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
-                    <option value="price-high" {% if current_sort == 'price-high' or current_sort == 'price_high' or current_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
                     <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
                     <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
                     <option value="name-asc" {% if current_sort == 'name-asc' or current_sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
@@ -129,37 +127,7 @@
                 </div>
             </fieldset>
 
-            <!-- 2. Dual Price Range Valuation Filter -->
-            <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">
-                    <span>Price Valuation (US$)</span>
-                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="filter-node-content">
-                    <!-- Dual Interactive Range Slider Track -->
-                    <div class="price-slider-widget">
-                        <div class="range-slider-track-bar" id="priceSliderTrack"></div>
-                        <input type="range" id="priceSliderMin" min="{{ filter_price.min|default:0 }}" max="{{ filter_price.max|default:100000 }}" value="{{ request.GET.min_price|default:filter_price.min|default:0 }}" step="500">
-                        <input type="range" id="priceSliderMax" min="{{ filter_price.min|default:0 }}" max="{{ filter_price.max|default:100000 }}" value="{{ request.GET.price_max|default:filter_price.max|default:100000 }}" step="500">
-                    </div>
-
-                    <!-- Dual Numeric Input Fields -->
-                    <div class="dual-price-range-inputs">
-                        <div class="price-input-box">
-                            <span class="currency-prefix">MIN</span>
-                            <input type="number" id="minPriceInput" name="min_price" value="{{ request.GET.min_price|default:'' }}" placeholder="{{ filter_price.min|default:0 }}" min="0" class="price-number-input">
-                        </div>
-                        <span class="price-range-dash">&ndash;</span>
-                        <div class="price-input-box">
-                            <span class="currency-prefix">MAX</span>
-                            <input type="number" id="maxPriceInput" name="price_max" value="{{ request.GET.price_max|default:'' }}" placeholder="{{ filter_price.max|default:100000 }}" min="0" class="price-number-input">
-                        </div>
-                        <button type="submit" class="btn-price-apply" aria-label="Apply price filter">Go</button>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- 3. Minimum Star Rating Filter -->
+            <!-- 2. Minimum Star Rating Filter -->
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">
                     <span>Customer Rating</span>
@@ -182,7 +150,7 @@
                 </div>
             </fieldset>
 
-            <!-- 4. Category Hierarchy -->
+            <!-- 3. Category Hierarchy -->
             {% if filter_categories %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">
@@ -204,7 +172,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 5. Master Craftsmen / Artisans -->
+            <!-- 4. Master Craftsmen / Artisans -->
             {% if filter_craftsmen %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">
@@ -226,7 +194,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 6. Provenance / Origin Region -->
+            <!-- 5. Provenance / Origin Region -->
             {% if filter_provenance %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">
@@ -248,7 +216,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 7. Material Configuration -->
+            <!-- 6. Material Configuration -->
             {% if filter_materials %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">
@@ -270,7 +238,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 8. Hue / Color Aesthetics -->
+            <!-- 7. Hue / Color Aesthetics -->
             {% if filter_hues %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">
@@ -289,7 +257,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 9. Ethical Standards -->
+            <!-- 8. Ethical Standards -->
             {% if filter_ethical %}
             <fieldset class="filter-accordion-node">
                 <button type="button" class="filter-node-trigger" aria-expanded="false">
@@ -311,7 +279,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 10. Product Tags Matrix -->
+            <!-- 9. Product Tags Matrix -->
             {% if filter_tags %}
             <fieldset class="filter-accordion-node">
                 <button type="button" class="filter-node-trigger" aria-expanded="false">
@@ -329,7 +297,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 11. Craft Collections -->
+            <!-- 10. Craft Collections -->
             {% if filter_collections %}
             <fieldset class="filter-accordion-node">
                 <button type="button" class="filter-node-trigger" aria-expanded="false">
@@ -350,26 +318,6 @@
                 </div>
             </fieldset>
             {% endif %}
-
-            <!-- 12. Promotions & Sales -->
-            <fieldset class="filter-accordion-node">
-                <button type="button" class="filter-node-trigger" aria-expanded="false">
-                    <span>Promotions &amp; Sales</span>
-                    <svg class="filter-chevron-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="filter-node-content">
-                    <label class="luxury-checkbox-option">
-                        <span class="custom-checkbox-wrapper">
-                            <input type="checkbox" name="on_sale" value="true" {% if request.GET.on_sale == 'true' %}checked{% endif %} onchange="this.form.submit();">
-                            <span class="checkmark"></span>
-                        </span>
-                        <span class="option-text">Special Offer / On Sale</span>
-                        {% if facets.on_sale_count is not None %}
-                            <span class="facet-count-badge">{{ facets.on_sale_count|format_facet_count }}</span>
-                        {% endif %}
-                    </label>
-                </div>
-            </fieldset>
 
             <noscript>
                 <button type="submit" class="pagination-node" style="margin-top: 1rem; width: 100%;">Apply Filters</button>

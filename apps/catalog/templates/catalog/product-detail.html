@@ -18,8 +18,6 @@
     <meta property="og:image:alt" content="{{ product.og_title|default:product.title|default:'Product image' }}">
     {% endif %}
     <meta property="og:site_name" content="Gobindas Handicrafts">
-    <meta property="product:price:amount" content="{{ product.price|default:'0.00' }}">
-    <meta property="product:price:currency" content="{{ product.currency|default:'USD' }}">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
@@ -42,8 +40,6 @@
       "offers": {
         "@type": "Offer",
         "url": "{{ request.build_absolute_uri|escapejs }}",
-        "priceCurrency": "{{ product.currency|default:'USD'|escapejs }}",
-        "price": "{{ product.price|default:'0.00'|escapejs }}",
         "itemCondition": "https://schema.org/NewCondition",
         "availability": "{% if inventory.is_out_of_stock %}https://schema.org/OutOfStock{% else %}https://schema.org/InStock{% endif %}"
       }
@@ -275,27 +271,6 @@
             background-color: var(--bg-light);
             padding: 2rem; margin-bottom: 2.5rem;
             position: relative;
-        }
-
-        .price-structure-box {
-            display: flex; align-items: baseline; gap: 1rem;
-            margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light);
-            padding-bottom: 1.25rem;
-            flex-wrap: wrap;
-        }
-        .price-current-large {
-            font-family: var(--font-brand); font-size: 2.25rem;
-            font-weight: 700; color: var(--brand-dark);
-        }
-        .price-original-large {
-            font-size: 1.3rem; text-decoration: line-through;
-            color: var(--text-muted);
-        }
-        .discount-percentage-pill {
-            font-size: 0.75rem; font-weight: 700;
-            background-color: var(--color-error);
-            color: #FFFFFF; padding: 3px 8px;
-            letter-spacing: 0.05em; text-transform: uppercase;
         }
 
         .variants-section { margin-bottom: 1.5rem; }
@@ -666,13 +641,6 @@
                 </div>
 
                 <div class="luxury-purchase-box">
-                    <div class="price-structure-box">
-                        <span class="price-current-large">{{ product.currency|default:'US$' }} {{ product.price|default:0|floatformat:2|intcomma }}</span>
-                        {% if product.original_price and product.price and product.original_price > product.price %}
-                        <span class="price-original-large">{{ product.currency|default:'US$' }} {{ product.original_price|floatformat:2|intcomma }}</span>
-                        <span class="discount-percentage-pill">Exclusive Collection Price</span>
-                        {% endif %}
-                    </div>
 
                     {% if variant_groups %}
                         <div class="variants-section" role="group" aria-label="Product variants">
@@ -805,7 +773,7 @@
                         <span><strong>Traditional Weaving & Processing Duration:</strong> Meticulous artisan inspection before transit.</span>
                     </div>
                     <div class="shipping-highlight-node">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                         <span><strong>Worldwide Secure Dispatch:</strong> Tracked shipping globally from Kathmandu, Nepal.</span>
                     </div>
                 </div>
@@ -909,7 +877,6 @@
     <div class="sticky-action-mobile-bar" role="region" aria-label="Quick purchase actions">
         <div class="sticky-mobile-details">
             <span class="sticky-mobile-title">{{ product.title|default:'Product' }}</span>
-            <span class="sticky-mobile-price">{{ product.currency|default:'US$' }} {{ product.price|default:0|floatformat:2|intcomma }}</span>
         </div>
         <div class="sticky-mobile-ctas">
             {% if not inventory.is_out_of_stock %}

@@ -143,28 +143,28 @@ def seed_homepage():
     products = [
         {
             "title": "Jaipur Terracotta Vase",
-            "price": "$120.00",
+            "price": "",
             "url": "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
             "badge": "Only 1 Left",
             "position": 10
         },
         {
             "title": "Handloomed Silk Throw",
-            "price": "$240.00",
+            "price": "",
             "url": "https://images.unsplash.com/photo-1606722590583-6951b5ea92a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
             "badge": None,
             "position": 20
         },
         {
             "title": "Carved Teak Root Bowl",
-            "price": "$185.00",
+            "price": "",
             "url": "https://images.unsplash.com/photo-1610701596045-5606d289cb83?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
             "badge": "New Kiln Run",
             "position": 30
         },
         {
             "title": "Bronze Ganesha Murti",
-            "price": "$450.00",
+            "price": "",
             "url": "https://images.unsplash.com/photo-1544974246-88d40733575c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
             "badge": "One of a Kind",
             "position": 40

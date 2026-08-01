@@ -46,7 +46,15 @@ def ensure_homepage_categories():
         categories.append(category)
     return categories
 
+def cleanup_existing_prices():
+    """Wipes prices from existing Product and TrendingProduct records."""
+    p_updated = Product.objects.all().update(price=None, original_price=None, cost_price=None)
+    t_updated = TrendingProduct.objects.all().update(price="")
+    print(f"🧹 Cleaned existing prices: {p_updated} products & {t_updated} trending products updated.")
+
 def process_exact_camera_images():
+    cleanup_existing_prices()
+
     if not os.path.exists(BULK_DIR):
         print(f"❌ Error: Folder '{BULK_DIR}' does not exist.")
         return
@@ -123,19 +131,17 @@ def process_exact_camera_images():
             slug_counter += 1
 
         is_featured_item = index in featured_indices
-        
-        # USD Pricing ($35.00 - $450.00)
-        random_price = Decimal(random.randrange(35, 450, 5))
 
         # Assign to a category cyclically
         assigned_category = categories[uploaded_count % len(categories)]
 
-        # Create new product
+        # Create new product without price
         product = Product.objects.create(
             title=title,
             slug=slug,
             sku=base_sku,
-            price=random_price,
+            price=None,
+            original_price=None,
             currency="USD",
             short_description=f"Exquisite {prefix.lower()} created by master artisans.",
             description=f"Ethically produced {prefix.lower()} using traditional techniques preserved through generations.",
@@ -164,7 +170,7 @@ def process_exact_camera_images():
                 product=product,
                 defaults={
                     'title': title,
-                    'price': f"US$ {random_price:,.2f}",
+                    'price': "",
                     'badge': "Featured",
                     'position': trending_pos
                 }
@@ -173,7 +179,7 @@ def process_exact_camera_images():
 
         uploaded_count += 1
         status_tag = "⭐ [FEATURED CAROUSEL]" if is_featured_item else "✅ [NEW PRODUCT UPLOADED]"
-        print(f"{status_tag} [{index+1}/{len(files)}] '{title}' | US$ {random_price:.2f} | Category: {assigned_category.name}")
+        print(f"{status_tag} [{index+1}/{len(files)}] '{title}' | Category: {assigned_category.name}")
 
     # Invalidate Caches so changes reflect immediately
     invalidate_homepage_cache()

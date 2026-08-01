@@ -291,7 +291,6 @@
             if (!productId || !productSlug) return;
 
             var titleEl = document.querySelector('.product-title-row h1');
-            var priceEl = document.querySelector('.price-current-large');
             var imgEl = document.getElementById('pdpMainImage');
             var recentItems = [];
             try {
@@ -305,7 +304,6 @@
                 id: productId,
                 slug: productSlug,
                 title: titleEl ? titleEl.textContent.trim() : '',
-                price: priceEl ? priceEl.textContent.trim() : '',
                 image: imgEl ? imgEl.src : ''
             });
             try {
@@ -327,9 +325,6 @@
                         '</div>' +
                         '<div class="product-card-details">' +
                             '<a href="/product/' + escapeHtml(item.slug) + '/" class="product-title-link" style="font-family: var(--font-brand); font-size:1rem; font-weight:600;">' + escapeHtml(item.title) + '</a>' +
-                            '<div class="product-bottom-meta" style="margin-top:auto; padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center;">' +
-                                '<span class="price-current" style="font-family: var(--font-brand); font-weight:700;">' + escapeHtml(item.price) + '</span>' +
-                            '</div>' +
                         '</div>' +
                     '</article>';
                 }).join('');

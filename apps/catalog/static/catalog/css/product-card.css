@@ -353,36 +353,24 @@
 }
 
 /* ==========================================================================
-   Pricing & Stock Interface
+   Stock & Metadata Interface
    ========================================================================== */
 
 .product-bottom-meta {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     margin-top: auto;
-    padding-top: 1rem;
+    padding-top: 0.75rem;
     border-top: 1px dashed #EAE5E0;
     gap: 1rem;
 }
 
-.price-structure {
+.product-card-status-stack {
     display: flex;
     flex-direction: column;
-}
-
-.price-original {
-    font-size: 0.8rem;
-    text-decoration: line-through;
-    color: var(--text-muted, #7A726A);
-    margin-bottom: 0.2rem;
-}
-
-.price-current {
-    font-size: 1.25rem;
-    font-family: var(--font-brand, 'Cinzel', serif);
-    font-weight: 700;
-    color: var(--brand-dark, #2C2520);
+    gap: 4px;
+    width: 100%;
 }
 
 .stock-indicator {
@@ -393,7 +381,6 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    text-align: right;
 }
 
 .stock-in { color: #4A6B53; }
@@ -401,7 +388,7 @@
 .stock-out { color: #7A726A; }
 
 /* ==========================================================================
-   Dynamic Cart Dynamic Frame Overlay
+   Dynamic Cart Drawer Overlay
    ========================================================================== */
 
 .product-card-cta-drawer {

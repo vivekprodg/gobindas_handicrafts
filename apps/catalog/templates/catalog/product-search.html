@@ -45,8 +45,6 @@
                         onchange="const form = document.getElementById('catalog-filter-form'); if(form){const s=form.elements['sort']; if(s){s.value=this.value;} form.submit();}">
                     <option value="featured" {% if current_sort == 'featured' or not current_sort %}selected{% endif %}>Featured Collection</option>
                     <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
-                    <option value="price-low" {% if current_sort == 'price-low' or current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-                    <option value="price-high" {% if current_sort == 'price-high' or current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
                     <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
                     <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
                 </select>
@@ -87,26 +85,7 @@
                 </div>
             </fieldset>
 
-            <!-- 2. Price Range -->
-            <fieldset class="filter-accordion-node active">
-                <button type="button" class="filter-node-trigger" aria-expanded="true">Price Range (US$)</button>
-                <div class="filter-node-content">
-                    <div class="dual-price-range-inputs">
-                        <div class="price-input-group">
-                            <label for="searchMinPrice">Min</label>
-                            <input type="number" id="searchMinPrice" name="min_price" value="{{ selected_min_price }}" placeholder="0" min="0" class="price-number-input">
-                        </div>
-                        <span class="price-range-dash">&ndash;</span>
-                        <div class="price-input-group">
-                            <label for="searchMaxPrice">Max</label>
-                            <input type="number" id="searchMaxPrice" name="price_max" value="{{ selected_max_price }}" placeholder="Max" min="0" class="price-number-input">
-                        </div>
-                        <button type="submit" class="btn-price-apply">Go</button>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- 3. Star Rating -->
+            <!-- 2. Star Rating -->
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">Minimum Rating</button>
                 <div class="filter-node-content">
@@ -120,7 +99,7 @@
                 </div>
             </fieldset>
 
-            <!-- 4. Materials -->
+            <!-- 3. Materials -->
             {% if facets.materials %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">Material</button>
@@ -136,7 +115,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 5. Artisans -->
+            <!-- 4. Artisans -->
             {% if facets.artisans %}
             <fieldset class="filter-accordion-node active">
                 <button type="button" class="filter-node-trigger" aria-expanded="true">Master Craftsmen</button>
@@ -152,7 +131,7 @@
             </fieldset>
             {% endif %}
 
-            <!-- 6. Color Hues -->
+            <!-- 5. Color Hues -->
             {% if facets.hues %}
             <fieldset class="filter-accordion-node">
                 <button type="button" class="filter-node-trigger" aria-expanded="false">Hue Aesthetic</button>
