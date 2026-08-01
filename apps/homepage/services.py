@@ -107,6 +107,7 @@ def get_homepage_payload(*, use_cache: bool = True) -> dict[str, Any]:
                     {
                         "title": item.product.title if item.product else (item.title or ""),
                         "price": "",
+                        "url": f"/product/{item.product.slug}/" if (item.product and getattr(item.product, 'slug', None)) else "#",
                         "image": (
                             item.product.primary_image.url if (item.product and getattr(item.product, 'primary_image', None))
                             else (item.image.url if item.image else "")
