@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoSlideTimer = null;
     let isHovered = false;
     let isDown = false;
+    let hasDragged = false;
     let startX, scrollLeft;
 
     const cardWidth = 320;      // Distance to scroll per click or auto-slide
@@ -84,9 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
         startAutoSlide();
     });
 
-    // 5. MOUSE DRAG / TOUCH SWIPE SUPPORT
+    // 5. MOUSE DRAG / TOUCH SWIPE SUPPORT (SAFE CLICK HANDLING)
     carousel.addEventListener('mousedown', (e) => {
         isDown = true;
+        hasDragged = false;
         stopAutoSlide();
         startX = e.pageX - carousel.offsetLeft;
         scrollLeft = carousel.scrollLeft;
@@ -99,10 +101,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     carousel.addEventListener('mousemove', (e) => {
         if (!isDown) return;
-        e.preventDefault();
         const x = e.pageX - carousel.offsetLeft;
         const walk = (x - startX) * 2;
-        carousel.scrollLeft = scrollLeft - walk;
+        
+        // Only trigger drag behavior if mouse moved more than 5px
+        if (Math.abs(x - startX) > 5) {
+            hasDragged = true;
+            e.preventDefault();
+            carousel.scrollLeft = scrollLeft - walk;
+        }
+    });
+
+    // Prevent link navigation ONLY if the user was actively dragging
+    carousel.addEventListener('click', (e) => {
+        if (hasDragged) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
     });
 
     // Start auto-sliding on page load
